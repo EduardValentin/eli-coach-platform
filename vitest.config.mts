@@ -9,26 +9,6 @@ const integrationTestGlobs = ["apps/**/*.integration.test.{ts,tsx}"];
 const toolsTestGlobs = ["tools/**/*.test.mjs", "scripts/**/*.test.mjs"];
 const testGlobs = ["apps/**/*.test.{ts,tsx}"];
 
-function integrationProject(options: { name: string; appBasePath: string }) {
-  return {
-    extends: true,
-    test: {
-      name: options.name,
-      include: integrationTestGlobs,
-      env: { APP_BASE_PATH: options.appBasePath },
-      globalSetup: ["./vitest.global-setup.mts"],
-      // Every file here drives a real PostgreSQL container through
-      // testcontainers. Hooks pull and start that container; bodies measure
-      // sub-second idle but have been seen climbing past 4s under
-      // full-suite contention, so vitest's 5s default fails them on load
-      // rather than on anything being wrong. Both opt out here, once, so a
-      // new integration file inherits it instead of redeclaring it.
-      hookTimeout: 120_000,
-      testTimeout: 120_000,
-    },
-  };
-}
-
 export default defineConfig({
   resolve: {
     alias: {
@@ -75,13 +55,22 @@ export default defineConfig({
           testTimeout: 60_000,
         },
       },
-      // One production build, served once under TEST's prefix and once at the
-      // root PROD uses: the prefix is chosen when an instance starts.
-      integrationProject({
-        name: "integration-prefixed",
-        appBasePath: "/eli-coach-platform",
-      }),
-      integrationProject({ name: "integration-root", appBasePath: "/" }),
+      {
+        extends: true,
+        test: {
+          name: "integration",
+          include: integrationTestGlobs,
+          globalSetup: ["./vitest.global-setup.mts"],
+          // Every file here drives a real PostgreSQL container through
+          // testcontainers. Hooks pull and start that container; bodies measure
+          // sub-second idle but have been seen climbing past 4s under
+          // full-suite contention, so vitest's 5s default fails them on load
+          // rather than on anything being wrong. Both opt out here, once, so a
+          // new integration file inherits it instead of redeclaring it.
+          hookTimeout: 120_000,
+          testTimeout: 120_000,
+        },
+      },
     ],
   },
 });

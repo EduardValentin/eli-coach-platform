@@ -215,7 +215,7 @@ describe("coach clients pages integration", () => {
       // assert
       expect(response.status).toBe(302);
       expect(response.headers.get("location")).toContain(
-        encodeURIComponent(suite.path(CLIENTS_PAGE)),
+        encodeURIComponent(CLIENTS_PAGE),
       );
     });
 
@@ -229,9 +229,7 @@ describe("coach clients pages integration", () => {
       expect(response.status).toBe(202);
       const encodedRedirect = await response.text();
       expect(encodedRedirect).toContain("/sign-in");
-      expect(encodedRedirect).toContain(
-        encodeURIComponent(suite.path(CLIENTS_PAGE)),
-      );
+      expect(encodedRedirect).toContain(encodeURIComponent(CLIENTS_PAGE));
       expect(encodedRedirect).not.toContain(".data");
     });
 
@@ -253,7 +251,7 @@ describe("coach clients pages integration", () => {
       );
 
       // assert
-      expect(dashboard).toContain(`href="${suite.path(CLIENTS_PAGE)}"`);
+      expect(dashboard).toContain(`href="${CLIENTS_PAGE}"`);
     });
   });
 

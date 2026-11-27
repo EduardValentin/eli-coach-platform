@@ -77,7 +77,7 @@ describe("coach assessment calls integration", () => {
     expect(page).toContain("Upcoming assessment calls");
     expect(page).toContain("No upcoming calls.");
     expect(page).toContain("View all calls");
-    expect(page).toContain(`href="${suite.path("/coach/assessment-calls")}"`);
+    expect(page).toContain('href="/coach/assessment-calls"');
   });
 
   it("paints a booked call on both coach surfaces in the coach's own zone", async () => {
@@ -254,7 +254,7 @@ describe("coach assessment calls integration", () => {
     );
     expect(calls.status).toBe(302);
     expect(calls.headers.get("location")).toContain(
-      encodeURIComponent(suite.path("/coach/assessment-calls/")),
+      encodeURIComponent("/coach/assessment-calls/"),
     );
   });
 
@@ -265,9 +265,7 @@ describe("coach assessment calls integration", () => {
     // assert
     expect(dashboard).toContain("Coach portal navigation");
     expect(dashboard).toContain("Assessment calls");
-    expect(dashboard).toContain(
-      `href="${suite.path("/coach/assessment-calls")}"`,
-    );
+    expect(dashboard).toContain('href="/coach/assessment-calls"');
   });
 
   it("pages the calls page and keeps the dashboard to the next three", async () => {

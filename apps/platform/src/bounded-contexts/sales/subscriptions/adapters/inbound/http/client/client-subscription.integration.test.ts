@@ -66,7 +66,7 @@ const PROGRAM_START_API = "/api/subscriptions/program-start";
 const PAYMENT_METHOD_API = "/api/subscriptions/payment-method-session";
 const CLIENT_PORTAL = "/client";
 const ENDED_PAGE = "/client/ended";
-const SETTINGS_RETURN_URL = suite.publicUrl("/client/settings");
+const SETTINGS_RETURN_URL = "https://localhost:3000/client/settings";
 
 const DAY_IN_MILLISECONDS = 24 * 60 * 60 * 1000;
 const DAY_13 = new Date(
@@ -179,7 +179,7 @@ describe("client subscription integration", () => {
       expect(refundDueEmail?.replyTo).toBe(ANA.email);
       const portal = await rig.requestAs(ANA_SESSION, CLIENT_PORTAL);
       expect(portal.status).toBe(302);
-      expect(portal.headers.get("location")).toBe(suite.path(ENDED_PAGE));
+      expect(portal.headers.get("location")).toBe(ENDED_PAGE);
     });
 
     it("schedules the end in Stripe at purchase plus the bundle months on the immediate path within the 14 days, owing nothing and keeping her portal open", async () => {
@@ -220,7 +220,7 @@ describe("client subscription integration", () => {
       });
       expect(await refundDueEmails()).toEqual([]);
       const portal = await rig.requestAs(ANA_SESSION, CLIENT_PORTAL);
-      expect(portal.headers.get("location")).not.toBe(suite.path(ENDED_PAGE));
+      expect(portal.headers.get("location")).not.toBe(ENDED_PAGE);
     });
 
     it("schedules the end in Stripe at purchase plus the bundle months once the withdrawal right is gone, owing nothing and keeping her portal open", async () => {
@@ -253,9 +253,7 @@ describe("client subscription integration", () => {
       });
       expect(await refundDueEmails()).toEqual([]);
       const portal = await rig.requestAs(ANA_SESSION, CLIENT_PORTAL);
-      expect(portal.headers.get("location")).toBe(
-        suite.path("/client/welcome"),
-      );
+      expect(portal.headers.get("location")).toBe("/client/welcome");
     });
 
     it("closes her portal once the access a cancellation kept runs out", async () => {
@@ -270,7 +268,7 @@ describe("client subscription integration", () => {
 
       // assert
       expect(portal.status).toBe(302);
-      expect(portal.headers.get("location")).toBe(suite.path(ENDED_PAGE));
+      expect(portal.headers.get("location")).toBe(ENDED_PAGE);
     });
 
     it("leaves her subscription as it was and asks her to try again when Stripe refuses", async () => {
@@ -400,7 +398,7 @@ describe("client subscription integration", () => {
 
       // assert
       expect(response.status).toBe(302);
-      expect(response.headers.get("location")).toBe(suite.path(ENDED_PAGE));
+      expect(response.headers.get("location")).toBe(ENDED_PAGE);
     });
 
     it("sends her to the ended page once Stripe ends her subscription", async () => {
@@ -419,7 +417,7 @@ describe("client subscription integration", () => {
       const response = await rig.requestAs(ANA_SESSION, CLIENT_PORTAL);
 
       // assert
-      expect(response.headers.get("location")).toBe(suite.path(ENDED_PAGE));
+      expect(response.headers.get("location")).toBe(ENDED_PAGE);
     });
   });
 
@@ -480,7 +478,7 @@ describe("client subscription integration", () => {
 
       // assert
       expect(response.status).toBe(303);
-      expect(response.headers.get("location")).toBe(suite.path(ENDED_PAGE));
+      expect(response.headers.get("location")).toBe(ENDED_PAGE);
     });
   });
 
@@ -578,7 +576,7 @@ describe("client subscription integration", () => {
       // assert
       expect(response.status).toBe(303);
       expect(response.headers.get("location")).toBe(
-        suite.path("/client/settings?paymentMethod=unavailable"),
+        "/client/settings?paymentMethod=unavailable",
       );
     });
 

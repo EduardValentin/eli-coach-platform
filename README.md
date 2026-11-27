@@ -98,7 +98,7 @@ http://localhost:3000/?ff.WAITLIST_MODE=default
 
 Booking, store requests and the waitlist refuse a subaddressed email (`name+tag@domain`) when `ENVIRONMENT=production` and accept it on LOCAL and TEST.
 
-One build serves any URL prefix: the server reads `APP_BASE_PATH` (default `/`) when it starts, and the integration suites serve the same build under `/eli-coach-platform` and at `/`. The dev server always serves at `/`.
+One build serves any URL prefix: the server reads `APP_BASE_PATH` (default `/`) when it starts. The integration suites and the dev server serve it at `/`.
 
 The reference prototype sits outside the pnpm workspace and uses npm on the same Node version:
 

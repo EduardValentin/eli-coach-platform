@@ -195,7 +195,7 @@ describe("assessment call booking integration", () => {
     expect(coachEmail?.replyTo).toBe(VISITOR_EMAIL);
     expect(visitorEmail?.replyTo).toBe(PRODUCT_EMAIL_REPLY_TO);
 
-    const joinUrl = suite.publicUrl(`/book/${body.booking.id}/join`);
+    const joinUrl = `https://localhost:3000/book/${body.booking.id}/join`;
 
     expect(visitorEmail?.text).toContain("Hi Ana,");
     expect(visitorEmail?.text).toContain("3:00 PM");

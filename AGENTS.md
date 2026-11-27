@@ -62,6 +62,7 @@ pnpm test:lighthouse
 ## Tests
 
 - Every `pnpm test` run typechecks first and refuses to start Vitest if it fails.
+- Test suites never account for infrastructure differences (URL prefix, environment, host layout): one test configuration, and every test file runs once. Never add per-environment test projects, matrices, or duplicate runs; deploy checks on real hosts prove infrastructure correctness.
 - Co-locate tests with code, organized by product concept. Every scenario has ordered `// arrange`, `// act`, `// assert` sections. Prefer `userEvent`; use `fireEvent` only for unsupported interactions.
 - Backend unit and integration tests live in separate files. Unit tests mock dependencies. Integration tests mock nothing: a suite extends `apps/platform/integration-test-config/`, starts real containers (Postgres, third parties behind WireMock honoring their real contract), spawns the production build as its own process, and drives an entry point over HTTP through `suite.request`. Assert the response and the side effects that reached the database or provider. A page is asserted by status and copy, not loader output.
 - Never construct a repository, service, or controller inside an integration test, never stand in for an internal collaborator, and never call below the entry point. Behavior unreachable from an entry point belongs in a unit test. The harness itself is not integration-tested. A repository is a Postgres adapter implementing a domain port.

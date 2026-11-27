@@ -109,7 +109,7 @@ describe("client journey integration", () => {
 
     // assert
     expect(response.status).toBe(302);
-    expect(response.headers.get("location")).toBe(suite.path(ONBOARDING));
+    expect(response.headers.get("location")).toBe(ONBOARDING);
     expect(await welcomeSeenAtOf(INVITED_CLIENT)).toEqual(CALL_ENDED_INSTANT);
   });
 
@@ -140,9 +140,9 @@ describe("client journey integration", () => {
 
     // assert
     expect(welcome.status).toBe(302);
-    expect(welcome.headers.get("location")).toBe(suite.path(ONBOARDING));
+    expect(welcome.headers.get("location")).toBe(ONBOARDING);
     expect(portalHome.status).toBe(302);
-    expect(portalHome.headers.get("location")).toBe(suite.path(ONBOARDING));
+    expect(portalHome.headers.get("location")).toBe(ONBOARDING);
     expect(onboarding.status).toBe(200);
   });
 
@@ -158,12 +158,12 @@ describe("client journey integration", () => {
     // assert
     expect(beforeWelcome.status).toBe(200);
     expect(portalLinksIn(await visibleDocument(beforeWelcome))).toContainEqual({
-      href: suite.path(WELCOME),
+      href: WELCOME,
       label: "Finish your onboarding",
     });
     expect(afterWelcome.status).toBe(200);
     expect(portalLinksIn(await visibleDocument(afterWelcome))).toContainEqual({
-      href: suite.path(ONBOARDING),
+      href: ONBOARDING,
       label: "Finish your onboarding",
     });
   });
@@ -179,7 +179,7 @@ describe("client journey integration", () => {
     expect(response.status).toBe(200);
     const page = await visibleDocument(response);
     expect(portalLinksIn(page)).toContainEqual({
-      href: suite.path("/coach"),
+      href: "/coach",
       label: "Coach Portal",
     });
     expect(page).not.toContain("Finish your onboarding");
@@ -199,7 +199,7 @@ describe("client journey integration", () => {
     expect(portalPage).toContain("Welcome back.");
     expect(portalPage).toContain(">Client<");
     expect(portalLinksIn(await visibleDocument(publicHome))).toContainEqual({
-      href: suite.path(CLIENT_PORTAL),
+      href: CLIENT_PORTAL,
       label: "Client Portal",
     });
   });

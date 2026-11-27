@@ -1409,7 +1409,7 @@ describe("client resources integration", () => {
 
         // assert
         expect(response.status).toBe(302);
-        expect(response.headers.get("location")).toBe(suite.path(location));
+        expect(response.headers.get("location")).toBe(location);
       },
     );
   });

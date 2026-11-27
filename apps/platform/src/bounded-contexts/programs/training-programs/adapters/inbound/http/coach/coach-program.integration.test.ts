@@ -276,7 +276,7 @@ describe("a client's training program, from her profile", () => {
 
       expect(response.status).toBe(302);
       expect(response.headers.get("location")).toBe(
-        suite.path(programBuilderPage(clientId)),
+        programBuilderPage(clientId),
       );
       expect(await programs.programRowsOf(clientId)).toEqual([
         expect.objectContaining({
@@ -483,9 +483,7 @@ describe("a client's training program, from her profile", () => {
 
       // assert
       expect(response.status).toBe(302);
-      expect(response.headers.get("location")).toBe(
-        suite.path(programSetupPage(clientId)),
-      );
+      expect(response.headers.get("location")).toBe(programSetupPage(clientId));
       expect(await programs.programRowsOf(clientId)).toEqual([]);
     });
 
@@ -503,9 +501,7 @@ describe("a client's training program, from her profile", () => {
 
       // assert
       expect(response.status).toBe(302);
-      expect(response.headers.get("location")).toBe(
-        suite.path(coachClientPage(clientId)),
-      );
+      expect(response.headers.get("location")).toBe(coachClientPage(clientId));
       expect(await programs.programRowsOf(clientId)).toEqual([]);
     });
 
@@ -524,7 +520,7 @@ describe("a client's training program, from her profile", () => {
       // assert
       expect(response.status).toBe(302);
       expect(response.headers.get("location")).toBe(
-        suite.path(programBuilderPage(clientId)),
+        programBuilderPage(clientId),
       );
       expect(await programs.programRowsOf(clientId)).toEqual([
         expect.objectContaining({ level: "beginner" }),
@@ -620,9 +616,7 @@ describe("a client's training program, from her profile", () => {
 
       // assert
       expect(response.status).toBe(302);
-      expect(response.headers.get("location")).toBe(
-        suite.path(coachClientPage(clientId)),
-      );
+      expect(response.headers.get("location")).toBe(coachClientPage(clientId));
     });
 
     it("opens her draft in the builder once she has a program", async () => {
@@ -636,7 +630,7 @@ describe("a client's training program, from her profile", () => {
       // assert
       expect(response.status).toBe(302);
       expect(response.headers.get("location")).toBe(
-        suite.path(programBuilderPage(clientId)),
+        programBuilderPage(clientId),
       );
     });
 
@@ -693,7 +687,7 @@ describe("a client's training program, from her profile", () => {
       expect(texts).toContain("No program yet");
       expect(texts).toContain("Build it from her profile.");
       expect(buildProgramLinkOf(page)).toContain(
-        `href="${suite.path(programSetupPage(clientId))}"`,
+        `href="${programSetupPage(clientId)}"`,
       );
     });
 
@@ -796,9 +790,7 @@ describe("a client's training program, from her profile", () => {
       expect(texts).toContain("9 sessions without exercises");
       expect(texts).not.toContain("No program yet");
       expect(buildProgramLinkOf(page)).toBeUndefined();
-      expect(page).toContain(
-        `href="${suite.path(programBuilderPage(clientId))}"`,
-      );
+      expect(page).toContain(`href="${programBuilderPage(clientId)}"`);
       expect(texts).toContain("Continue draft");
     });
 
@@ -865,9 +857,7 @@ describe("a client's training program, from her profile", () => {
         "There is no draft to edit yet. Set up the program to start its first version.",
       );
       expect(texts).toContain("Set up program");
-      expect(page).toContain(
-        `href="${suite.path(programSetupPage(clientId))}"`,
-      );
+      expect(page).toContain(`href="${programSetupPage(clientId)}"`);
     });
 
     it("answers 404 for a client no one paid for and for an id that is not one", async () => {

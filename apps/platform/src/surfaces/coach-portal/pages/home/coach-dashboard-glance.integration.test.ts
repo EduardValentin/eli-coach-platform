@@ -82,7 +82,7 @@ describe("coach dashboard at a glance integration", () => {
     expect(page).toContain("1 check-in to review.");
     expect(textNodesOf(card)).toContain("Ana Popescu");
     expect(textNodesOf(card)).toContain("Review");
-    expect(card).toContain(`href="${suite.path(coachCheckInPath(checkInId))}"`);
+    expect(card).toContain(`href="${coachCheckInPath(checkInId)}"`);
   });
 
   it("drops a request the coach declined", async () => {
@@ -158,7 +158,7 @@ async function expectNothingToReview(response: Response): Promise<void> {
   expect(page).toContain("0 check-ins to review.");
   expect(textNodesOf(card)).toContain("No pending check-ins.");
   expect(textNodesOf(card)).not.toContain("Ana Popescu");
-  expect(card).not.toContain(suite.path(coachCheckInPath("")));
+  expect(card).not.toContain(coachCheckInPath(""));
 }
 
 function pendingCardIn(page: string): string {

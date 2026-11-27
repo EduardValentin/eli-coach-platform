@@ -570,7 +570,7 @@ describe("nutrition library integration", () => {
 
       // assert
       expect(response.status).toBe(302);
-      expect(response.headers.get("location")).toBe(suite.path(LIBRARY_PAGE));
+      expect(response.headers.get("location")).toBe(LIBRARY_PAGE);
     });
   });
 
@@ -687,7 +687,7 @@ describe("nutrition library integration", () => {
 
       // assert
       expect(response.status).toBe(302);
-      expect(response.headers.get("location")).toBe(suite.path(LIBRARY_PAGE));
+      expect(response.headers.get("location")).toBe(LIBRARY_PAGE);
     });
 
     it("refuses a signed-in client on the library and both editor pages", async () => {
@@ -732,7 +732,7 @@ describe("nutrition library integration", () => {
         pages.map((page) => [
           302,
           `https://evoa.fit/sign-in?redirect_url=${encodeURIComponent(
-            `https://localhost:3000${suite.path(page)}`,
+            `https://localhost:3000${page}`,
           )}`,
         ]),
       );

@@ -49,6 +49,7 @@ const deliveryAllowance = 10;
  * to a named moment is what makes "a minute later" mean a minute exactly.
  */
 const fixedNow = new Date("2026-07-30T12:00:00.000Z");
+const UNAVAILABLE_DOWNLOAD_LOCATION = "/store/download?unavailable=1";
 const PAST_COOLDOWN_INSIDE_A_DAY_MS = 2 * 60 * 1000;
 
 describe("Store integration", () => {
@@ -97,9 +98,7 @@ describe("Store integration", () => {
         {
           cover: {
             alt: "Hormone Harmony guide cover",
-            url: suite.path(
-              `/api/store/covers/${encodeURIComponent(fixture.coverAssetKey)}`,
-            ),
+            url: `/api/store/covers/${encodeURIComponent(fixture.coverAssetKey)}`,
           },
           slug: "hormone-harmony",
           title: "Hormone Harmony",
@@ -347,7 +346,7 @@ describe("Store integration", () => {
     // assert
     expect(response.status).toBe(303);
     expect(response.headers.get("Location")).toBe(
-      unavailableDownloadLocation(),
+      UNAVAILABLE_DOWNLOAD_LOCATION,
     );
   });
 
@@ -367,7 +366,7 @@ describe("Store integration", () => {
     // assert
     expect(response.status).toBe(303);
     expect(response.headers.get("Location")).toBe(
-      unavailableDownloadLocation(),
+      UNAVAILABLE_DOWNLOAD_LOCATION,
     );
   });
 
@@ -381,7 +380,7 @@ describe("Store integration", () => {
     // assert
     expect(response.status).toBe(303);
     expect(response.headers.get("Location")).toBe(
-      unavailableDownloadLocation(),
+      UNAVAILABLE_DOWNLOAD_LOCATION,
     );
   });
 
@@ -1098,10 +1097,6 @@ async function changeSeededProductPrice(body: {
       },
     ),
   );
-}
-
-function unavailableDownloadLocation(): string {
-  return suite.path("/store/download?unavailable=1");
 }
 
 async function seedPublishedProductVersion() {

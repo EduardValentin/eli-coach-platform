@@ -134,7 +134,7 @@ describe("client check-in answers integration", () => {
     expect(approved?.subject).toBe("Ana Popescu approved the check-in");
     expect(approved?.text).toContain("Europe/Bucharest");
     expect(approved?.html).toContain(
-      `href="${PUBLIC_ORIGIN}${suite.path(`/coach/checkins/${checkInId}/join`)}"`,
+      `href="${PUBLIC_ORIGIN}/coach/checkins/${checkInId}/join"`,
     );
     expect(approved?.html).toContain(
       'href="https://calendar.google.com/calendar/render?',

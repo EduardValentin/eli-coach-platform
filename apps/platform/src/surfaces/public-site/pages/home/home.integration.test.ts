@@ -29,9 +29,7 @@ describe("home page integration", () => {
     expect(posterLinks[0]).toMatch(/\brel="preload"/);
     expect(posterLinks[0]).toMatch(/\bas="image"/);
     expect(posterLinks[0]).toMatch(/\bfetchpriority="high"/i);
-    expect(posterLinks[0]).toContain(
-      `href="${suite.path(`/${HERO_POSTER_FILE}`)}"`,
-    );
+    expect(posterLinks[0]).toContain(`href="/${HERO_POSTER_FILE}"`);
   });
 
   it("leaves the hero poster out of other public pages", async () => {

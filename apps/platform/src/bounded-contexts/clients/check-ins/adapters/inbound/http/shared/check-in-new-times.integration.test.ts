@@ -178,9 +178,7 @@ describe("check-in new times integration", () => {
       expect(sent?.text).toContain("Europe/London");
       expect(sent?.text).not.toContain("Europe/Bucharest");
       expect(sent?.text).toContain(`NOTE: ${COACH_NOTE}`);
-      expect(sent?.html).toContain(
-        `href="${PUBLIC_ORIGIN}${suite.path("/client/checkins")}"`,
-      );
+      expect(sent?.html).toContain(`href="${PUBLIC_ORIGIN}/client/checkins"`);
     });
 
     it("records the client's new time in the zone she proposed from and emails the coach in hers, replying to the client", async () => {
@@ -217,9 +215,7 @@ describe("check-in new times integration", () => {
         "NEW TIME: Friday, 23 October 2026 at 5:00 PM",
       );
       expect(sent?.text).toContain("Europe/Bucharest");
-      expect(sent?.html).toContain(
-        `href="${PUBLIC_ORIGIN}${suite.path("/coach/checkins")}"`,
-      );
+      expect(sent?.html).toContain(`href="${PUBLIC_ORIGIN}/coach/checkins"`);
     });
 
     it("lets the client counter-propose the coach's new time, keeping only the last earlier time and freeing it", async () => {
@@ -594,7 +590,7 @@ describe("check-in new times integration", () => {
         "WHEN: Friday, 23 October 2026 at 5:00 PM",
       );
       expect(accepted?.html).toContain(
-        `href="${PUBLIC_ORIGIN}${suite.path(`/coach/checkins/${checkInId}/join`)}"`,
+        `href="${PUBLIC_ORIGIN}/coach/checkins/${checkInId}/join"`,
       );
       const [invite, ...otherAttachments] = accepted?.attachments ?? [];
       expect(otherAttachments).toEqual([]);
@@ -625,7 +621,7 @@ describe("check-in new times integration", () => {
         "WHEN: Friday, 23 October 2026 at 3:00 PM",
       );
       expect(accepted?.html).toContain(
-        `href="${PUBLIC_ORIGIN}${suite.path(`/client/checkins/${checkInId}/join`)}"`,
+        `href="${PUBLIC_ORIGIN}/client/checkins/${checkInId}/join"`,
       );
     });
 

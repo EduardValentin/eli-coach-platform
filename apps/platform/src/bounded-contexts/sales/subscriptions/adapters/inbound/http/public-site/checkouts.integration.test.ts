@@ -113,12 +113,10 @@ describe("checkouts integration", () => {
       "subscription_data[metadata][purpose]": "coaching-subscription",
       "subscription_data[metadata][assessmentCallId]": callId,
       "line_items[0][price_data][product_data][name]": "3 Months",
-      success_url: suite.publicUrl(
-        "/checkout/complete?session={CHECKOUT_SESSION_ID}",
-      ),
-      cancel_url: suite.publicUrl(
-        "/select-bundle?payment=cancelled&bundle=3-months&start=immediate",
-      ),
+      success_url:
+        "https://localhost:3000/checkout/complete?session={CHECKOUT_SESSION_ID}",
+      cancel_url:
+        "https://localhost:3000/select-bundle?payment=cancelled&bundle=3-months&start=immediate",
     });
     expect(await readCheckoutSessions()).toEqual([
       {
@@ -210,7 +208,7 @@ describe("checkouts integration", () => {
     // assert
     expect(response.status).toBe(303);
     expect(response.headers.get("location")).toBe(
-      suite.path(`/select-bundle?bundle=3-months#${token}`),
+      `/select-bundle?bundle=3-months#${token}`,
     );
     expect(await stripeRequests()).toEqual([]);
   });
@@ -229,7 +227,7 @@ describe("checkouts integration", () => {
     // assert
     expect(response.status).toBe(303);
     expect(response.headers.get("location")).toBe(
-      suite.path(`/select-bundle#${UNKNOWN_TOKEN}`),
+      `/select-bundle#${UNKNOWN_TOKEN}`,
     );
     expect(await stripeRequests()).toEqual([]);
   });

@@ -1,4 +1,3 @@
-import { joinBasePath } from "~/shared/http/base-path";
 import { spawn, type ChildProcess } from "node:child_process";
 import { createWriteStream, rmSync, type WriteStream } from "node:fs";
 import { mkdtemp } from "node:fs/promises";
@@ -53,8 +52,6 @@ type ClockAcknowledgement = {
 };
 
 export type PlatformServerOptions = {
-  /** Where the router's basename puts every route, `/readyz` included. */
-  basePath: string;
   /** Complete at spawn: a deployed instance never learns anything later. */
   environment: NodeJS.ProcessEnv;
 };
@@ -353,9 +350,7 @@ export class PlatformServer {
 
   private async probeReadiness(): Promise<number | null> {
     try {
-      const response = await fetch(
-        `${this.origin()}${joinBasePath(this.options.basePath, "/readyz")}`,
-      );
+      const response = await fetch(`${this.origin()}/readyz`);
 
       return response.status;
     } catch {

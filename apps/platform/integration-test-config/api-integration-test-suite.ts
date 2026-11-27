@@ -1,4 +1,3 @@
-import { joinBasePath } from "~/shared/http/base-path";
 import { randomBytes } from "node:crypto";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -7,7 +6,6 @@ import { join } from "node:path";
 import { IntegrationTestSuite } from "./integration-test-suite";
 import { PlatformServer } from "./platform-server";
 import { PostgresContainer } from "./postgres-container";
-import { loadIntegrationTestEnvironment } from "./runtime-environment";
 import { WireMockContainer } from "./wire-mock/wire-mock-container";
 import { clerkBackendApiStubs } from "./wire-mock/expectations/clerk-backend-api";
 import {
@@ -62,8 +60,6 @@ export class ApiIntegrationTestSuite extends IntegrationTestSuite {
   ]);
   protected readonly containers = [this.postgres, this.wireMock];
 
-  private readonly integrationTestEnvironment =
-    loadIntegrationTestEnvironment();
   private server: PlatformServer | null = null;
   private storeAssetRoot: string | null = null;
   private clientMediaRoot: string | null = null;
@@ -95,7 +91,6 @@ export class ApiIntegrationTestSuite extends IntegrationTestSuite {
     await super.start();
 
     this.server = new PlatformServer({
-      basePath: this.basePath(),
       // Complete at spawn, containers included: the instance reads its
       // configuration once, when it starts, and nothing reaches inside it
       // afterwards.
@@ -164,17 +159,8 @@ export class ApiIntegrationTestSuite extends IntegrationTestSuite {
     await this.requireServer().setClock(instant);
   }
 
-  path(target: string): string {
-    return joinBasePath(this.basePath(), target);
-  }
-
-  /** Where a visitor's browser reaches `target`, as the application links it. */
-  publicUrl(target: string): string {
-    return `${this.integrationTestEnvironment.runtimeEnvironment.PUBLIC_APP_URL}${this.path(target)}`;
-  }
-
   url(target: string): string {
-    return `http://localhost${this.path(target)}`;
+    return `http://localhost${target}`;
   }
 
   assetRoot(): string {
@@ -255,10 +241,6 @@ export class ApiIntegrationTestSuite extends IntegrationTestSuite {
       RECIPE_PHOTO_ROOT: this.photoRoot(),
       ...this.options.environment,
     };
-  }
-
-  private basePath(): string {
-    return this.integrationTestEnvironment.runtimeEnvironment.APP_BASE_PATH;
   }
 
   private requireServer(): PlatformServer {
