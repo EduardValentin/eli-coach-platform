@@ -10,7 +10,7 @@ STATE=/sim/state
 APP_DIR=/srv/apps/eli-coach-platform
 EDGE_DIR=/srv/edge/dynamic
 EDGE_HOST=sim.example.test
-METRICS_ADDRESS=100.64.0.7
+TAILSCALE_ADDRESS=100.64.0.7
 REGISTRY=localhost:5000
 SHA_LENGTH=40
 FAILURES=0
@@ -106,10 +106,12 @@ prepare_host() {
   echo "PLACEHOLDER=1" > "${APP_DIR}/.env"
   printf 'POSTGRES_USER=sim\nPOSTGRES_DB=sim\nPOSTGRES_PASSWORD=sim\nAPP_DB_MONITORING_USER=monitor\nAPP_DB_MONITORING_PASSWORD=monitorpass\n' > /srv/postgres/eli-coach-platform.env
 
-  # The exporter publishes on the host's Tailscale address; give the loopback one.
-  ip addr add "${METRICS_ADDRESS}/32" dev lo
+  # The edge and the exporter publish on a non-loopback address, as on TEST
+  # hosts, so a probe that assumes loopback fails here too.
+  ip addr add "${TAILSCALE_ADDRESS}/32" dev lo
   mkdir -p /srv/apps/observability
-  echo "METRICS_BIND_IP=${METRICS_ADDRESS}" > /srv/apps/observability/.env
+  echo "METRICS_BIND_IP=${TAILSCALE_ADDRESS}" > /srv/apps/observability/.env
+  printf 'TRAEFIK_BIND_IP=%s\nMETRICS_BIND_IP=%s\n' "${TAILSCALE_ADDRESS}" "${TAILSCALE_ADDRESS}" > /srv/edge/.env
 
   openssl req -x509 -newkey rsa:2048 -nodes -days 2 -subj "/CN=${EDGE_HOST}" \
     -addext "subjectAltName=DNS:${EDGE_HOST},DNS:www.${EDGE_HOST}" \
@@ -132,7 +134,7 @@ start_edge() {
   docker run --detach --name sim-registry --publish 127.0.0.1:5000:5000 \
     registry:2@sha256:a3d8aaa63ed8681a604f1dea0aa03f100d5895b6a58ace528858a7b332415373 > /dev/null
   docker run --detach --name sim-traefik --network edge_default \
-    --publish 127.0.0.1:80:80 --publish 127.0.0.1:443:443 \
+    --publish "${TAILSCALE_ADDRESS}:80:80" --publish "${TAILSCALE_ADDRESS}:443:443" \
     --volume "${EDGE_DIR}:/dynamic:ro" \
     --volume "${SIMULATION}/traefik/traefik.yml:/etc/traefik/traefik.yml:ro" \
     --volume /certs:/certs:ro \
@@ -189,7 +191,7 @@ edge_url() {
 
 edge_response() {
   curl --silent --max-time 5 --output /dev/null --dump-header - --write-out 'status:%{http_code}\n' \
-    --connect-to "${EDGE_HOST}:443:127.0.0.1:443" "$(edge_url "${1:-}")" | tr -d '\r'
+    --connect-to "${EDGE_HOST}:443:${TAILSCALE_ADDRESS}:443" "$(edge_url "${1:-}")" | tr -d '\r'
 }
 
 edge_serves_colour() {
@@ -206,7 +208,7 @@ start_probe() {
   (
     while true; do
       curl --silent --max-time 2 --output /dev/null --write-out '%{http_code}\n' \
-        --connect-to "${EDGE_HOST}:443:127.0.0.1:443" "$(edge_url "")" >> "${STATE}/probe.log" || true
+        --connect-to "${EDGE_HOST}:443:${TAILSCALE_ADDRESS}:443" "$(edge_url "")" >> "${STATE}/probe.log" || true
       sleep 0.2
     done
   ) &
@@ -420,6 +422,24 @@ deploy_without_the_metrics_inputs() {
   check "kept the ledger" ledger_has_length 2
 }
 
+deploy_without_the_edge_address() {
+  section "PROD stays closed without the address the edge listens on"
+  local backups_before=""
+  backups_before="$(backup_calls)"
+  local edge_env=/srv/edge/.env
+
+  cp "${edge_env}" "${edge_env}.saved"
+  sed -i '/^TRAEFIK_BIND_IP=/d' "${edge_env}"
+  deploy_release 5 good EXPECTED_LIVE_SHA="$(release_sha 2)"
+  mv "${edge_env}.saved" "${edge_env}"
+
+  check "exits 12 without TRAEFIK_BIND_IP" deploy_exit_is 12
+  check "names the edge env file" output_contains "edge/.env"
+  check "never reached the backup" test "$(backup_calls)" = "${backups_before}"
+  check "kept the ledger" ledger_has_length 2
+  check "still serves the live release" edge_serves_colour blue
+}
+
 lost_ledger_does_not_skip_the_backup() {
   section "A missing Postgres container with an earlier release's state is not a first deploy"
   local ledger_copy="${STATE}/releases.jsonl.copy"
@@ -546,6 +566,18 @@ switch_back_with_no_previous_colour_running() {
   check "has no new ledger line" ledger_has_length 2
 }
 
+next_deploy_after_a_colour_left_for_inspection() {
+  section "After an exit 30 the next deploy restarts the stopped colour and retires the one left for inspection"
+
+  deploy_release 10 good EXPECTED_LIVE_SHA="$(release_sha 2)"
+
+  check "exits 0" deploy_exit_is 0
+  check "recorded the release on blue" ledger_live_is 10 blue
+  check "runs the restarted colour" container_running prod-platform-blue
+  check "serves through the edge with the blue header" edge_serves_colour blue
+  check "retired the colour left for inspection" negated container_exists prod-platform-green
+}
+
 first_release_that_fails_at_the_edge() {
   section "First PROD release failing at the edge leaves the host with no routing"
   reset_host
@@ -593,11 +625,13 @@ release_that_fails_only_at_the_edge
 failed_backups_stop_the_deploy
 deploy_without_the_compare_and_swap
 deploy_without_the_metrics_inputs
+deploy_without_the_edge_address
 lost_ledger_does_not_skip_the_backup
 refused_deploys
 release_that_never_becomes_healthy
 release_whose_image_cannot_be_pulled
 switch_back_with_no_previous_colour_running
+next_deploy_after_a_colour_left_for_inspection
 first_release_that_fails_at_the_edge
 legacy_postgres_data_does_not_skip_the_backup
 session_that_drops_mid_deploy
