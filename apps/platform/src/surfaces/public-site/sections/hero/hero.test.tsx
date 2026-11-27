@@ -129,6 +129,12 @@ function heroPosterImage(container: HTMLElement) {
   return image;
 }
 
+function expectedHeroFileUrl(name: string, extension: string) {
+  return expect.stringMatching(
+    new RegExp(`/${name.replaceAll(".", "\\.")}[^/]*\\.${extension}`),
+  );
+}
+
 describe("PublicHero local interactions", () => {
   it("renders an enabled waitlist state when availability is known", () => {
     // arrange
@@ -262,13 +268,13 @@ describe("PublicHero local interactions", () => {
     ).toEqual([
       {
         media: "(orientation: portrait)",
-        srcSet: "/media/hero/hero-studio-poster-portrait.webp",
+        srcSet: expectedHeroFileUrl("hero-studio-poster-portrait", "webp"),
       },
     ]);
     expect(posterImage).toHaveAttribute("alt", "");
     expect(posterImage).toHaveAttribute(
       "src",
-      "/media/hero/hero-studio-poster-landscape.webp",
+      expectedHeroFileUrl("hero-studio-poster-landscape", "webp"),
     );
   });
 
@@ -307,22 +313,22 @@ describe("PublicHero local interactions", () => {
     ).toEqual([
       {
         media: "(orientation: portrait)",
-        src: "/media/hero/hero-studio-loop-portrait.av1.mp4",
+        src: expectedHeroFileUrl("hero-studio-loop-portrait.av1", "mp4"),
         type: 'video/mp4; codecs="av01.0.05M.08"',
       },
       {
         media: "(orientation: portrait)",
-        src: "/media/hero/hero-studio-loop-portrait.h264.mp4",
+        src: expectedHeroFileUrl("hero-studio-loop-portrait.h264", "mp4"),
         type: "video/mp4",
       },
       {
         media: null,
-        src: "/media/hero/hero-studio-loop-landscape.av1.mp4",
+        src: expectedHeroFileUrl("hero-studio-loop-landscape.av1", "mp4"),
         type: 'video/mp4; codecs="av01.0.08M.08"',
       },
       {
         media: null,
-        src: "/media/hero/hero-studio-loop-landscape.h264.mp4",
+        src: expectedHeroFileUrl("hero-studio-loop-landscape.h264", "mp4"),
         type: "video/mp4",
       },
     ]);

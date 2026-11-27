@@ -14,9 +14,7 @@ describe("the prefix the server builds URLs under", () => {
 
     // assert
     expect(basePath).toBe("/");
-    expect(appUrl("media/eli/eli-portrait-192.webp")).toBe(
-      "/media/eli/eli-portrait-192.webp",
-    );
+    expect(appUrl("icon.svg")).toBe("/icon.svg");
   });
 
   it("is the prefix the instance registered, written without a trailing slash", async () => {

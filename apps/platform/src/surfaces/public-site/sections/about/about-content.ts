@@ -1,4 +1,11 @@
-import { ELI_PORTRAIT_PATHS } from "~/shared/brand";
+import { ELI_PORTRAIT_PATHS } from "~/shared/brand/eli-portrait-paths";
+
+import storyGymPosterPath from "./media/story-gym-poster.webp?url&no-inline";
+import storyGymVideoPath from "./media/story-gym.h264.mp4?url&no-inline";
+import storyLifestylePosterPath from "./media/story-lifestyle-poster.webp?url&no-inline";
+import storyLifestyleVideoPath from "./media/story-lifestyle.h264.mp4?url&no-inline";
+import storyMobilityPosterPath from "./media/story-mobility-poster.webp?url&no-inline";
+import storyMobilityVideoPath from "./media/story-mobility.h264.mp4?url&no-inline";
 
 export const ABOUT_COPY = {
   bioParagraphs: [
@@ -27,19 +34,20 @@ export const ABOUT_MEDIA = {
 
 export const INSTAGRAM_PROFILE_URL = "https://www.instagram.com/elilungu_";
 
-function aboutMediaPath(fileName: string) {
-  return `media/about/${fileName}`;
-}
-
-function storyMedia(reelName: string) {
-  return {
-    posterPath: aboutMediaPath(`story-${reelName}-poster.webp`),
-    videoPath: aboutMediaPath(`story-${reelName}.h264.mp4`),
-  };
-}
-
 export const ABOUT_STORIES = [
-  { alt: "Story 1 of 3", ...storyMedia("lifestyle") },
-  { alt: "Story 2 of 3", ...storyMedia("mobility") },
-  { alt: "Story 3 of 3", ...storyMedia("gym") },
+  {
+    alt: "Story 1 of 3",
+    posterPath: storyLifestylePosterPath,
+    videoPath: storyLifestyleVideoPath,
+  },
+  {
+    alt: "Story 2 of 3",
+    posterPath: storyMobilityPosterPath,
+    videoPath: storyMobilityVideoPath,
+  },
+  {
+    alt: "Story 3 of 3",
+    posterPath: storyGymPosterPath,
+    videoPath: storyGymVideoPath,
+  },
 ] as const;

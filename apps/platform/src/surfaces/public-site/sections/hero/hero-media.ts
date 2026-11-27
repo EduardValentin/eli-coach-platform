@@ -1,3 +1,10 @@
+import heroLoopLandscapeAv1Path from "./media/hero-studio-loop-landscape.av1.mp4?url&no-inline";
+import heroLoopLandscapeH264Path from "./media/hero-studio-loop-landscape.h264.mp4?url&no-inline";
+import heroLoopPortraitAv1Path from "./media/hero-studio-loop-portrait.av1.mp4?url&no-inline";
+import heroLoopPortraitH264Path from "./media/hero-studio-loop-portrait.h264.mp4?url&no-inline";
+import heroPosterLandscapePath from "./media/hero-studio-poster-landscape.webp?url&no-inline";
+import heroPosterPortraitPath from "./media/hero-studio-poster-portrait.webp?url&no-inline";
+
 type HeroPoster = {
   height: number;
   media: string;
@@ -17,14 +24,10 @@ const WIDE_SCREEN_MEDIA_QUERY = "(orientation: landscape)";
 const H264_TYPE = "video/mp4";
 const WEBP_TYPE = "image/webp";
 
-function heroMediaPath(fileName: string) {
-  return `media/hero/${fileName}`;
-}
-
 export const HERO_PORTRAIT_POSTER: HeroPoster = {
   height: 1280,
   media: UPRIGHT_SCREEN_MEDIA_QUERY,
-  path: heroMediaPath("hero-studio-poster-portrait.webp"),
+  path: heroPosterPortraitPath,
   type: WEBP_TYPE,
   width: 720,
 };
@@ -32,7 +35,7 @@ export const HERO_PORTRAIT_POSTER: HeroPoster = {
 export const HERO_LANDSCAPE_POSTER: HeroPoster = {
   height: 900,
   media: WIDE_SCREEN_MEDIA_QUERY,
-  path: heroMediaPath("hero-studio-poster-landscape.webp"),
+  path: heroPosterLandscapePath,
   type: WEBP_TYPE,
   width: 1600,
 };
@@ -42,20 +45,20 @@ export const HERO_LANDSCAPE_POSTER: HeroPoster = {
 export const HERO_VIDEO_SOURCES: readonly HeroVideoSource[] = [
   {
     media: UPRIGHT_SCREEN_MEDIA_QUERY,
-    path: heroMediaPath("hero-studio-loop-portrait.av1.mp4"),
+    path: heroLoopPortraitAv1Path,
     type: 'video/mp4; codecs="av01.0.05M.08"',
   },
   {
     media: UPRIGHT_SCREEN_MEDIA_QUERY,
-    path: heroMediaPath("hero-studio-loop-portrait.h264.mp4"),
+    path: heroLoopPortraitH264Path,
     type: H264_TYPE,
   },
   {
-    path: heroMediaPath("hero-studio-loop-landscape.av1.mp4"),
+    path: heroLoopLandscapeAv1Path,
     type: 'video/mp4; codecs="av01.0.08M.08"',
   },
   {
-    path: heroMediaPath("hero-studio-loop-landscape.h264.mp4"),
+    path: heroLoopLandscapeH264Path,
     type: H264_TYPE,
   },
 ];

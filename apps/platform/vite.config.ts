@@ -36,6 +36,8 @@ function emitPdfPagesWorker(): Plugin {
  * The build is served under a prefix chosen at container start, so a chunk or
  * stylesheet must find its neighbours relative to itself. Other assets a module
  * imports keep their `/`-based URL, which the app prefixes when it renders them.
+ * Every media import adds `no-inline`, so none can ever arrive as a `data:`
+ * URL, which cannot take the prefix.
  */
 function resolveBuiltUrlAgainstItsImporter(
   fileName: string,
