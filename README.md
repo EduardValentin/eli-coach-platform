@@ -155,7 +155,7 @@ pnpm test:e2e:critical # only the journeys tagged @critical
 
 The reference prototype is covered by its own `npm test` — which typechecks with `tsc --noEmit` before running vitest, as `pnpm test` does for the workspace — and `npm run build`; no workspace gate reaches it. CI typechecks and builds the prototype in its own job, only when `designs/` changed, and does not run its vitest suite, so run `npm test` locally before changing it.
 
-CI runs the pieces of `pnpm validate` as parallel jobs in `.github/workflows/ci.yml`: lint, boundaries and types; the unit suites in three shards; the build with Lighthouse; and the integration suites. A pull request that changes only Markdown runs the first of those and skips the rest. A push to `main` always runs everything.
+CI runs the pieces of `pnpm validate` as parallel jobs in `.github/workflows/ci.yml`: lint, boundaries and types; the unit suites in three shards; the build with Lighthouse; and the integration suites, one job per URL prefix. A pull request that changes only Markdown runs the first of those and skips the rest. A push to `main` always runs everything.
 
 ## Database
 
