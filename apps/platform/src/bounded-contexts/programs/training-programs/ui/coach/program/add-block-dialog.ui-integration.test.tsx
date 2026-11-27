@@ -43,12 +43,14 @@ const SETUP: BlockSetup = {
 
 let nextId = 0;
 const suggestions = new ProgramSuggestions({
-  cardioExercises: [],
+  libraryExercises: [],
   newId: () => `fixture-${(nextId += 1)}`,
 });
 
 function blockOf(type: BlockType, weeks: number): Block {
-  return suggestions.newBlock(type, weeks, { setup: SETUP });
+  return suggestions.newBlock(type, weeks, {
+    setup: { ...SETUP, level: "beginner" },
+  });
 }
 
 type OnAdd = (type: BlockType, weeks: number) => void;

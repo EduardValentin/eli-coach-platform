@@ -1,9 +1,27 @@
 import { GripVertical } from "lucide-react";
+import type { ReactNode, Ref } from "react";
 import type { XYCoord } from "react-dnd";
 
 import { cn } from "~/shared/design-system/lib";
 
 type DropReadiness = { isOver: boolean; canDrop: boolean };
+
+export const DRAGGABLE_CARD_CLASS =
+  "relative rounded-control border bg-surface-base transition-[border-color,box-shadow,opacity] motion-reduce:transition-none";
+
+export function draggableCardState({
+  targeted,
+  dragging,
+}: {
+  targeted: boolean;
+  dragging: boolean;
+}) {
+  return {
+    "border-brand-secondary ring-2 ring-brand-secondary/20": targeted,
+    "border-border-default": !targeted,
+    "opacity-40": dragging,
+  };
+}
 
 export function InsertionLine({ isOver, canDrop }: DropReadiness) {
   return (
@@ -42,5 +60,39 @@ export function DragPreview({
         <span className="text-sm font-medium text-text-primary">{label}</span>
       </div>
     </div>
+  );
+}
+
+export function DragHandle({
+  handleRef,
+  className,
+}: {
+  handleRef: Ref<HTMLSpanElement>;
+  className?: string;
+}) {
+  return (
+    <span
+      aria-hidden="true"
+      className={cn(
+        "flex h-7 shrink-0 cursor-grab touch-none items-center text-text-secondary select-none hover:text-text-primary active:cursor-grabbing",
+        className,
+      )}
+      ref={handleRef}
+    >
+      <GripVertical size={16} />
+    </span>
+  );
+}
+
+export function DropOverlay({ children }: { children: ReactNode }) {
+  return (
+    <p
+      aria-hidden="true"
+      className="pointer-events-none absolute inset-0 flex items-center justify-center rounded-control bg-brand-secondary-soft"
+    >
+      <span className="rounded-control bg-surface-base px-3 py-1.5 text-sm font-medium text-brand-secondary shadow-raised">
+        {children}
+      </span>
+    </p>
   );
 }

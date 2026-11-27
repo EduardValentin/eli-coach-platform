@@ -1,17 +1,41 @@
 import { describe, expect, it } from "vitest";
 
-import type { CardioExercise } from "./cardio-exercises-port";
 import { CardioPresets } from "./cardio-presets";
+import type { LibraryExercise } from "./library-exercise";
 
-const ROWER: CardioExercise = { id: "rower", name: "Rowing machine" };
-const TREADMILL: CardioExercise = { id: "treadmill", name: "Treadmill walk" };
-const BIKE: CardioExercise = { id: "bike", name: "Stationary bike" };
+function cardio(
+  id: string,
+  name: string,
+  overrides: Partial<LibraryExercise> = {},
+): LibraryExercise {
+  return {
+    id,
+    name,
+    type: "cardio",
+    unit: "time",
+    perSide: false,
+    pattern: null,
+    role: null,
+    primaryMuscles: [],
+    secondaryMuscles: [],
+    equipment: [],
+    tags: [],
+    cues: "",
+    videoPath: null,
+    archived: false,
+    ...overrides,
+  };
+}
 
-function presetsOver(cardioExercises: CardioExercise[]): CardioPresets {
+const ROWER = cardio("rower", "Rowing machine");
+const TREADMILL = cardio("treadmill", "Treadmill walk");
+const BIKE = cardio("bike", "Stationary bike");
+
+function presetsOver(libraryExercises: LibraryExercise[]): CardioPresets {
   let next = 0;
 
   return new CardioPresets({
-    cardioExercises,
+    libraryExercises,
     newId: () => `id-${(next += 1)}`,
   });
 }
@@ -41,6 +65,21 @@ describe("CardioPresets", () => {
   it("falls back to the first cardio exercise when none matches", () => {
     // arrange
     const presets = presetsOver([ROWER]);
+
+    // act
+    const [easy] = presets.defaultsFor("deload");
+
+    // assert
+    expect(easy.segments[0]).toMatchObject({ exerciseId: "rower" });
+  });
+
+  it("picks only an active cardio exercise of her library", () => {
+    // arrange
+    const presets = presetsOver([
+      cardio("walking-lunge", "Walking lunge", { type: "resistance" }),
+      cardio("old-bike", "Old bike", { archived: true }),
+      ROWER,
+    ]);
 
     // act
     const [easy] = presets.defaultsFor("deload");

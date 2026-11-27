@@ -35,7 +35,11 @@ export const dayCellVariants = cva(
       },
     },
     compoundVariants: [
-      { variant: "rail", kind: "session", class: "hover:bg-surface-subtle" },
+      {
+        variant: ["rail", "compact"],
+        kind: "session",
+        class: "hover:bg-surface-subtle",
+      },
       {
         variant: "rail",
         kind: "cardio",
@@ -45,6 +49,11 @@ export const dayCellVariants = cva(
         variant: "rail",
         kind: "rest",
         class: "enabled:hover:bg-surface-muted-hover",
+      },
+      {
+        variant: "compact",
+        kind: "rest",
+        class: "hover:bg-surface-muted-hover",
       },
     ],
   },
@@ -98,15 +107,21 @@ function DayGlyph({ day }: { day: WeekDay }) {
   );
 }
 
-export function DayFace({ day }: { day: WeekDay }) {
+const DAY_FACE_CLASS =
+  "col-span-full row-start-2 grid h-full content-between justify-items-start gap-1.5 text-left";
+
+/** The pointer area spans the whole card, so a click anywhere on it opens the day; the card's own controls sit above it. */
+const CARD_WIDE_BUTTON_CLASS =
+  "cursor-pointer font-medium outline-none after:absolute after:inset-0 after:rounded-control after:content-[''] focus-visible:after:ring-[3px] focus-visible:after:ring-focus-ring/50";
+
+type DayFaceProps = { day: WeekDay; onOpen?: () => void };
+
+/** The plan and its length under the top line of a `compact` card; with `onOpen` it is the card's one open control. */
+export function DayFace({ day, onOpen }: DayFaceProps) {
   const { kind } = day.plan;
   const length = dayLengthOf(day.plan);
-
-  return (
-    <div
-      className="col-span-full row-start-2 grid h-full content-between justify-items-start gap-1.5 text-left font-medium"
-      data-parity={`day-face-${day.weekday}`}
-    >
+  const face = (
+    <>
       <span
         className={cn(
           "line-clamp-2 text-sm font-medium text-balance break-words",
@@ -131,7 +146,26 @@ export function DayFace({ day }: { day: WeekDay }) {
           </>
         )}
       </span>
-    </div>
+    </>
+  );
+  const parity = `day-face-${day.weekday}`;
+  if (!onOpen) {
+    return (
+      <div className={DAY_FACE_CLASS} data-parity={parity}>
+        {face}
+      </div>
+    );
+  }
+
+  return (
+    <button
+      className={cn(DAY_FACE_CLASS, CARD_WIDE_BUTTON_CLASS)}
+      data-parity={parity}
+      onClick={onOpen}
+      type="button"
+    >
+      {face}
+    </button>
   );
 }
 

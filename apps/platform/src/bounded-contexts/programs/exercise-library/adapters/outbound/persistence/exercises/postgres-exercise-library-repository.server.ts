@@ -7,14 +7,17 @@ import {
   Exercise,
   type ExerciseAddition,
   type ExerciseLibraryPort,
+  type ExerciseProgramCounts,
   type ExerciseReference,
   type ExerciseRemoval,
   type ExerciseReplacement,
   type ExerciseVideoSnapshot,
+  type VersionExerciseUsage,
 } from "~/bounded-contexts/programs/exercise-library/domain/exercise";
-import { and, asc, eq, sql } from "drizzle-orm";
+import { and, asc, countDistinct, eq, sql } from "drizzle-orm";
 
 import {
+  exerciseProgramUsagesTable,
   exercisesConstraints,
   exercisesTable,
 } from "~/bounded-contexts/programs/exercise-library/adapters/outbound/persistence/schema.server";
@@ -108,6 +111,54 @@ export class PostgresExerciseLibraryRepository implements ExerciseLibraryPort {
       .returning({ id: exercisesTable.id });
 
     return removed.length > 0 ? "removed" : "missing";
+  }
+
+  async replaceVersionUsage({
+    programId,
+    versionNumber,
+    exerciseIds,
+  }: VersionExerciseUsage): Promise<void> {
+    await this.executor
+      .delete(exerciseProgramUsagesTable)
+      .where(
+        and(
+          eq(exerciseProgramUsagesTable.programId, programId),
+          eq(exerciseProgramUsagesTable.versionNumber, versionNumber),
+        ),
+      );
+
+    if (exerciseIds.length === 0) {
+      return;
+    }
+
+    await this.executor.insert(exerciseProgramUsagesTable).values(
+      exerciseIds.map((exerciseId) => ({
+        exerciseId,
+        programId,
+        versionNumber,
+      })),
+    );
+  }
+
+  async programCountsOf(
+    ownerAccountId: string,
+  ): Promise<ExerciseProgramCounts> {
+    const rows = await this.executor
+      .select({
+        exerciseId: exerciseProgramUsagesTable.exerciseId,
+        programCount: countDistinct(exerciseProgramUsagesTable.programId),
+      })
+      .from(exerciseProgramUsagesTable)
+      .innerJoin(
+        exercisesTable,
+        eq(exercisesTable.id, exerciseProgramUsagesTable.exerciseId),
+      )
+      .where(eq(exercisesTable.ownerAccountId, ownerAccountId))
+      .groupBy(exerciseProgramUsagesTable.exerciseId);
+
+    return new Map(
+      rows.map(({ exerciseId, programCount }) => [exerciseId, programCount]),
+    );
   }
 
   private nameTakenOrRethrow(error: unknown): "name-taken" {

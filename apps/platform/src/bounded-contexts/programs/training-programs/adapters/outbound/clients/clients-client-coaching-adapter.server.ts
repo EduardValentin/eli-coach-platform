@@ -64,6 +64,8 @@ export class ClientsClientCoachingAdapter implements ClientCoachingPort {
         facts.sessionMinutes,
       ),
       equipment: [...facts.equipment],
+      trainingPlace: facts.trainingPlace,
+      limitations: facts.limitations,
     };
   }
 

@@ -9,7 +9,13 @@ import {
 
 type ClientCoachingFacts = Pick<
   CoachingFactsSnapshot,
-  "primaryGoal" | "level" | "trainingDays" | "sessionMinutes" | "equipment"
+  | "primaryGoal"
+  | "level"
+  | "trainingDays"
+  | "sessionMinutes"
+  | "equipment"
+  | "trainingPlace"
+  | "limitations"
 >;
 
 type EquipmentOption = {
@@ -66,6 +72,8 @@ export class ClientCoaching {
           trainingDays: coaching.trainingDays,
           sessionMinutes: coaching.sessionMinutes,
           equipment: coaching.equipment,
+          trainingPlace: coaching.trainingPlace,
+          limitations: coaching.limitations,
         }
       : null;
   }

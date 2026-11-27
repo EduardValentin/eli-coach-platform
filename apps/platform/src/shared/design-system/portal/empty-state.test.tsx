@@ -57,4 +57,28 @@ describe("EmptyState", () => {
       screen.getByRole("button", { name: "Clear filters" }).parentElement,
     ).toHaveClass("mt-1");
   });
+
+  it("sits left-aligned and small at compact density, with no icon needed", () => {
+    // arrange
+    // act
+    const { container } = render(
+      <EmptyState
+        density="compact"
+        title="No matches"
+        description="Remove one to see more."
+        action={<button type="button">Clear filters</button>}
+      />,
+    );
+
+    // assert
+    expect(screen.getByText("No matches")).toHaveClass(
+      "text-sm",
+      "font-semibold",
+    );
+    expect(container.firstElementChild).toHaveClass("items-start", "text-left");
+    expect(container.querySelector("svg")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Clear filters" }).parentElement,
+    ).not.toHaveClass("mt-1");
+  });
 });

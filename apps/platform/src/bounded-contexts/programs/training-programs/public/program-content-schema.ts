@@ -1,7 +1,11 @@
 import {
   BLOCK_TYPES,
   DAILY_STEP_TARGETS,
+  LAST_SET_TECHNIQUES,
+  ROW_FIELDS,
   SESSION_MINUTE_OPTIONS,
+  SET_KINDS,
+  SLOTS,
   SPLIT_SHAPES,
   TRAINING_DAY_OPTIONS,
   WEEKDAYS,
@@ -11,6 +15,34 @@ import {
 import { z } from "zod";
 
 const rangeSchema = z.strictObject({ min: z.number(), max: z.number() });
+
+const plannedSetSchema = z.strictObject({
+  id: z.string(),
+  kind: z.enum(SET_KINDS),
+  start: z.strictObject({
+    reps: rangeSchema,
+    rir: z.int(),
+    weightKg: z.number().optional(),
+  }),
+});
+
+const exerciseRowSchema = z.strictObject({
+  id: z.string(),
+  exerciseId: z.string(),
+  slot: z.enum(SLOTS),
+  supersetGroup: z.string().optional(),
+  startSets: z.array(plannedSetSchema),
+  restSeconds: z.number(),
+  tempo: z.string().optional(),
+  lastSetTechnique: z.enum(LAST_SET_TECHNIQUES),
+  substitutions: z.array(z.string()),
+  progression: z.discriminatedUnion("kind", [
+    z.strictObject({ kind: z.literal("double") }),
+    z.strictObject({ kind: z.literal("custom"), text: z.string() }),
+  ]),
+  cues: z.string(),
+  touched: z.array(z.enum(ROW_FIELDS)),
+});
 
 const sessionSchema = z.strictObject({
   id: z.string(),
@@ -37,7 +69,7 @@ const sessionSchema = z.strictObject({
       }),
     ),
   }),
-  rows: z.array(z.strictObject({ id: z.string(), exerciseId: z.string() })),
+  rows: z.array(exerciseRowSchema),
 });
 
 const cardioSessionSchema = z.strictObject({

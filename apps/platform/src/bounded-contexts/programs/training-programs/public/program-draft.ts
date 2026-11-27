@@ -1,12 +1,15 @@
 import {
   CLIENT_LEVELS,
   type BlockSetup,
-  type CardioExercise,
   PROGRAM_LANGUAGES,
   type ClientGender,
   type ClientLevel,
+  type Equipment,
+  type LibraryExercise,
   type ProgramContent,
   type ProgramLanguage,
+  type SessionMinutes,
+  type TrainingDays,
 } from "~/bounded-contexts/programs/training-programs/domain/program";
 import { z } from "zod";
 
@@ -42,6 +45,15 @@ type ProgramDraftClient = {
   gender: ClientGender;
 };
 
+export type ProgramDraftClientProfile = {
+  goal: string | null;
+  equipment: string[];
+  trainingPlace: string | null;
+  trainingDays: TrainingDays;
+  sessionMinutes: SessionMinutes;
+  limitations: string;
+};
+
 export type ProgramDraftView =
   | { state: "no-program"; client: ProgramDraftClient }
   | {
@@ -54,5 +66,7 @@ export type ProgramDraftView =
       content: ProgramContent;
       updatedAt: string;
       startingBlockSetup: BlockSetup;
-      cardioExercises: CardioExercise[];
+      libraryExercises: LibraryExercise[];
+      clientProfile: ProgramDraftClientProfile | null;
+      libraryEquipment: Equipment[];
     };

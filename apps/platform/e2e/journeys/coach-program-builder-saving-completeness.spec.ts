@@ -298,7 +298,9 @@ test(
     await programBuilder.chooseDayTab("Monday");
 
     // assert
-    await programBuilder.expectOpenDaySpoken(/^Monday \S.* · ~?\d+ min$/);
+    await programBuilder.expectOpenDaySpoken(
+      /^Monday \S.* · ~?\d+ min Open session$/,
+    );
     await expectOneH1AndNoSkippedLevels(page);
 
     // act

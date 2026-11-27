@@ -1,4 +1,12 @@
-import { useId, useRef, useState, type ReactNode, type RefObject } from "react";
+import { ArrowRight } from "lucide-react";
+import {
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+  type RefObject,
+} from "react";
 
 import {
   cn,
@@ -6,6 +14,7 @@ import {
   WIDGET_TITLE_CLASS,
 } from "~/shared/design-system/lib";
 import {
+  Button,
   cardVariants,
   RowActionsMenu,
 } from "~/shared/design-system/primitives";
@@ -16,7 +25,9 @@ import {
   WEEKDAY_LABELS,
   WEEKDAYS,
   type Block,
+  type ClientLevel,
   type DayChoice,
+  type LibraryExercise,
   type Weekday,
 } from "~/bounded-contexts/programs/training-programs/public/program-editing";
 
@@ -30,10 +41,17 @@ import {
   planOn,
   weekdayAbbreviation,
   type WeekDay,
+  type WeekTiming,
 } from "./week-view";
 import { WeekRailTabs } from "./week-rail";
 
-type WeekDaysProps = { block: Block; onChange: (block: Block) => void };
+type WeekDaysProps = {
+  block: Block;
+  level: ClientLevel;
+  libraryExercises: readonly LibraryExercise[];
+  onChange: (block: Block) => void;
+  onOpenSession: (sessionId: string) => void;
+};
 
 type DayMenuProps = {
   block: Block;
@@ -109,8 +127,11 @@ function lostByChoice(block: Block, day: Weekday, choice: DayChoice): string[] {
     : BlockLoss.describe(block, { kind: "day", weekday: day });
 }
 
-function weekOf(block: Block): WeekDay[] {
-  return WEEKDAYS.map((weekday) => ({ weekday, plan: planOn(block, weekday) }));
+function weekOf(block: Block, timing: WeekTiming): WeekDay[] {
+  return WEEKDAYS.map((weekday) => ({
+    weekday,
+    plan: planOn(block, weekday, timing),
+  }));
 }
 
 function useWeekLayout(): {
@@ -125,10 +146,20 @@ function useWeekLayout(): {
   };
 }
 
-type DayCardProps = { day: WeekDay; menu: ReactNode };
+function openableSessionId(day: WeekDay): string | null {
+  return day.plan.kind === "session" ? day.plan.session.id : null;
+}
 
-/** The weekday and the options share the card's top line; the face below is plain text. */
-function DayCard({ day, menu }: DayCardProps) {
+type DayCardProps = {
+  day: WeekDay;
+  menu: ReactNode;
+  onOpenSession: (sessionId: string) => void;
+};
+
+/** The weekday and the options share the card's top line; the face below is the one open control of a strength day, and its pointer area covers the card. */
+function DayCard({ day, menu, onOpenSession }: DayCardProps) {
+  const sessionId = openableSessionId(day);
+
   return (
     <div
       className={dayCellVariants({ variant: "compact", kind: day.plan.kind })}
@@ -138,7 +169,10 @@ function DayCard({ day, menu }: DayCardProps) {
         <span aria-hidden="true">{weekdayAbbreviation(day.weekday)}</span>
         <span className="sr-only">{WEEKDAY_LABELS[day.weekday]}</span>
       </h4>
-      <DayFace day={day} />
+      <DayFace
+        day={day}
+        onOpen={sessionId === null ? undefined : () => onOpenSession(sessionId)}
+      />
       <div className="relative z-10 col-start-2 row-start-1 -mt-1 -mr-1.5 flex items-center">
         {menu}
       </div>
@@ -146,15 +180,26 @@ function DayCard({ day, menu }: DayCardProps) {
   );
 }
 
-type BuilderWeekProps = { block: Block; days: WeekDay[]; onChoose: ChooseDay };
+type BuilderWeekProps = {
+  block: Block;
+  days: WeekDay[];
+  onChoose: ChooseDay;
+  onOpenSession: (sessionId: string) => void;
+};
 
-function BuilderWeekRow({ block, days, onChoose }: BuilderWeekProps) {
+function BuilderWeekRow({
+  block,
+  days,
+  onChoose,
+  onOpenSession,
+}: BuilderWeekProps) {
   return (
     <ol className="grid grid-cols-7 gap-x-2" data-parity="week-row">
       {days.map((day) => (
         <li className="grid" key={day.weekday}>
           <DayCard
             day={day}
+            onOpenSession={onOpenSession}
             menu={
               <DayMenu
                 block={block}
@@ -172,13 +217,20 @@ function BuilderWeekRow({ block, days, onChoose }: BuilderWeekProps) {
 }
 
 function initialRailDay(days: readonly WeekDay[]): Weekday {
-  return (days.find((day) => day.plan.kind !== "rest") ?? days[0]).weekday;
+  return (days.find((day) => openableSessionId(day) !== null) ?? days[0])
+    .weekday;
 }
 
-function BuilderWeekTabs({ block, days, onChoose }: BuilderWeekProps) {
+function BuilderWeekTabs({
+  block,
+  days,
+  onChoose,
+  onOpenSession,
+}: BuilderWeekProps) {
   const [selected, setSelected] = useState<Weekday>(() => initialRailDay(days));
   const day =
     days.find((candidate) => candidate.weekday === selected) ?? days[0];
+  const sessionId = openableSessionId(day);
   const length = dayLengthOf(day.plan)?.shown;
 
   return (
@@ -213,6 +265,16 @@ function BuilderWeekTabs({ block, days, onChoose }: BuilderWeekProps) {
               >{` · ${length}`}</span>
             )}
           </p>
+          {sessionId !== null && (
+            <Button
+              onClick={() => onOpenSession(sessionId)}
+              size="sm"
+              variant="outline"
+            >
+              Open session
+              <ArrowRight aria-hidden="true" className="size-4" />
+            </Button>
+          )}
         </div>
       </TabsContent>
     </Tabs>
@@ -240,11 +302,21 @@ function WeekSection({ children, headingId, layoutRef }: WeekSectionProps) {
   );
 }
 
-export function WeekDays({ block, onChange }: WeekDaysProps) {
+export function WeekDays({
+  block,
+  level,
+  libraryExercises,
+  onChange,
+  onOpenSession,
+}: WeekDaysProps) {
   const headingId = useId();
   const confirm = useDestructiveConfirm();
   const { ref, layout } = useWeekLayout();
-  const days = weekOf(block);
+  const exercisesById = useMemo(
+    () => new Map(libraryExercises.map((exercise) => [exercise.id, exercise])),
+    [libraryExercises],
+  );
+  const days = weekOf(block, { level, exercisesById });
 
   function choose(
     day: Weekday,
@@ -260,7 +332,7 @@ export function WeekDays({ block, onChange }: WeekDaysProps) {
     });
   }
 
-  const view = { block, days, onChoose: choose };
+  const view = { block, days, onChoose: choose, onOpenSession };
 
   return (
     <WeekSection headingId={headingId} layoutRef={ref}>

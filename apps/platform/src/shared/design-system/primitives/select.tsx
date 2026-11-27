@@ -184,9 +184,10 @@ export const SelectItem = React.forwardRef<
 >(({ children, className, count, countParity, ...props }, ref) => (
   <RadixSelect.Item
     className={cn(
-      "relative flex min-h-12 w-full cursor-default items-center gap-2 rounded-tile py-1.5 pr-8 pl-2 text-sm outline-none select-none hover:bg-primary-soft hover:text-primary focus:bg-primary-soft focus:text-primary data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[highlighted]:bg-primary-soft data-[highlighted]:text-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2",
+      "[--focus-ring-offset:-2px] [--focus-ring-halo:0_0_#0000] data-[state=checked]:[--focus-ring-offset:-4px] data-[state=checked]:[--color-focus-ring:var(--color-primary-foreground)] relative flex min-h-12 w-full cursor-default items-center gap-2 rounded-tile py-1.5 pr-8 pl-2 text-sm outline-none select-none hover:bg-primary-soft hover:text-primary focus:bg-primary-soft focus:text-primary data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[highlighted]:bg-primary-soft data-[highlighted]:text-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2",
       className,
     )}
+    data-focus-ring=""
     ref={ref}
     {...props}
   >

@@ -84,12 +84,12 @@ const DROP_ZONE_ACTIVE_CLASS: Record<DropZoneTone, string> = {
   fill: 'bg-primary-soft',
 };
 
-type DropZoneProps = { rules: SessionDropRules; accepts?: typeof acceptsIntoSession; className?: string; tone?: DropZoneTone; children: ReactNode };
+type DropZoneProps = { rules: SessionDropRules; accepts?: typeof acceptsIntoSession; className?: string; tone?: DropZoneTone; parityRoot?: string; children: ReactNode };
 
-export function DropZone({ rules, accepts, className, tone = 'ring', children }: DropZoneProps) {
+export function DropZone({ rules, accepts, className, tone = 'ring', parityRoot, children }: DropZoneProps) {
   const [{ isOver, canDrop }, drop] = useSessionDrop(rules, accepts);
   return (
-    <div ref={drop as unknown as Ref<HTMLDivElement>} className={cn(className, { [DROP_ZONE_ACTIVE_CLASS[tone]]: isOver && canDrop })}>
+    <div ref={drop as unknown as Ref<HTMLDivElement>} data-parity-root={parityRoot} className={cn(className, { [DROP_ZONE_ACTIVE_CLASS[tone]]: isOver && canDrop })}>
       {children}
     </div>
   );

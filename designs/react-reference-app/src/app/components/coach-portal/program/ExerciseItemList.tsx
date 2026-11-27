@@ -44,6 +44,7 @@ export function ExerciseItemList<Item extends ListedExercise>({ label, frame, it
           <li
             key={item.id}
             data-item-id={item.id}
+            data-parity="exercise-item"
             className={cn('grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 @lg:grid-cols-[minmax(0,1fr)_auto_auto]', ROW_CLASS[frame])}
           >
             <ExerciseNameButton exercise={exercise} detail={detailFor(item, exercise)} weight="medium" size="compact" place={place} />

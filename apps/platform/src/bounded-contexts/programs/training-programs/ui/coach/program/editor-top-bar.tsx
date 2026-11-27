@@ -1,15 +1,40 @@
-import { cn, WIDGET_TITLE_CLASS } from "~/shared/design-system/lib";
+import {
+  cn,
+  useIsDesktopViewport,
+  WIDGET_TITLE_CLASS,
+} from "~/shared/design-system/lib";
 import {
   Alert,
   AlertAction,
+  Button,
   buttonVariants,
+  RowActionsMenu,
+  type RowMenuAction,
 } from "~/shared/design-system/primitives";
-import { AlertCircle, ArrowLeft, ChevronRight } from "lucide-react";
-import { useEffect, type ReactNode, type RefObject } from "react";
+import {
+  AlertCircle,
+  ArrowLeft,
+  ChevronRight,
+  Library,
+  UserRound,
+} from "lucide-react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+  type RefObject,
+} from "react";
 import { Link } from "react-router";
 
 import { coachClientPath } from "~/bounded-contexts/clients/public/paths";
 
+import type { ProgramDraftClientProfile } from "~/bounded-contexts/programs/training-programs/public/program-draft";
+
+import {
+  ClientProfilePopover,
+  ClientProfileTrigger,
+} from "./client-profile-popover";
 import type { DraftSaving, SaveState } from "./use-autosaved-draft";
 
 export type BuilderClient = {
@@ -22,6 +47,8 @@ type EditorTopBarProps = {
   client: BuilderClient;
   versionNumber: number;
   coachingEnded: boolean;
+  clientProfile: ProgramDraftClientProfile | null;
+  library: { open: boolean; onToggle: () => void } | null;
   railToggle: ReactNode;
   placeTitle: string;
   placeHeading: RefObject<HTMLHeadingElement | null>;
@@ -176,12 +203,42 @@ export function EditorTopBar({
   client,
   versionNumber,
   coachingEnded,
+  clientProfile,
+  library,
   railToggle,
   placeTitle,
   placeHeading,
   onOverview,
   saving,
 }: EditorTopBarProps) {
+  const [profileOpen, setProfileOpen] = useState(false);
+  const profileReturnFocus = useRef<HTMLElement | null>(null);
+  const draftActions = useRef<HTMLSpanElement>(null);
+  const showsToolbarIcons = useIsDesktopViewport();
+  const libraryActions: RowMenuAction[] = library
+    ? [
+        {
+          name: "library",
+          label: library.open ? "Close exercise library" : "Exercise library",
+          icon: Library,
+          onSelect: library.onToggle,
+        },
+      ]
+    : [];
+  const profileAction: RowMenuAction = {
+    name: "profile",
+    label: "Client profile",
+    icon: UserRound,
+    onSelect: () => {
+      profileReturnFocus.current =
+        draftActions.current?.querySelector("button") ?? null;
+      setProfileOpen(true);
+    },
+  };
+  const narrowScreenActions: RowMenuAction[] = showsToolbarIcons
+    ? []
+    : [...libraryActions, profileAction];
+
   return (
     <header
       className={cn(
@@ -214,6 +271,38 @@ export function EditorTopBar({
           placeTitle={placeTitle}
         />
       </div>
+      <ClientProfilePopover
+        name={clientName(client)}
+        onOpenChange={(open) => {
+          if (open) profileReturnFocus.current = null;
+          setProfileOpen(open);
+        }}
+        open={profileOpen}
+        profile={clientProfile}
+        returnFocus={profileReturnFocus}
+      >
+        <div className="ml-auto flex min-w-0 shrink-0 items-center justify-end gap-4 sm:flex-wrap">
+          {showsToolbarIcons && <ClientProfileTrigger />}
+          {showsToolbarIcons && library && (
+            <Button
+              aria-label="Exercise library"
+              aria-pressed={library.open}
+              onClick={library.onToggle}
+              size="icon-sm"
+              variant="ghost"
+            >
+              <Library size={20} />
+            </Button>
+          )}
+          <span className="contents" ref={draftActions}>
+            <RowActionsMenu
+              actions={narrowScreenActions}
+              label="Draft actions"
+              parityRoot="DraftActionsMenu"
+            />
+          </span>
+        </div>
+      </ClientProfilePopover>
       {saving.failing && (
         <FailedSaveAlert
           placeHeading={placeHeading}

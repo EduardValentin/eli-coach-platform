@@ -125,13 +125,18 @@ const OPENED: OpenExerciseVideoResult = {
 
 function createController() {
   const listExercises = {
-    execute: vi.fn(async () => ({
-      status: "listed" as const,
-      exercises: [
-        Exercise.reconstitute(HIP_THRUST),
-        Exercise.reconstitute(ARCHIVED_LUNGE),
-      ],
-    })),
+    execute: vi.fn(
+      async (): Promise<
+        Awaited<ReturnType<ListExercisesUseCase["execute"]>>
+      > => ({
+        status: "listed",
+        exercises: [
+          { ...HIP_THRUST, status: "active", programCount: 2 },
+          { ...ARCHIVED_LUNGE, status: "archived", programCount: 0 },
+        ],
+        reservedNames: ["Hip thrust"],
+      }),
+    ),
   };
   const findExercise = {
     execute: vi.fn(async (): Promise<FindExerciseResult> => ({
@@ -185,7 +190,7 @@ function createController() {
   const deleteExercise = {
     execute: vi.fn(async (): Promise<DeleteExerciseResult> => ({
       status: "deleted",
-      exercise: Exercise.reconstitute(HIP_THRUST),
+      name: "Hip thrust",
     })),
   };
   const exerciseLibraryController = new ExerciseLibraryController({
@@ -309,7 +314,7 @@ async function captureThrown(thunk: () => unknown): Promise<unknown> {
 }
 
 describe("ExerciseLibraryController#list", () => {
-  it("presents every exercise the signed-in coach's library lists", async () => {
+  it("presents every exercise the signed-in coach's library lists, with how many programs use each", async () => {
     // arrange
     const { exerciseLibraryController, listExercises } = createController();
 
@@ -319,13 +324,14 @@ describe("ExerciseLibraryController#list", () => {
     // assert
     expect(library).toEqual({
       exercises: [
-        HIP_THRUST_VIEW,
+        { ...HIP_THRUST_VIEW, programCount: 2 },
         {
           ...HIP_THRUST_VIEW,
           id: ARCHIVED_LUNGE.id,
           name: "Lunge",
           video: null,
           status: "archived",
+          programCount: 0,
         },
       ],
     });
@@ -347,7 +353,7 @@ describe("ExerciseLibraryController#list", () => {
 });
 
 describe("ExerciseLibraryController#loadNew", () => {
-  it("opens a blank exercise with the names of the active exercises in the signed-in coach's library", async () => {
+  it("opens a blank exercise with the names the signed-in coach's library reserves", async () => {
     // arrange
     const { exerciseLibraryController, listExercises } = createController();
 
@@ -1218,6 +1224,25 @@ describe("ExerciseLibraryController#delete", () => {
       ownerAccountId: COACH.id,
       exerciseId: EXERCISE_ID,
     });
+  });
+
+  it("answers 409 with how many programs use an exercise in use", async () => {
+    // arrange
+    const { exerciseLibraryController, deleteExercise } = createController();
+    deleteExercise.execute.mockResolvedValueOnce({
+      status: "in-use",
+      programCount: 2,
+    });
+
+    // act
+    const response = await exerciseLibraryController.delete(
+      argsFor({ request: lifecycleRequest("DELETE") }),
+      EXERCISE_ID,
+    );
+
+    // assert
+    expect(response.status).toBe(409);
+    expect(await response.json()).toEqual({ error: "in-use", programCount: 2 });
   });
 
   it("answers 404 for an unknown exercise", async () => {

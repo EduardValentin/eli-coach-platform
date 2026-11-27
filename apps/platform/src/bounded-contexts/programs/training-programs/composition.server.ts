@@ -8,7 +8,8 @@ import {
   StartProgramUseCase,
 } from "~/bounded-contexts/programs/training-programs/domain/program";
 import type { ClockPort } from "~/bounded-contexts/programs/training-programs/domain/clock-port";
-import type { CardioExercisesFacade } from "~/bounded-contexts/programs/exercise-library/public/cardio-exercises-facade";
+import type { ExerciseUsageFacade } from "~/bounded-contexts/programs/exercise-library/public/exercise-usage-facade";
+import type { LibraryExercisesFacade } from "~/bounded-contexts/programs/exercise-library/public/library-exercises-facade";
 import type { ClientCoachingFacade } from "~/bounded-contexts/clients/public/client-coaching-facade";
 import type { ClientLookupFacade } from "~/bounded-contexts/clients/public/client-lookup-facade";
 import type { CoachingEndedFacade } from "~/bounded-contexts/sales/public/coaching-ended-facade";
@@ -18,14 +19,16 @@ import { CoachProgramController } from "~/bounded-contexts/programs/training-pro
 import type { TrainingProgramsFeature } from "~/bounded-contexts/programs/training-programs/adapters/inbound/http/context.server";
 import { ClientsClientCoachingAdapter } from "~/bounded-contexts/programs/training-programs/adapters/outbound/clients/clients-client-coaching-adapter.server";
 import { ClientsClientIdentityAdapter } from "~/bounded-contexts/programs/training-programs/adapters/outbound/clients/clients-client-identity-adapter.server";
-import { ExerciseLibraryCardioExercisesAdapter } from "~/bounded-contexts/programs/training-programs/adapters/outbound/exercise-library/exercise-library-cardio-exercises-adapter.server";
+import { ExerciseLibraryExerciseUsageAdapter } from "~/bounded-contexts/programs/training-programs/adapters/outbound/exercise-library/exercise-library-exercise-usage-adapter.server";
+import { ExerciseLibraryLibraryExercisesAdapter } from "~/bounded-contexts/programs/training-programs/adapters/outbound/exercise-library/exercise-library-library-exercises-adapter.server";
 import { ProgramIncidentsAdapter } from "~/bounded-contexts/programs/training-programs/adapters/outbound/logging/program-incidents-adapter.server";
 import { SalesCoachingEndedAdapter } from "~/bounded-contexts/programs/training-programs/adapters/outbound/sales/sales-coaching-ended-adapter.server";
 import { PostgresProgramStoreRepository } from "~/bounded-contexts/programs/training-programs/adapters/outbound/persistence/programs/postgres-program-store-repository.server";
 import { RandomProgramIdsAdapter } from "~/bounded-contexts/programs/training-programs/adapters/outbound/persistence/programs/random-program-ids-adapter.server";
 
 type TrainingProgramsFeatureHandles = {
-  cardioExercisesFacade: CardioExercisesFacade;
+  libraryExercisesFacade: LibraryExercisesFacade;
+  exerciseUsageFacade: ExerciseUsageFacade;
   clientCoachingFacade: ClientCoachingFacade;
   clientLookupFacade: Pick<ClientLookupFacade, "identityOf">;
   clockPort: ClockPort;
@@ -40,8 +43,14 @@ export function composeTrainingProgramsFeature(
   const postgresProgramStoreRepository = new PostgresProgramStoreRepository(
     handles.database,
   );
-  const exerciseLibraryCardioExercisesAdapter =
-    new ExerciseLibraryCardioExercisesAdapter(handles.cardioExercisesFacade);
+  const exerciseLibrary = {
+    libraryExercisesPort: new ExerciseLibraryLibraryExercisesAdapter(
+      handles.libraryExercisesFacade,
+    ),
+    exerciseUsagePort: new ExerciseLibraryExerciseUsageAdapter(
+      handles.exerciseUsageFacade,
+    ),
+  };
   const programReads = {
     clientIdentityPort: new ClientsClientIdentityAdapter(
       handles.clientLookupFacade,
@@ -61,16 +70,17 @@ export function composeTrainingProgramsFeature(
       readProgramSetupUseCase: new ReadProgramSetupUseCase(programReads),
       startProgramUseCase: new StartProgramUseCase({
         ...programReads,
-        cardioExercisesPort: exerciseLibraryCardioExercisesAdapter,
+        ...exerciseLibrary,
         programIdsPort: new RandomProgramIdsAdapter(),
         clockPort: handles.clockPort,
       }),
       readProgramDraftUseCase: new ReadProgramDraftUseCase({
         ...programReads,
-        cardioExercisesPort: exerciseLibraryCardioExercisesAdapter,
+        libraryExercisesPort: exerciseLibrary.libraryExercisesPort,
       }),
       saveProgramDraftUseCase: new SaveProgramDraftUseCase({
         ...programReads,
+        ...exerciseLibrary,
         clockPort: handles.clockPort,
       }),
       unitOfWork: createUnitOfWork(handles.database),

@@ -24,9 +24,11 @@ export { type ExerciseIdsPort } from "./exercise-ids-port";
 export {
   type ExerciseAddition,
   type ExerciseLibraryPort,
+  type ExerciseProgramCounts,
   type ExerciseReference,
   type ExerciseRemoval,
   type ExerciseReplacement,
+  type VersionExerciseUsage,
 } from "./exercise-library-port";
 export { type ExerciseLibraryIncidentsPort } from "./exercise-library-incidents-port";
 export {
@@ -69,12 +71,19 @@ export {
   type FindExerciseResult,
 } from "./find-exercise-use-case";
 export { InvalidStoredExerciseError } from "./invalid-stored-exercise-error";
-export { ListCardioExercisesUseCase } from "./list-cardio-exercises-use-case";
-export { ListExercisesUseCase } from "./list-exercises-use-case";
+export {
+  ListLibraryExercisesUseCase,
+  type LibraryExerciseEntry,
+} from "./list-library-exercises-use-case";
+export {
+  ListExercisesUseCase,
+  type ExerciseListingEntry,
+} from "./list-exercises-use-case";
 export {
   OpenExerciseVideoUseCase,
   type OpenExerciseVideoResult,
 } from "./open-exercise-video-use-case";
+export { RecordExerciseUsageUseCase } from "./record-exercise-usage-use-case";
 export {
   RestoreExerciseUseCase,
   type RestoreExerciseResult,

@@ -41,10 +41,10 @@ export function useBuilderState(view: DraftView) {
   const programSuggestions = useMemo(
     () =>
       new ProgramSuggestions({
-        cardioExercises: view.cardioExercises,
+        libraryExercises: view.libraryExercises,
         newId: newBuilderId,
       }),
-    [view.cardioExercises],
+    [view.libraryExercises],
   );
   const { blocks } = draft.content.plan;
   // The server cannot see the address's hash, so hydration starts on the
@@ -80,7 +80,7 @@ export function useBuilderState(view: DraftView) {
 
   function addBlock(type: BlockType, weeks: number) {
     const block = programSuggestions.newBlock(type, weeks, {
-      setup: blockSetupOf(view, draft),
+      setup: { ...blockSetupOf(view, draft), level: draft.level },
       previous: blocks.at(-1),
     });
     updateBlocks((current) => [...current, block]);
@@ -102,6 +102,8 @@ export function useBuilderState(view: DraftView) {
 
   return {
     draft,
+    libraryEquipment: view.libraryEquipment,
+    libraryExercises: view.libraryExercises,
     saving,
     selected,
     select,

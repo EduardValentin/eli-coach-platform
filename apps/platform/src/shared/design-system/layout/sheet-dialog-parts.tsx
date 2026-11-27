@@ -1,3 +1,4 @@
+import { X } from "lucide-react";
 import { Dialog as RadixDialog } from "radix-ui";
 import {
   createContext,
@@ -8,12 +9,17 @@ import {
 } from "react";
 
 import { cn } from "../lib/cn";
+import { buttonVariants } from "../primitives/button";
 
 export type ShownHeader = { description?: string };
 
 export const ShownHeaderContext = createContext<
   (header: ShownHeader | null) => void
 >(() => {});
+
+export type SheetClose = "none" | "shown";
+
+export const SheetCloseContext = createContext<SheetClose>("none");
 
 type SheetDialogRule = "subtle" | "faint";
 
@@ -23,6 +29,7 @@ const RULE_COLOR_CLASS: Record<SheetDialogRule, string> = {
 };
 
 type SheetDialogHeaderProps = {
+  eyebrow?: ReactNode;
   title: string;
   description?: string;
   rule?: SheetDialogRule;
@@ -30,12 +37,14 @@ type SheetDialogHeaderProps = {
 };
 
 export function SheetDialogHeader({
+  eyebrow,
   title,
   description,
   rule = "subtle",
   titleRef,
 }: SheetDialogHeaderProps) {
   const announceHeader = useContext(ShownHeaderContext);
+  const sheetClose = useContext(SheetCloseContext);
 
   useLayoutEffect(() => {
     announceHeader({ description });
@@ -50,6 +59,19 @@ export function SheetDialogHeader({
       )}
       data-parity="sheet-header"
     >
+      {sheetClose === "shown" && (
+        <RadixDialog.Close
+          aria-label="Close"
+          className={buttonVariants({
+            className: "absolute top-4 right-3",
+            size: "icon-sm",
+            variant: "ghost",
+          })}
+        >
+          <X aria-hidden="true" />
+        </RadixDialog.Close>
+      )}
+      {eyebrow}
       <RadixDialog.Title
         className="pr-10 text-lg leading-snug font-semibold text-text-primary outline-none md:text-xl"
         ref={titleRef}

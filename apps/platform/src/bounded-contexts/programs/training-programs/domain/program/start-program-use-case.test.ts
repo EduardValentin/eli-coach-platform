@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { CardioExercise } from "./cardio-exercises-port";
 import type {
   ClientCoaching,
   ClientCoachingPort,
@@ -11,6 +10,11 @@ import type {
   ClientIdentityPort,
 } from "./client-identity-port";
 import type { CoachingEndedPort } from "./coaching-ended-port";
+import type {
+  ExerciseUsagePort,
+  VersionExerciseUsage,
+} from "./exercise-usage-port";
+import type { LibraryExercise } from "./library-exercise";
 import { Program } from "./program";
 import type { ProgramSetupValues } from "./program-setup";
 import type { ProgramAddition, ProgramStorePort } from "./program-store-port";
@@ -40,6 +44,8 @@ const ANAS_COACHING: ClientCoaching = {
       trainingDays: 3,
       sessionMinutes: 60,
       equipment: ["Dumbbells", "Resistance bands"],
+      trainingPlace: "Gym",
+      limitations: "",
     },
   },
   equipmentOptions: [
@@ -62,7 +68,31 @@ const SETUP: ProgramSetupValues = {
   equipment: ["Resistance bands", "Dumbbells"],
 };
 
-const BIKE: CardioExercise = { id: "bike", name: "Stationary bike" };
+function libraryExercise(
+  id: string,
+  name: string,
+  overrides: Partial<LibraryExercise> = {},
+): LibraryExercise {
+  return {
+    id,
+    name,
+    type: "cardio",
+    unit: "time",
+    perSide: false,
+    pattern: null,
+    role: null,
+    primaryMuscles: [],
+    secondaryMuscles: [],
+    equipment: [],
+    tags: [],
+    cues: "",
+    videoPath: null,
+    archived: false,
+    ...overrides,
+  };
+}
+
+const BIKE = libraryExercise("bike", "Stationary bike");
 
 class InMemoryProgramStoreAdapter implements Pick<
   ProgramStorePort,
@@ -120,12 +150,20 @@ class InMemoryClientCoachingAdapter implements ClientCoachingPort {
   }
 }
 
+class InMemoryExerciseUsageAdapter implements ExerciseUsagePort {
+  readonly recorded: VersionExerciseUsage[] = [];
+
+  async recordVersionUsage(usage: VersionExerciseUsage): Promise<void> {
+    this.recorded.push(usage);
+  }
+}
+
 type Arrangement = {
   clients?: ClientIdentity[];
   coachingEnded?: boolean;
   clientCoaching?: ClientCoaching;
   programs?: Program[];
-  cardioExercises?: CardioExercise[];
+  libraryExercises?: LibraryExercise[];
 };
 
 function startProgram({
@@ -133,20 +171,22 @@ function startProgram({
   coachingEnded = false,
   clientCoaching = ANAS_COACHING,
   programs = [],
-  cardioExercises = [],
+  libraryExercises = [],
 }: Arrangement = {}) {
   let next = 0;
   const programStorePort = new InMemoryProgramStoreAdapter(programs);
   const clientIdentityPort = new InMemoryClientIdentityAdapter(clients);
   const coachingEndedPort = new InMemoryCoachingEndedAdapter(coachingEnded);
   const clientCoachingPort = new InMemoryClientCoachingAdapter(clientCoaching);
-  const cardioExercisesPort = { listFor: vi.fn(async () => cardioExercises) };
+  const libraryExercisesPort = { listFor: vi.fn(async () => libraryExercises) };
+  const inMemoryExerciseUsageAdapter = new InMemoryExerciseUsageAdapter();
   const startProgramUseCase = new StartProgramUseCase({
     programStorePort,
     clientIdentityPort,
     coachingEndedPort,
     clientCoachingPort,
-    cardioExercisesPort,
+    libraryExercisesPort,
+    exerciseUsagePort: inMemoryExerciseUsageAdapter,
     programIdsPort: { generate: () => `id-${(next += 1)}` },
     clockPort: { now: () => NOW },
   });
@@ -157,7 +197,8 @@ function startProgram({
     clientIdentityPort,
     coachingEndedPort,
     clientCoachingPort,
-    cardioExercisesPort,
+    libraryExercisesPort,
+    inMemoryExerciseUsageAdapter,
   };
 }
 
@@ -319,8 +360,8 @@ describe("StartProgramUseCase", () => {
 
   it("builds the cardio sessions on a cardio exercise from the coach's library", async () => {
     // arrange
-    const { startProgramUseCase, programStorePort, cardioExercisesPort } =
-      startProgram({ cardioExercises: [BIKE] });
+    const { startProgramUseCase, programStorePort, libraryExercisesPort } =
+      startProgram({ libraryExercises: [BIKE] });
 
     // act
     await startProgramUseCase.execute({
@@ -330,7 +371,7 @@ describe("StartProgramUseCase", () => {
     });
 
     // assert
-    expect(cardioExercisesPort.listFor).toHaveBeenCalledWith(COACH_ACCOUNT_ID);
+    expect(libraryExercisesPort.listFor).toHaveBeenCalledWith(COACH_ACCOUNT_ID);
     const [program] = programStorePort.added;
     const [block] = program.toSnapshot().versions[0].content.plan.blocks;
     expect(
@@ -338,6 +379,52 @@ describe("StartProgramUseCase", () => {
         cardio.segments.map((segment) => segment.exerciseId),
       ),
     ).toEqual(["bike", "bike"]);
+  });
+
+  it("records, for the coach, the exercises her new program's first draft uses: its cardio presets", async () => {
+    // arrange
+    const { startProgramUseCase, inMemoryExerciseUsageAdapter } = startProgram({
+      libraryExercises: [BIKE],
+    });
+
+    // act
+    await startProgramUseCase.execute({
+      coachAccountId: COACH_ACCOUNT_ID,
+      clientId: CLIENT_ID,
+      setup: SETUP,
+    });
+
+    // assert
+    expect(inMemoryExerciseUsageAdapter.recorded).toEqual([
+      {
+        coachAccountId: COACH_ACCOUNT_ID,
+        programId: "id-1",
+        versionNumber: 1,
+        exerciseIds: ["bike"],
+      },
+    ]);
+  });
+
+  it("fails whole when the library cannot record the exercises the program uses, so the unit of work rolls the program back", async () => {
+    // arrange
+    const failure = new Error("usage refused");
+    const { startProgramUseCase, inMemoryExerciseUsageAdapter } = startProgram({
+      libraryExercises: [BIKE],
+    });
+    vi.spyOn(
+      inMemoryExerciseUsageAdapter,
+      "recordVersionUsage",
+    ).mockRejectedValue(failure);
+
+    // act
+    const started = startProgramUseCase.execute({
+      coachAccountId: COACH_ACCOUNT_ID,
+      clientId: CLIENT_ID,
+      setup: SETUP,
+    });
+
+    // assert
+    await expect(started).rejects.toBe(failure);
   });
 
   it("builds the cardio sessions without an exercise when the coach has no cardio exercise", async () => {
@@ -380,8 +467,12 @@ describe("StartProgramUseCase", () => {
     ["has-program", { programs: [existingProgram()] }],
   ])("refuses with %s and writes nothing", async (status, arrangement) => {
     // arrange
-    const { startProgramUseCase, programStorePort, clientCoachingPort } =
-      startProgram(arrangement);
+    const {
+      startProgramUseCase,
+      programStorePort,
+      clientCoachingPort,
+      inMemoryExerciseUsageAdapter,
+    } = startProgram({ ...arrangement, libraryExercises: [BIKE] });
 
     // act
     const result = await startProgramUseCase.execute({
@@ -394,6 +485,7 @@ describe("StartProgramUseCase", () => {
     expect(result).toEqual({ status });
     expect(programStorePort.added).toEqual([]);
     expect(clientCoachingPort.savedEquipment).toEqual([]);
+    expect(inMemoryExerciseUsageAdapter.recorded).toEqual([]);
   });
 
   it("refuses a setup without a goal or without equipment, naming each problem, and writes nothing", async () => {
@@ -481,10 +573,14 @@ describe("StartProgramUseCase", () => {
     ]);
   });
 
-  it("refuses with has-program and saves no equipment when another program for her lands first", async () => {
+  it("refuses with has-program, saving no equipment and recording no exercise, when another program for her lands first", async () => {
     // arrange
-    const { startProgramUseCase, programStorePort, clientCoachingPort } =
-      startProgram();
+    const {
+      startProgramUseCase,
+      programStorePort,
+      clientCoachingPort,
+      inMemoryExerciseUsageAdapter,
+    } = startProgram({ libraryExercises: [BIKE] });
     vi.spyOn(programStorePort, "add").mockResolvedValue("client-has-program");
 
     // act
@@ -497,6 +593,7 @@ describe("StartProgramUseCase", () => {
     // assert
     expect(result).toEqual({ status: "has-program" });
     expect(clientCoachingPort.savedEquipment).toEqual([]);
+    expect(inMemoryExerciseUsageAdapter.recorded).toEqual([]);
   });
 
   it("writes the program and her equipment in one call, failing it whole when the equipment save fails so the unit of work rolls both back", async () => {

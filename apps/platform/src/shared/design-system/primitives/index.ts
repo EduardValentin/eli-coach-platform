@@ -40,9 +40,15 @@ export { Link, linkVariants } from "./link";
 export { MediaOverlayActions } from "./media-overlay-actions";
 export { MediaRemoveButton } from "./media-remove-button";
 export { MultiSelect } from "./multi-select";
-export { Popover, PopoverContent, PopoverTrigger } from "./popover";
+export {
+  Popover,
+  PopoverAnchor,
+  PopoverContent,
+  PopoverTrigger,
+} from "./popover";
 export { Progress } from "./progress";
 export { RadioGroup, RadioGroupItem } from "./radio-group";
+export { RemovableChip } from "./removable-chip";
 export { RowActionsMenu, type RowMenuAction } from "./row-actions-menu";
 export { SearchField } from "./search-field";
 export { SectionEyebrow } from "./section-eyebrow";
@@ -71,4 +77,5 @@ export {
 } from "./table";
 export { TagInput } from "./tag-input";
 export { Textarea } from "./textarea";
+export { Tooltip, TooltipContent, TooltipTrigger } from "./tooltip";
 export { ValueTile } from "./value-tile";

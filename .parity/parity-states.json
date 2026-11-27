@@ -294,6 +294,9 @@
     "real": [
       {
         "use": "builder-block"
+      },
+      {
+        "click": "role=button[name=\"Exercise library\"][pressed=true]"
       }
     ]
   },
@@ -6969,5 +6972,488 @@
     {
       "click": "role=button[name=\"Pause story\"]"
     }
-  ]
+  ],
+  "library-empty-type": [
+    {
+      "use": "builder-block"
+    },
+    {
+      "click": "role=button[name=\"Add or drop an exercise in A · Main lift\"]"
+    },
+    {
+      "click": "role=combobox[name=\"Exercise type\"]"
+    },
+    {
+      "click": "role=option[name=\"Cardio\"]"
+    },
+    {
+      "fill": [
+        "role=searchbox[name=\"Search exercises\"]",
+        "zzzz"
+      ]
+    }
+  ],
+  "exercise-detail-open": [
+    {
+      "use": "builder-block"
+    },
+    {
+      "click": "role=button[name=\"Add or drop an exercise in A · Main lift\"]"
+    },
+    {
+      "click": "role=button[name=\"Add Barbell Back Squat\"]"
+    },
+    {
+      "click": "role=button[name=\"Add or drop an exercise in B · Secondary\"]"
+    },
+    {
+      "click": "role=button[name=\"Add Romanian Deadlift\"]"
+    },
+    {
+      "click": "role=button[name=\"Add or drop an exercise in C · Accessories\"]"
+    },
+    {
+      "click": "role=button[name=\"Add Lateral Raises\"]"
+    },
+    {
+      "click": "role=button[name=\"Add exercise to C · Accessories\"]"
+    },
+    {
+      "click": "role=button[name=\"Add Biceps Curl\"]"
+    },
+    {
+      "click": "role=heading[level=5] >> role=button[name=/^Barbell Back Squat/]"
+    }
+  ],
+  "session-filled": [
+    {
+      "use": "builder-block"
+    },
+    {
+      "click": "role=button[name=\"Add or drop an exercise in A · Main lift\"]"
+    },
+    {
+      "click": "role=button[name=\"Add Barbell Back Squat\"]"
+    },
+    {
+      "click": "role=button[name=\"Add or drop an exercise in B · Secondary\"]"
+    },
+    {
+      "click": "role=button[name=\"Add Romanian Deadlift\"]"
+    },
+    {
+      "click": "role=button[name=\"Add or drop an exercise in C · Accessories\"]"
+    },
+    {
+      "click": "role=button[name=\"Add Lateral Raises\"]"
+    },
+    {
+      "click": "role=button[name=\"Add exercise to C · Accessories\"]"
+    },
+    {
+      "click": "role=button[name=\"Add Biceps Curl\"]"
+    }
+  ],
+  "session-superset": [
+    {
+      "use": "builder-block"
+    },
+    {
+      "click": "role=button[name=\"Add or drop an exercise in A · Main lift\"]"
+    },
+    {
+      "click": "role=button[name=\"Add Barbell Back Squat\"]"
+    },
+    {
+      "click": "role=button[name=\"Add or drop an exercise in B · Secondary\"]"
+    },
+    {
+      "click": "role=button[name=\"Add Romanian Deadlift\"]"
+    },
+    {
+      "click": "role=button[name=\"Add or drop an exercise in C · Accessories\"]"
+    },
+    {
+      "click": "role=button[name=\"Add Lateral Raises\"]"
+    },
+    {
+      "click": "role=button[name=\"Add exercise to C · Accessories\"]"
+    },
+    {
+      "click": "role=button[name=\"Add Biceps Curl\"]"
+    },
+    {
+      "click": "role=button[name=\"Lateral Raises actions\"]"
+    },
+    {
+      "click": "role=menuitem[name=\"Superset with next\"]"
+    }
+  ],
+  "warm-up-filled": [
+    {
+      "use": "builder-block"
+    },
+    {
+      "click": "role=button[name=\"Add exercise to warm-up\"]"
+    },
+    {
+      "click": "role=button[name=\"Add 90/90 Hip Switches\"]"
+    }
+  ],
+  "session-over-target": [
+    {
+      "use": "builder-block"
+    },
+    {
+      "click": "role=combobox[name=\"Target\"]"
+    },
+    {
+      "click": "role=option[name=\"30 min\"]"
+    },
+    {
+      "click": "role=button[name=\"Add or drop an exercise in C · Accessories\"]"
+    },
+    {
+      "click": "role=button[name=\"Add Walking Lunges\"]"
+    },
+    {
+      "click": "role=button[name=\"Add exercise to C · Accessories\"]"
+    },
+    {
+      "click": "role=button[name=\"Add Dumbbell Rows\"]"
+    },
+    {
+      "click": "role=button[name=\"Add exercise to C · Accessories\"]"
+    },
+    {
+      "click": "role=button[name=\"Add Bulgarian Split Squat\"]"
+    },
+    {
+      "click": "role=button[name=\"Add exercise to C · Accessories\"]"
+    },
+    {
+      "click": "role=button[name=\"Add Reverse Lunge\"]"
+    }
+  ],
+  "cool-down-on-filled": [
+    {
+      "use": "builder-block"
+    },
+    {
+      "click": "role=switch[name=\"Cool-down\"]"
+    },
+    {
+      "click": "role=button[name=\"Add stretch to cool-down\"]"
+    },
+    {
+      "click": "role=button[name=\"Add Couch Stretch\"]"
+    }
+  ],
+  "session-clear-confirm": [
+    {
+      "use": "builder-block"
+    },
+    {
+      "click": "role=button[name=\"Add or drop an exercise in A · Main lift\"]"
+    },
+    {
+      "click": "role=button[name=\"Add Barbell Back Squat\"]"
+    },
+    {
+      "click": "role=button[name=\"Add or drop an exercise in B · Secondary\"]"
+    },
+    {
+      "click": "role=button[name=\"Add Romanian Deadlift\"]"
+    },
+    {
+      "click": "role=button[name=\"Add or drop an exercise in C · Accessories\"]"
+    },
+    {
+      "click": "role=button[name=\"Add Lateral Raises\"]"
+    },
+    {
+      "click": "role=button[name=\"Add exercise to C · Accessories\"]"
+    },
+    {
+      "click": "role=button[name=\"Add Biceps Curl\"]"
+    },
+    {
+      "click": "[data-parity-root=\"SessionCard\"]:first-of-type > header [data-parity=\"row-actions-trigger\"]"
+    },
+    {
+      "click": "role=menuitem[name=\"Clear session\"]"
+    }
+  ],
+  "library-filters-open": [
+    {
+      "use": "builder-block"
+    },
+    {
+      "click": "role=button[name=\"Add or drop an exercise in A · Main lift\"]"
+    },
+    {
+      "click": "role=button[name=/^Filters/]"
+    }
+  ],
+  "session-open": [
+    {
+      "use": "builder-block"
+    }
+  ],
+  "exercise-details-open": [
+    {
+      "use": "builder-block"
+    },
+    {
+      "click": "role=button[name=\"Add or drop an exercise in A · Main lift\"]"
+    },
+    {
+      "click": "role=button[name=\"Add Barbell Back Squat\"]"
+    },
+    {
+      "click": "role=button[name=\"Add or drop an exercise in B · Secondary\"]"
+    },
+    {
+      "click": "role=button[name=\"Add Romanian Deadlift\"]"
+    },
+    {
+      "click": "role=button[name=\"Add or drop an exercise in C · Accessories\"]"
+    },
+    {
+      "click": "role=button[name=\"Add Lateral Raises\"]"
+    },
+    {
+      "click": "role=button[name=\"Add exercise to C · Accessories\"]"
+    },
+    {
+      "click": "role=button[name=\"Add Biceps Curl\"]"
+    },
+    {
+      "click": "role=button[name=/^Details for Barbell Back Squat/]"
+    }
+  ],
+  "session-collapsed": [
+    {
+      "use": "builder-block"
+    },
+    {
+      "click": "[data-parity-root=\"SessionCard\"] > h3 > button[aria-expanded=\"false\"]"
+    }
+  ],
+  "draft-actions-menu": [
+    {
+      "use": "builder-block"
+    },
+    {
+      "click": "role=button[name=\"Draft actions\"]"
+    }
+  ],
+  "library-no-matches": [
+    {
+      "use": "builder-block"
+    },
+    {
+      "click": "role=button[name=\"Add or drop an exercise in A · Main lift\"]"
+    },
+    {
+      "fill": [
+        "role=searchbox[name=\"Search exercises\"]",
+        "zzzz"
+      ]
+    }
+  ],
+  "library-open": [
+    {
+      "use": "builder-block"
+    },
+    {
+      "click": "role=button[name=\"Add or drop an exercise in A · Main lift\"]"
+    }
+  ],
+  "client-profile-open": [
+    {
+      "use": "builder-block"
+    },
+    {
+      "click": "role=button[name=\"Client profile\"]"
+    }
+  ],
+  "cool-down-on": [
+    {
+      "use": "builder-block"
+    },
+    {
+      "click": "role=switch[name=\"Cool-down\"]"
+    }
+  ],
+  "exercise-delete-held-back": [
+    {
+      "use": "open-exercise-actions"
+    },
+    {
+      "press": "End"
+    }
+  ],
+  "library-add-refused": [
+    {
+      "use": "builder-block"
+    },
+    {
+      "click": "role=button[name=\"Add exercise to warm-up\"]"
+    },
+    {
+      "click": "role=button[name=\"Add Jumping Jacks\"]"
+    },
+    {
+      "click": "role=button[name=\"Add exercise to warm-up\"]"
+    },
+    {
+      "click": "role=button[name=\"Add Jumping Jacks\"]"
+    }
+  ],
+  "keyboard-resource-actions-delete": [
+    {
+      "use": "keyboard-open-resource-actions"
+    },
+    {
+      "press": "End"
+    }
+  ],
+  "exercise-type-keyboard-open": [
+    {
+      "use": "exercise-type-open"
+    },
+    {
+      "press": "Escape"
+    },
+    {
+      "wait": 400
+    },
+    {
+      "press": "Enter"
+    },
+    {
+      "waitFor": "[role=\"listbox\"][data-state=\"open\"]"
+    }
+  ],
+  "exercise-type-keyboard-next": [
+    {
+      "use": "exercise-type-keyboard-open"
+    },
+    {
+      "press": "ArrowDown"
+    }
+  ],
+  "checkins-kind-keyboard-open": [
+    {
+      "use": "checkins-kind-open"
+    },
+    {
+      "press": "Escape"
+    },
+    {
+      "wait": 400
+    },
+    {
+      "press": "Enter"
+    },
+    {
+      "waitFor": "[role=\"listbox\"][data-state=\"open\"]"
+    }
+  ],
+  "checkins-kind-keyboard-next": [
+    {
+      "use": "checkins-kind-keyboard-open"
+    },
+    {
+      "press": "ArrowDown"
+    }
+  ],
+  "add-resource-tag-suggestion-keyboard": [
+    {
+      "use": "add-resource-tag-suggestions"
+    },
+    {
+      "press": "ArrowDown"
+    }
+  ],
+  "block-day-menu-session-focus-visible": [
+    {
+      "use": "builder-block"
+    },
+    {
+      "click": "role=button[name=\"Monday options\"]"
+    },
+    {
+      "waitFor": "role=menu >> role=menuitem[name=\"Session\"]"
+    },
+    {
+      "wait": 400
+    },
+    {
+      "press": "ArrowDown"
+    }
+  ],
+  "focus-checkin-reschedule-moved-twice": [
+    {
+      "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Upcoming/]"
+    },
+    {
+      "click": "[data-parity-root$=\"Checkins\"] li:has-text(\"Thursday afternoon suits me better\") >> [data-parity=\"row-actions-trigger\"]"
+    },
+    {
+      "waitFor": "[role=\"menu\"][data-state=\"open\"]:focus"
+    },
+    {
+      "press": "ArrowDown"
+    },
+    {
+      "waitFor": "[data-parity=\"disabled-action-hint\"]"
+    }
+  ],
+  "coach-focus-checkin-reschedule-moved-twice": {
+    "prototype": [
+      {
+        "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Upcoming/]"
+      },
+      {
+        "click": "[data-parity-root$=\"Checkins\"] li:has-text(\"Thursday afternoon suits me better\") >> [data-parity=\"checkin-note\"]"
+      },
+      {
+        "hover": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Upcoming/]"
+      },
+      {
+        "press": "Tab"
+      },
+      {
+        "press": "Tab"
+      },
+      {
+        "press": "Tab"
+      },
+      {
+        "press": "Enter"
+      },
+      {
+        "waitFor": "[data-parity=\"disabled-action-hint\"]"
+      }
+    ],
+    "real": [
+      {
+        "click": "[data-parity-root$=\"Checkins\"] >> role=tab[name=/^Upcoming/]"
+      },
+      {
+        "click": "[data-parity-root$=\"Checkins\"] li:has-text(\"Thursday afternoon suits me better\") >> [data-parity=\"row-actions-trigger\"]"
+      },
+      {
+        "waitFor": "[role=\"menu\"][data-state=\"open\"]:focus"
+      },
+      {
+        "press": "ArrowDown"
+      },
+      {
+        "waitFor": "[data-parity=\"disabled-action-hint\"]"
+      }
+    ]
+  }
 }

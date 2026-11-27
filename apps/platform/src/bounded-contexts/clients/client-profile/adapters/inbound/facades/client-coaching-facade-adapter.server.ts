@@ -51,6 +51,8 @@ export class ClientCoachingFacadeAdapter implements ClientCoachingFacade {
         trainingDays: facts.trainingDays,
         sessionMinutes: facts.sessionMinutes,
         equipment: [...facts.equipment],
+        trainingPlace: facts.trainingPlace,
+        limitations: facts.limitations,
       },
       equipmentOptions: coaching.equipmentOptions.map((option) => ({
         equipment: option.equipment,

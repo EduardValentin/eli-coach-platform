@@ -57,7 +57,7 @@ describe('rowEdits', () => {
     const [row] = next.rows;
     expect(row).toMatchObject({ slot: 'C', exerciseId: 'curl', cues: 'curl cues', restSeconds: 75 });
     expect(row.startSets.filter(set => set.kind === 'working')).toHaveLength(3);
-    expect(row.substitutions).toEqual(['raise', 'kickback']);
+    expect(row.substitutions).toEqual(['kickback', 'raise']);
   });
 
   it('sends a second exercise for a one-card slot to the next group', () => {
@@ -207,6 +207,19 @@ describe('rowEdits', () => {
     expect(rowOf(swapped, 'curl')).toMatchObject(sets);
   });
 
+  it('suggests substitutions picked from the library in name order, whatever order the library holds them in', () => {
+    // arrange
+    const library = [byId('curl'), exercise('wall-sit', { name: 'Wall Sit' }), exercise('lunge', { name: 'lunge' }), exercise('box-squat', { name: 'Box Squat' })];
+    const context = { ...CONTEXT, library };
+    const session = rowEdits(emptySession(), context).add(byId('curl'), { slot: 'C' });
+
+    // act
+    const next = rowEdits(session, context).suggestSubstitutions(session.rows[0].id);
+
+    // assert
+    expect(next.rows[0].substitutions).toEqual(['box-squat', 'lunge']);
+  });
+
   it('removes a substitution and marks the substitutions as touched', () => {
     // arrange
     const session = withExercises(['curl', 'C']);
@@ -218,6 +231,27 @@ describe('rowEdits', () => {
     // assert
     expect(next.rows[0].substitutions).toEqual(['kickback']);
     expect(next.rows[0].touched).toContain('substitutions');
+  });
+
+  it('says why it refuses a substitution: the row’s own exercise, one it has, or a third', () => {
+    // arrange
+    const session = withExercises(['curl', 'C']);
+    const edits = rowEdits(session, CONTEXT);
+    const rowId = session.rows[0].id;
+    const oneLeft = rowEdits(edits.removeSubstitution(rowId, 'raise'), CONTEXT);
+
+    // act
+    const own = edits.substitutionRefusalFor(rowId, 'curl');
+    const repeated = edits.substitutionRefusalFor(rowId, 'raise');
+    const third = edits.substitutionRefusalFor(rowId, 'plank');
+    const second = oneLeft.substitutionRefusalFor(rowId, 'plank');
+
+    // assert
+    expect(own).toBe('own-substitution');
+    expect(repeated).toBe('already-a-substitution');
+    expect(third).toBe('substitutions-full');
+    expect(second).toBeUndefined();
+    expect(edits.addSubstitution(rowId, 'plank')).toEqual(session);
   });
 });
 

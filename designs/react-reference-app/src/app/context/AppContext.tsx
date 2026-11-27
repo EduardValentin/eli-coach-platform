@@ -55,6 +55,7 @@ import { FOOD_SEEDS, type FoodSeed } from '../services/foodSamples';
 import { FOOD_SAVE_OUTCOMES, type FoodSaveOutcome } from '../services/foodService';
 import { RECIPE_SAVE_OUTCOMES, type RecipeSaveOutcome } from '../services/recipeService';
 import { PROGRAM_LOAD_OUTCOMES, type ProgramLoadOutcome } from '../services/programLoadService';
+import { BUILDER_SESSIONS, type BuilderSessions } from '../services/builderSessions';
 import { BUILDER_WEEK_DATES, type BuilderWeekDates } from '../services/builderWeekDates';
 import { DRAFT_SAVE_OUTCOMES, PROGRAM_WRITE_OUTCOMES, type DraftSaveOutcome, type ProgramWriteOutcome } from '../services/programWriteService';
 import { RECIPE_PHOTO_UPLOAD_OUTCOMES, type RecipePhotoUpload } from '../services/recipePhotoService';
@@ -186,6 +187,7 @@ type AppState = {
   programWrite: ProgramWriteOutcome;
   draftSave: DraftSaveOutcome;
   builderWeekDates: BuilderWeekDates;
+  builderSessions: BuilderSessions;
   programLoad: ProgramLoadOutcome;
   exerciseVideoUpload: ExerciseVideoUpload;
   foodSeed: FoodSeed;
@@ -257,6 +259,7 @@ const defaultState: AppState = {
   programWrite: 'works',
   draftSave: 'works',
   builderWeekDates: 'from-today',
+  builderSessions: 'full',
   programLoad: 'ready',
   exerciseVideoUpload: 'works',
   foodSeed: 'seeded',
@@ -610,6 +613,11 @@ function parseDevParamsFromURL(): AppState {
     params.get('pweekdates'),
     defaultState.builderWeekDates,
   );
+  state.builderSessions = optionOrDefault(
+    BUILDER_SESSIONS,
+    params.get('psessions'),
+    defaultState.builderSessions,
+  );
   state.programLoad = optionOrDefault(
     PROGRAM_LOAD_OUTCOMES,
     params.get('pload'),
@@ -748,6 +756,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     url.searchParams.delete('pwrite');
     url.searchParams.delete('pdraft');
     url.searchParams.delete('pweekdates');
+    url.searchParams.delete('psessions');
     url.searchParams.delete('pload');
     url.searchParams.delete('exupload');
     url.searchParams.delete('nutseed');
@@ -912,6 +921,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
     if (appState.builderWeekDates !== defaultState.builderWeekDates) {
       url.searchParams.set('pweekdates', appState.builderWeekDates);
+    }
+    if (appState.builderSessions !== defaultState.builderSessions) {
+      url.searchParams.set('psessions', appState.builderSessions);
     }
     if (appState.programLoad !== defaultState.programLoad) {
       url.searchParams.set('pload', appState.programLoad);

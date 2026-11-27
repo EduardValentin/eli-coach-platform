@@ -16,7 +16,7 @@ const PROFILE = ClientProfile.reconstitute({
     sessionMinutes: 45,
     equipment: ["Dumbbells", "Resistance bands"],
     trainingPlace: "Home",
-    limitations: "",
+    limitations: "Left knee, no deep lunges",
     level: "beginner",
     primaryGoal: "Build muscle",
     goalWeightKg: null,
@@ -76,6 +76,8 @@ describe("ReadClientCoachingUseCase", () => {
         trainingDays: 3,
         sessionMinutes: 45,
         equipment: ["Dumbbells", "Resistance bands"],
+        trainingPlace: "Home",
+        limitations: "Left knee, no deep lunges",
       },
     });
     expect(coaching.equipmentOptions).toEqual([

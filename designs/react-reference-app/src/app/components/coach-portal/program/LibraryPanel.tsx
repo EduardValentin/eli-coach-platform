@@ -12,7 +12,8 @@ import {
   type Muscle,
   type MovementPattern,
 } from '../../../domain/exercises';
-import { pickableItems } from '../../../domain/libraryLifecycle';
+import { inNameOrder, pickableItems } from '../../../domain/libraryLifecycle';
+import type { LibraryPickRefusal } from '../../../domain/programEditing';
 import { counted } from '../../../utils/counted';
 import { IconActionButton } from '../../IconActionButton';
 import { MultiSelect } from '../../MultiSelect';
@@ -30,7 +31,7 @@ import { FieldTrigger } from '../../ui/select';
 import { Sheet, SheetContent, SheetTitle } from '../../ui/sheet';
 import { Switch } from '../../ui/switch';
 import { cn } from '../../ui/utils';
-import { useEditorAnnouncer } from './editorAnnouncer';
+import { AnnouncementRegion, useAnnouncement, useEditorAnnouncer, type Announce } from './editorAnnouncer';
 import { usePendingFocus } from './usePendingFocus';
 import { LIBRARY_EXERCISE, type LibraryItem } from './sessionDnd';
 import { OptionSelect } from './OptionSelect';
@@ -46,13 +47,23 @@ export type LibraryPurpose = {
 };
 export type LibraryPresentation = 'pane' | 'drawer';
 
+const REFUSED_ADD_TEXT: Readonly<Record<LibraryPickRefusal, (name: string) => string>> = {
+  'warm-up-full': name => `${name} not added: the warm-up holds four exercises`,
+  'already-in-warm-up': name => `${name} is already in the warm-up`,
+  'already-in-cool-down': name => `${name} is already in the cool-down`,
+  'own-substitution': name => `${name} can’t be its own substitution`,
+  'already-a-substitution': name => `${name} is already one of its substitutions`,
+  'substitutions-full': name => `${name} not added: an exercise holds two substitutions`,
+  'not-cardio': name => `${name} not added: a cardio session takes cardio exercises`,
+};
+
 type LibraryPanelProps = {
   presentation: LibraryPresentation;
   purpose: LibraryPurpose | null;
   library: readonly Exercise[];
   equipment: readonly Equipment[];
   searchRef: RefObject<HTMLInputElement>;
-  onAdd: (exercise: Exercise) => void;
+  onAdd: (exercise: Exercise) => LibraryPickRefusal | undefined;
   onClose: () => void;
 };
 
@@ -102,17 +113,18 @@ function panelFilters(filters: Filters, type: LibraryType): ActiveFilter[] {
   ];
 }
 
-function useCountAnnouncement(count: number, filtersKey: string) {
-  const announce = useEditorAnnouncer();
+function useCountAnnouncement(count: number, filtersKey: string, announce: Announce) {
   const firstRender = useRef(true);
+  const pendingCountTimer = useRef<number>();
   useEffect(() => {
     if (firstRender.current) {
       firstRender.current = false;
       return;
     }
-    const timer = window.setTimeout(() => announce(count === 0 ? 'No exercises match' : counted(count, 'exercise')), COUNT_ANNOUNCE_DELAY_MS);
-    return () => window.clearTimeout(timer);
+    pendingCountTimer.current = window.setTimeout(() => announce(count === 0 ? 'No exercises match' : counted(count, 'exercise')), COUNT_ANNOUNCE_DELAY_MS);
+    return () => window.clearTimeout(pendingCountTimer.current);
   }, [announce, count, filtersKey]);
+  return { cancelPending: () => window.clearTimeout(pendingCountTimer.current) };
 }
 
 function LibraryExerciseCard({ exercise, onAdd }: { exercise: Exercise; onAdd: (exercise: Exercise) => void }) {
@@ -123,6 +135,7 @@ function LibraryExerciseCard({ exercise, onAdd }: { exercise: Exercise; onAdd: (
   const facts = musclesAndEquipmentText(exercise);
   return (
     <div
+      data-parity="library-exercise-card"
       ref={drag as unknown as Ref<HTMLDivElement>}
       className={cn(
         'group grid cursor-grab touch-none grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1.5 rounded-control border bg-card p-3 select-none transition-shadow hover:shadow-card active:cursor-grabbing motion-reduce:transition-none',
@@ -130,11 +143,11 @@ function LibraryExerciseCard({ exercise, onAdd }: { exercise: Exercise; onAdd: (
       )}
     >
       <ExerciseNameButton exercise={exercise} detail={exerciseDetailOf(exercise, { targets: [], cues: exercise.cues })} weight="medium" size="compact" />
-      <span className="flex items-center gap-6">
+      <span data-parity="library-exercise-card-actions" className="flex items-center gap-6">
         <IconActionButton icon={Plus} label={`Add ${exercise.name}`} hint="Add exercise" onClick={() => onAdd(exercise)} />
         <GripVertical aria-hidden="true" size={16} className="text-text-secondary group-hover:text-primary" />
       </span>
-      {facts && <p className="col-span-2 text-sm break-words text-text-secondary">{facts}</p>}
+      {facts && <p data-parity="library-exercise-card-facts" className="col-span-2 text-sm break-words text-text-secondary">{facts}</p>}
     </div>
   );
 }
@@ -239,14 +252,14 @@ type FrameProps = { isDrawer: boolean; headingId: string; onClose: () => void; c
 function LibraryFrame({ isDrawer, headingId, onClose, children }: FrameProps) {
   if (!isDrawer) {
     return (
-      <aside aria-labelledby={headingId} className="flex w-80 max-w-[40%] shrink-0 flex-col border-l border-border bg-card">
+      <aside data-parity-root="LibraryPanel" aria-labelledby={headingId} className="flex w-80 max-w-[40%] shrink-0 flex-col border-l border-border bg-card">
         {children}
       </aside>
     );
   }
   return (
     <Sheet open onOpenChange={open => !open && onClose()}>
-      <SheetContent padding="flush" width="sm" aria-describedby={undefined} className="bg-card">
+      <SheetContent data-parity-root="LibraryPanel" padding="flush" width="sm" aria-describedby={undefined} className="bg-card">
         {children}
       </SheetContent>
     </Sheet>
@@ -272,13 +285,17 @@ export function LibraryPanel({ presentation, purpose, library, equipment, search
   const [filters, setFilters] = useState<Filters>({ ...CLEARED_FILTERS, onlyHers: true });
   const [type, setType] = useState<LibraryType>('resistance');
   const [appliedPurpose, setAppliedPurpose] = useState<string | null>(null);
-  const announce = useEditorAnnouncer();
+  const announceOnPage = useEditorAnnouncer();
+  const drawerAnnouncement = useAnnouncement();
   const focusLater = usePendingFocus();
   const content = useRef<HTMLDivElement>(null);
   const filtersTrigger = useRef<HTMLButtonElement>(null);
   const headingId = useId();
   const purposeId = useId();
   const isDrawer = presentation === 'drawer';
+  // A modal drawer hides the page's live region, so it speaks from its own while open.
+  const announce = isDrawer ? drawerAnnouncement.announce : announceOnPage;
+  const addClosesDrawer = isDrawer && purpose !== null;
   const { query, patterns, muscles, onlyHers, bodyweightOnly } = filters;
   const change = (next: Partial<Filters>) => setFilters(current => ({ ...current, ...next }));
   if (purpose && purpose.key !== appliedPurpose) {
@@ -289,7 +306,7 @@ export function LibraryPanel({ presentation, purpose, library, equipment, search
   const needle = query.trim().toLowerCase();
   const alsoTagged = purpose?.type === type ? purpose.alsoTagged : undefined;
   const ofType = (exercise: Exercise) => exercise.type === type || (alsoTagged !== undefined && exercise.tags.includes(alsoTagged));
-  const shown = pickableItems(library)
+  const shown = inNameOrder(pickableItems(library))
     .filter(exercise => exercise.archivedAt === undefined && ofType(exercise))
     .filter(exercise => exercise.name.toLowerCase().includes(needle))
     .filter(exercise => type !== 'resistance' || anyOf(patterns, exercise.pattern ? [exercise.pattern] : []))
@@ -297,11 +314,17 @@ export function LibraryPanel({ presentation, purpose, library, equipment, search
     .filter(exercise => !onlyHers || exercise.equipment.every(item => equipment.includes(item)))
     .filter(exercise => !bodyweightOnly || exercise.equipment.length === 0);
   const fromPanel = panelFilters(filters, type);
-  useCountAnnouncement(shown.length, JSON.stringify([type, filters]));
+  const countAnnouncement = useCountAnnouncement(shown.length, JSON.stringify([type, filters]), announce);
 
   function add(exercise: Exercise) {
-    onAdd(exercise);
-    announce(purpose ? `${exercise.name} added to ${purpose.destination}` : `${exercise.name} added`);
+    const refusal = onAdd(exercise);
+    countAnnouncement.cancelPending();
+    if (refusal) {
+      announce(REFUSED_ADD_TEXT[refusal](exercise.name));
+      return;
+    }
+    const announceAdd = addClosesDrawer ? announceOnPage : announce;
+    announceAdd(purpose ? `${exercise.name} added to ${purpose.destination}` : `${exercise.name} added`);
   }
 
   function removeFilter(filter: ActiveFilter, index: number) {
@@ -324,6 +347,7 @@ export function LibraryPanel({ presentation, purpose, library, equipment, search
   return (
     <LibraryFrame isDrawer={isDrawer} headingId={headingId} onClose={onClose}>
       <div ref={content} className="contents">
+        {isDrawer && <AnnouncementRegion message={drawerAnnouncement.message} />}
         <div className="grid grid-cols-[minmax(0,1fr)] gap-3 border-b border-border-subtle p-4">
           <LibraryHeading isDrawer={isDrawer} headingId={headingId} />
           {purpose && (
@@ -351,7 +375,7 @@ export function LibraryPanel({ presentation, purpose, library, equipment, search
             />
           </div>
         </div>
-        <div className="min-h-0 flex-1 overflow-y-auto bg-surface-page p-3">
+        <div data-parity="library-results" className="min-h-0 flex-1 overflow-y-auto bg-surface-page p-3">
           {shown.length === 0 ? (
             <NoMatches type={type} filters={[...searchFilters(filters), ...fromPanel]} onRemove={removeFilter} onClear={clearFilters} />
           ) : (

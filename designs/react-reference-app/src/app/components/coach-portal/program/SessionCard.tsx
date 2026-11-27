@@ -79,20 +79,20 @@ export function SessionCard({ session, block, expanded, articleRef, library, con
 
   if (!expanded) {
     return (
-      <article ref={articleRef} aria-labelledby={headingId} className={SESSION_ARTICLE_CLASS}>
+      <article data-parity-root="SessionCard" ref={articleRef} aria-labelledby={headingId} className={SESSION_ARTICLE_CLASS}>
         <CollapsedSessionHeader headingId={headingId} name={session.name} summary={sessionSummary(session, minutes)} onExpand={expand} />
       </article>
     );
   }
 
   return (
-    <article ref={articleRef} aria-labelledby={headingId} className={cn(SESSION_ARTICLE_CLASS, EXPANDED_SESSION_CLASS)} style={sessionHeaderHeightStyle(header.height)}>
-      <header ref={header.measureRef} className="sticky -top-4 z-[5] flex flex-wrap items-center gap-x-4 gap-y-1 rounded-t-card border-b border-border-subtle bg-card px-3 py-2 lg:top-[calc(var(--block-header-height)-1.5rem)]">
+    <article data-parity-root="SessionCard" ref={articleRef} aria-labelledby={headingId} className={cn(SESSION_ARTICLE_CLASS, EXPANDED_SESSION_CLASS)} style={sessionHeaderHeightStyle(header.height)}>
+      <header data-parity="session-header" ref={header.measureRef} className="sticky -top-4 z-[5] flex flex-wrap items-center gap-x-4 gap-y-1 rounded-t-card border-b border-border-subtle bg-card px-3 py-2 lg:top-[calc(var(--block-header-height)-1.5rem)]">
         <h3 id={headingId} className="sr-only">
           {session.name}
         </h3>
         <SessionNameInput value={session.name} inputRef={nameField} onChange={name => onChange({ ...session, name })} />
-        <p className={cn('flex gap-2 text-sm tabular-nums', { 'text-warning': overTarget, 'text-text-secondary': !overTarget })}>
+        <p data-parity="session-duration" className={cn('flex gap-2 text-sm tabular-nums', { 'text-warning': overTarget, 'text-text-secondary': !overTarget })}>
           <span>{durationAgainstTarget(minutes, block.targetMinutes)}</span>
           {overTarget && <span>Over target</span>}
         </p>
@@ -105,7 +105,7 @@ export function SessionCard({ session, block, expanded, articleRef, library, con
           ]}
         />
       </header>
-      <div className={cn('grid grid-cols-[minmax(0,1fr)] gap-5 p-3 sm:p-4', SESSION_CONTENT_CLASS)}>
+      <div data-parity="session-content" className={cn('grid grid-cols-[minmax(0,1fr)] gap-5 p-3 sm:p-4', SESSION_CONTENT_CLASS)}>
         <WarmUpCard
           session={session}
           library={library}

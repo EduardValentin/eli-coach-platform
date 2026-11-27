@@ -34,7 +34,7 @@ import { clientAction as archiveExercise } from "~/bounded-contexts/programs/exe
 import { clientAction as restoreExercise } from "~/bounded-contexts/programs/exercise-library/adapters/inbound/http/exercises/exercise-restore";
 import type {
   ExerciseLibraryView,
-  ExerciseView,
+  ExerciseListingView,
 } from "~/bounded-contexts/programs/exercise-library/public/exercises";
 import {
   COACH_TRAINING_PATH,
@@ -48,7 +48,7 @@ import ExerciseLibraryRoute, {
   shouldRevalidate,
 } from "./exercise-library-page";
 
-const BACK_SQUAT: ExerciseView = {
+const BACK_SQUAT: ExerciseListingView = {
   id: "1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d",
   name: "Back squat",
   type: "resistance",
@@ -67,9 +67,10 @@ const BACK_SQUAT: ExerciseView = {
     format: "mp4",
   },
   status: "active",
+  programCount: 0,
 };
 
-const BOX_BREATHING: ExerciseView = {
+const BOX_BREATHING: ExerciseListingView = {
   id: "2b3c4d5e-6f7a-4b8c-9d0e-1f2a3b4c5d6e",
   name: "Box breathing",
   type: "breathing",
@@ -85,9 +86,10 @@ const BOX_BREATHING: ExerciseView = {
   cues: "",
   video: null,
   status: "active",
+  programCount: 0,
 };
 
-const CAT_COW: ExerciseView = {
+const CAT_COW: ExerciseListingView = {
   ...BOX_BREATHING,
   id: "3c4d5e6f-7a8b-4c9d-8e0f-1a2b3c4d5e6f",
   name: "Cat-cow",
@@ -97,7 +99,7 @@ const CAT_COW: ExerciseView = {
   tags: ["Recovery"],
 };
 
-const DEADLIFT: ExerciseView = {
+const DEADLIFT: ExerciseListingView = {
   ...BACK_SQUAT,
   id: "4d5e6f7a-8b9c-4d0e-9f1a-2b3c4d5e6f7a",
   name: "Deadlift",
@@ -109,7 +111,7 @@ const DEADLIFT: ExerciseView = {
   video: null,
 };
 
-const HIP_THRUST: ExerciseView = {
+const HIP_THRUST: ExerciseListingView = {
   ...BACK_SQUAT,
   id: "5e6f7a8b-9c0d-4e1f-8a2b-3c4d5e6f7a8b",
   name: "Hip thrust",
@@ -122,7 +124,7 @@ const HIP_THRUST: ExerciseView = {
   video: null,
 };
 
-const JUMP_ROPE: ExerciseView = {
+const JUMP_ROPE: ExerciseListingView = {
   ...BOX_BREATHING,
   id: "6f7a8b9c-0d1e-4f2a-9b3c-4d5e6f7a8b9c",
   name: "Jump rope",
@@ -142,7 +144,7 @@ const LIBRARY = [
   BOX_BREATHING,
 ];
 
-const WALKING_LUNGE: ExerciseView = {
+const WALKING_LUNGE: ExerciseListingView = {
   ...DEADLIFT,
   id: "7a8b9c0d-1e2f-4a3b-8c4d-5e6f7a8b9c0d",
   name: "Walking lunge",
@@ -153,7 +155,7 @@ const WALKING_LUNGE: ExerciseView = {
   status: "archived",
 };
 
-const SIDE_PLANK: ExerciseView = {
+const SIDE_PLANK: ExerciseListingView = {
   ...CAT_COW,
   id: "8b9c0d1e-2f3a-4b4c-9d5e-6f7a8b9c0d1e",
   name: "Side plank",
@@ -168,7 +170,7 @@ const HEADING = "Exercises";
 
 const server = setupServer();
 
-const ELEVEN_EXERCISES: ExerciseView[] = Array.from(
+const ELEVEN_EXERCISES: ExerciseListingView[] = Array.from(
   { length: 11 },
   (_, index) => ({
     ...BOX_BREATHING,
@@ -367,7 +369,10 @@ describe("narrowing the library", () => {
 
   it("offers Conditioning among the tags with its count and narrows to the exercises that carry it", async () => {
     // arrange
-    const intervals: ExerciseView = { ...JUMP_ROPE, tags: ["Conditioning"] };
+    const intervals: ExerciseListingView = {
+      ...JUMP_ROPE,
+      tags: ["Conditioning"],
+    };
     const { router, user } = await renderLibrary({
       exercises: [intervals, BOX_BREATHING],
     });
@@ -1074,6 +1079,120 @@ describe("deleting an exercise", () => {
   });
 });
 
+describe("an exercise a program uses", () => {
+  it("holds Delete back, saying the exercise is used in one program", async () => {
+    // arrange
+    const { user } = await renderLibrary({
+      exercises: [{ ...BACK_SQUAT, programCount: 1 }, DEADLIFT],
+    });
+
+    // act
+    const remove = await openRowMenuItem(user, "Back squat", "Delete");
+    await user.hover(remove);
+
+    // assert
+    expect(remove).toHaveAttribute("aria-disabled", "true");
+    expect(await screen.findByText("Used in 1 program")).toBeInTheDocument();
+  });
+
+  it("says the exercise is used in two programs", async () => {
+    // arrange
+    const { user } = await renderLibrary({
+      exercises: [{ ...BACK_SQUAT, programCount: 2 }],
+    });
+
+    // act
+    const remove = await openRowMenuItem(user, "Back squat", "Delete");
+    await user.hover(remove);
+
+    // assert
+    expect(await screen.findByText("Used in 2 programs")).toBeInTheDocument();
+  });
+
+  it("does not ask to confirm or send a delete when she chooses the held-back Delete", async () => {
+    // arrange
+    const { sent, user } = await renderLibrary({
+      exercises: [{ ...BACK_SQUAT, programCount: 1 }],
+    });
+    const remove = await openRowMenuItem(user, "Back squat", "Delete");
+
+    // act
+    await user.click(remove);
+
+    // assert
+    expect(
+      screen.queryByRole("dialog", { name: "Delete “Back squat”?" }),
+    ).not.toBeInTheDocument();
+    expect(sent).toEqual([]);
+  });
+
+  it("keeps Archive allowed for an exercise a program uses", async () => {
+    // arrange
+    const { user } = await renderLibrary({
+      exercises: [{ ...BACK_SQUAT, programCount: 1 }],
+    });
+
+    // act
+    const archive = await openRowMenuItem(user, "Back squat", "Archive");
+
+    // assert
+    expect(archive).not.toHaveAttribute("aria-disabled");
+  });
+
+  it("holds Delete back for an archived exercise a program uses", async () => {
+    // arrange
+    const { user } = await renderLibrary(
+      {
+        exercises: [{ ...WALKING_LUNGE, programCount: 1 }, SIDE_PLANK],
+      },
+      `${COACH_TRAINING_PATH}?status=archived`,
+    );
+
+    // act
+    const remove = await openRowMenuItem(user, "Walking lunge", "Delete");
+
+    // assert
+    expect(remove).toHaveAttribute("aria-disabled", "true");
+  });
+
+  it("leaves Delete allowed when no program uses the exercise", async () => {
+    // arrange
+    const { user } = await renderLibrary({ exercises: [BACK_SQUAT] });
+
+    // act
+    const remove = await openRowMenuItem(user, "Back squat", "Delete");
+
+    // assert
+    expect(remove).not.toHaveAttribute("aria-disabled");
+  });
+
+  it("tells her the exercise is in use and keeps it when a delete is refused anyway", async () => {
+    // arrange
+    const { user } = await renderLibrary({ exercises: LIBRARY });
+    server.use(
+      http.delete(`*${EXERCISE_LIBRARY_API_PATHS.exercise}`, () =>
+        HttpResponse.json(
+          { error: "in-use", programCount: 1 },
+          { status: 409 },
+        ),
+      ),
+    );
+    const confirm = await openDeleteConfirm(user, "Back squat");
+
+    // act
+    await user.click(within(confirm).getByRole("button", { name: "Delete" }));
+
+    // assert
+    expect(
+      await screen.findByText('"Back squat" is in use, so it was not deleted'),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText('"Back squat" wasn’t deleted. Try again.'),
+    ).not.toBeInTheDocument();
+    expect(shownExerciseNames()).toContain("Back squat");
+  });
+});
+
 function EditorStandIn() {
   const { exerciseId } = useParams();
 
@@ -1132,7 +1251,7 @@ type LibraryRouter = ReturnType<typeof createMemoryRouter>;
 
 type LibraryStore = {
   load: () => ExerciseLibraryView;
-  replace: (exercise: ExerciseView) => void;
+  replace: (exercise: ExerciseListingView) => void;
   remove: (exerciseId: string) => void;
 };
 
@@ -1152,7 +1271,10 @@ function libraryStore(library: ExerciseLibraryView): LibraryStore {
   };
 }
 
-function exerciseIn(store: LibraryStore, exerciseId: unknown): ExerciseView {
+function exerciseIn(
+  store: LibraryStore,
+  exerciseId: unknown,
+): ExerciseListingView {
   const found = store
     .load()
     .exercises.find(({ id }) => id === String(exerciseId));
@@ -1205,9 +1327,14 @@ function acceptLifecycleWrites(store: LibraryStore): string[] {
   return sent;
 }
 
-async function chooseRowAction(user: UserEvent, name: string, action: string) {
+async function openRowMenuItem(user: UserEvent, name: string, action: string) {
   await user.click(screen.getByRole("button", { name: `Actions for ${name}` }));
-  await user.click(await screen.findByRole("menuitem", { name: action }));
+
+  return screen.findByRole("menuitem", { name: action });
+}
+
+async function chooseRowAction(user: UserEvent, name: string, action: string) {
+  await user.click(await openRowMenuItem(user, name, action));
 }
 
 async function openDeleteConfirm(user: UserEvent, name: string) {

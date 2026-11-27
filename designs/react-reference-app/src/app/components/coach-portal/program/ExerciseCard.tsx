@@ -1,11 +1,13 @@
 import type { ReactNode, Ref } from 'react';
 import { useDrag } from 'react-dnd';
 import { ArrowDown, ArrowUp, ChevronDown, CornerDownRight, Link2, RotateCcw, Trash2 } from 'lucide-react';
+import { useAppState } from '../../../context/AppContext';
 import type { Exercise } from '../../../context/TrainingContext';
 import { formatRest, positionLabel, withField, type Row, type Session, type Slot } from '../../../domain/program';
 import { blockSpan } from '../../../domain/programCalendar';
 import { progressionContextOf, rowAtWeek, type ProgressionSchedule } from '../../../domain/programProgression';
 import { SINGLE_CARD_SLOTS, type RowEdits } from '../../../domain/sessionEditing';
+import { hasWeeklySetsAndCardio } from '../../../services/builderSessions';
 import { RowActionsMenu, type RowMenuAction } from '../../RowActionsMenu';
 import { Button } from '../../ui/button';
 import { LABEL_CLASS } from '../../typography';
@@ -41,7 +43,7 @@ type ExerciseCardProps = {
   onAddSubstitution: (rowId: string) => void;
 };
 
-type MenuContext = Pick<ExerciseCardProps, 'row' | 'library' | 'edits' | 'slots' | 'focus' | 'onChange'> & { name: string; announce: (message: string) => void };
+type MenuContext = Pick<ExerciseCardProps, 'row' | 'library' | 'edits' | 'slots' | 'focus' | 'onChange'> & { name: string; announce: (message: string) => void; resettable: boolean };
 
 function groupingActions({ row, library, edits, focus, onChange, name, announce }: MenuContext): RowMenuAction[] {
   if (SINGLE_CARD_SLOTS.includes(row.slot)) return [];
@@ -80,7 +82,7 @@ function moveToSlotActions({ row, edits, slots, focus, onChange, name, announce 
 }
 
 function menuActions(context: MenuContext): RowMenuAction[] {
-  const { row, edits, focus, onChange, name, announce } = context;
+  const { row, edits, focus, onChange, name, announce, resettable } = context;
   const slotRows = edits.session.rows.filter(other => other.slot === row.slot);
   const index = slotRows.findIndex(other => other.id === row.id);
   const move = (direction: 'up' | 'down') => {
@@ -100,7 +102,7 @@ function menuActions(context: MenuContext): RowMenuAction[] {
     { name: 'down', label: 'Move down', icon: ArrowDown, disabled: index === slotRows.length - 1, onSelect: () => move('down') },
     ...moveToSlotActions(context),
     ...groupingActions(context),
-    { name: 'reset', label: 'Reset to block defaults', icon: RotateCcw, onSelect: () => onChange(edits.reset(row.id)) },
+    ...(resettable ? [{ name: 'reset', label: 'Reset to block defaults', icon: RotateCcw, onSelect: () => onChange(edits.reset(row.id)) }] : []),
     { name: 'remove', label: 'Remove', icon: Trash2, tone: 'destructive', onSelect: remove },
   ];
 }
@@ -171,6 +173,7 @@ function RestField({ row, onChange }: { row: Row; onChange: (row: Row) => void }
 
 export function ExerciseCard({ session, row, exercise, library, edits, slots, focus, schedule, onChange, onAddSubstitution }: ExerciseCardProps) {
   const announce = useEditorAnnouncer();
+  const weeklySets = hasWeeklySetsAndCardio(useAppState().appState.builderSessions);
   const progression = progressionContextOf(schedule, exercise);
   const firstWeek = rowAtWeek(row, 1, progression);
   const position = positionLabel(session, row);
@@ -204,60 +207,61 @@ export function ExerciseCard({ session, row, exercise, library, edits, slots, fo
     (dragged: DraggedItem, sessionId: string) => acceptsIntoSession(dragged, sessionId) && !(dragged.kind === PLAN_ROW && dragged.item.rowId === row.id),
   );
   const targeted = isOver && canDrop;
-  const panels: CardPanel[] = [
-    {
-      name: 'sets',
-      label: 'Sets',
-      content: (
-        <>
-          <SetGrid row={row} exercise={exercise} schedule={schedule} exerciseName={name} onChange={changeRow} />
-          <RestField row={row} onChange={changeRow} />
-        </>
-      ),
-    },
-    {
-      name: 'details',
-      label: 'Details',
-      content: (
-        <ExerciseRowDetails
-          row={row}
-          exercise={exercise}
-          detail={detail}
-          library={library}
-          substitutionDrop={{
-            sessionId: session.id,
-            onDrop: dragged => dragged.kind === LIBRARY_EXERCISE && onChange(edits.addSubstitution(row.id, dragged.item.exercise.id)),
-          }}
-          onChange={changeRow}
-          onAddSubstitution={() => onAddSubstitution(row.id)}
-          onRemoveSubstitution={exerciseId => onChange(edits.removeSubstitution(row.id, exerciseId))}
-          onSuggestSubstitutions={() => onChange(edits.suggestSubstitutions(row.id))}
-        />
-      ),
-    },
-  ];
+  const setsPanel: CardPanel = {
+    name: 'sets',
+    label: 'Sets',
+    content: (
+      <>
+        <SetGrid row={row} exercise={exercise} schedule={schedule} exerciseName={name} onChange={changeRow} />
+        <RestField row={row} onChange={changeRow} />
+      </>
+    ),
+  };
+  const detailsPanel: CardPanel = {
+    name: 'details',
+    label: 'Details',
+    content: (
+      <ExerciseRowDetails
+        row={row}
+        exercise={exercise}
+        detail={detail}
+        library={library}
+        substitutionDrop={{
+          sessionId: session.id,
+          onDrop: dragged => dragged.kind === LIBRARY_EXERCISE && onChange(edits.addSubstitution(row.id, dragged.item.exercise.id)),
+        }}
+        onChange={changeRow}
+        onAddSubstitution={() => onAddSubstitution(row.id)}
+        onRemoveSubstitution={exerciseId => onChange(edits.removeSubstitution(row.id, exerciseId))}
+        onSuggestSubstitutions={() => onChange(edits.suggestSubstitutions(row.id))}
+      />
+    ),
+  };
+  const panels = weeklySets ? [setsPanel, detailsPanel] : [detailsPanel];
+  const weekRange = weeklySets ? weekRangeTargets(row, progression, blockSpan(schedule.blocks, schedule.blockIndex).startWeek) : [];
 
   return (
     <article
+      data-parity-root="ExerciseCard"
       ref={drop as unknown as Ref<HTMLElement>}
       aria-label={`${position} ${name}`}
       data-row-id={row.id}
       className={cn(DRAGGABLE_CARD_CLASS, draggableCardState({ targeted, dragging: isDragging }))}
     >
       <TextDisclosureGroup>
-        <div className={CARD_GRID_CLASS}>
+        <div data-parity="exercise-card-grid" className={CARD_GRID_CLASS}>
           <DragHandle handleRef={drag as unknown as Ref<HTMLSpanElement>} className="mt-3.5 [grid-area:handle]" />
-          <div className="mt-3 grid min-w-0 gap-1 [grid-area:info]">
+          <div data-parity="exercise-card-info" className="mt-3 grid min-w-0 gap-1 [grid-area:info]">
             <h5 className="flex items-center gap-2.5">
               <PositionBadge label={position} size="sm" />{' '}
               <ExerciseNameButton exercise={exercise} detail={detail} weight="medium" size="compact" />
             </h5>
-            {facts && <p className="pl-9.5 text-sm text-text-secondary">{facts}</p>}
+            {facts && <p data-parity="exercise-card-facts" className="pl-9.5 text-sm text-text-secondary">{facts}</p>}
           </div>
-          <TargetsSummary size="sm" items={[...rowTargets(firstWeek, repsSuffix(exercise)), ...weekRangeTargets(row, progression, blockSpan(schedule.blocks, schedule.blockIndex).startWeek)]} className="mt-2 ml-9.5 [grid-area:stats] sm:mb-3" />
+          <TargetsSummary size="sm" items={[...rowTargets(firstWeek, repsSuffix(exercise)), ...weekRange]} className="mt-2 ml-9.5 [grid-area:stats] sm:mb-3" />
           <PanelTriggers panels={panels} exerciseName={name} />
           <div className="mt-3 [grid-area:menu]">
-            <RowActionsMenu label={`${name} actions`} size="xs" actions={menuActions({ row, library, edits, slots, focus, onChange, name, announce })} />
+            <RowActionsMenu label={`${name} actions`} size="xs" actions={menuActions({ row, library, edits, slots, focus, onChange, name, announce, resettable: weeklySets })} />
           </div>
           <OpenPanel panels={panels} />
         </div>

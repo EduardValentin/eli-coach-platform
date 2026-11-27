@@ -1,8 +1,4 @@
 import type {
-  CardioExercise,
-  CardioExercisesPort,
-} from "./cardio-exercises-port";
-import type {
   ClientCoaching,
   ClientCoachingFacts,
   ClientCoachingPort,
@@ -12,6 +8,9 @@ import type {
   ClientIdentityPort,
 } from "./client-identity-port";
 import type { CoachingEndedPort } from "./coaching-ended-port";
+import { LibraryEquipment } from "./library-equipment";
+import type { Equipment, LibraryExercise } from "./library-exercise";
+import type { LibraryExercisesPort } from "./library-exercises-port";
 import type { Program } from "./program";
 import { ProgramSetup } from "./program-setup";
 import type { ProgramStorePort } from "./program-store-port";
@@ -32,14 +31,16 @@ export type ProgramDraftReading =
       language: ProgramLanguage;
       draft: DraftReading;
       startingBlockSetup: BlockSetup;
-      cardioExercises: CardioExercise[];
+      libraryExercises: LibraryExercise[];
+      coachingFacts: ClientCoachingFacts | null;
+      libraryEquipment: Equipment[];
     };
 
 type ReadProgramDraftUseCaseOptions = {
   clientIdentityPort: ClientIdentityPort;
   coachingEndedPort: CoachingEndedPort;
   clientCoachingPort: Pick<ClientCoachingPort, "find">;
-  cardioExercisesPort: CardioExercisesPort;
+  libraryExercisesPort: LibraryExercisesPort;
   programStorePort: Pick<ProgramStorePort, "findByClientId">;
 };
 
@@ -49,6 +50,8 @@ const UNAPPROVED_COACHING_FACTS: ClientCoachingFacts = {
   trainingDays: 3,
   sessionMinutes: 60,
   equipment: [],
+  trainingPlace: null,
+  limitations: "",
 };
 
 export class ReadProgramDraftUseCase {
@@ -62,7 +65,7 @@ export class ReadProgramDraftUseCase {
       clientIdentityPort,
       coachingEndedPort,
       clientCoachingPort,
-      cardioExercisesPort,
+      libraryExercisesPort,
       programStorePort,
     } = this.options;
     const client = await clientIdentityPort.find(clientId);
@@ -83,6 +86,10 @@ export class ReadProgramDraftUseCase {
       return { status: "no-draft" };
     }
 
+    const coachingFacts = this.approvedFactsOf(
+      await clientCoachingPort.find(clientId),
+    );
+
     return {
       status: "draft",
       client,
@@ -90,24 +97,27 @@ export class ReadProgramDraftUseCase {
       level: program.level,
       language: program.language,
       draft,
-      startingBlockSetup: this.startingBlockSetupOf(
-        program,
-        await clientCoachingPort.find(clientId),
+      startingBlockSetup: this.startingBlockSetupOf(program, coachingFacts),
+      libraryExercises: await libraryExercisesPort.listFor(coachAccountId),
+      coachingFacts,
+      libraryEquipment: LibraryEquipment.coveredBy(
+        coachingFacts?.equipment ?? [],
       ),
-      cardioExercises: await cardioExercisesPort.listFor(coachAccountId),
     };
+  }
+
+  private approvedFactsOf({
+    answers,
+  }: ClientCoaching): ClientCoachingFacts | null {
+    return answers.status === "approved" ? answers.coachingFacts : null;
   }
 
   private startingBlockSetupOf(
     program: Program,
-    { answers }: ClientCoaching,
+    coachingFacts: ClientCoachingFacts | null,
   ): BlockSetup {
     const { splitShape, trainingDays, sessionMinutes, dailySteps } =
-      ProgramSetup.startingValues(
-        answers.status === "approved"
-          ? answers.coachingFacts
-          : UNAPPROVED_COACHING_FACTS,
-      );
+      ProgramSetup.startingValues(coachingFacts ?? UNAPPROVED_COACHING_FACTS);
 
     return {
       splitShape,

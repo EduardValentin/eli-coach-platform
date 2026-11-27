@@ -1,12 +1,14 @@
 import { useReducedMotion } from 'motion/react';
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { useAppState } from '../../../context/AppContext';
 import type { Exercise } from '../../../context/TrainingContext';
 import type { Equipment } from '../../../domain/exercises';
 import type { ClientJourney } from '../../../domain/journey';
 import type { Block, LevelHint, Program, ProgramLanguage } from '../../../domain/program';
 import { blockStatus } from '../../../domain/programCalendar';
 import { blockWithSession, type LibraryTarget } from '../../../domain/programEditing';
-import { blockWithCardio, plannedSessions } from '../../../domain/weekEditing';
+import { blockWithCardio } from '../../../domain/weekEditing';
+import { listedSessions } from '../../../services/builderSessions';
 import { BlockHeader } from './BlockHeader';
 import { CardioSessionCard } from './CardioSessionCard';
 import { LibraryTargetContext } from './libraryTarget';
@@ -38,10 +40,11 @@ type BlockWorkspaceProps = {
 export function BlockWorkspace(props: BlockWorkspaceProps) {
   const { block, blockIndex, blocks, language, dayOne, today, level, library, equipment, otherPrograms, journeys, openSessionId, onOpenSession, onChange, onRemove, onOpenLibrary, libraryTarget } = props;
   const header = useMeasuredHeight();
+  const { builderSessions } = useAppState().appState;
   const reducedMotion = useReducedMotion() === true;
   const articles = useRef(new Map<string, HTMLElement>());
   const [scrollTarget, setScrollTarget] = useState<string | null>(null);
-  const planned = plannedSessions(block);
+  const planned = listedSessions(block, builderSessions);
   const context = { blockType: block.type, library, equipment };
   const schedule = { blocks, blockIndex, dayOne, level };
 

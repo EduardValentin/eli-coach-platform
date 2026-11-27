@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
 
 import { BlockLoss } from "./block-loss";
-import type { Block, CardioSession, Session } from "./program-content";
+import type {
+  Block,
+  CardioSession,
+  ExerciseRow,
+  Session,
+} from "./program-content";
 import type { ProgramSetupValues } from "./program-setup";
 import { ProgramSuggestions } from "./program-suggestions";
 
@@ -20,16 +25,27 @@ function block(): Block {
   let next = 0;
 
   return new ProgramSuggestions({
-    cardioExercises: [],
+    libraryExercises: [],
     newId: () => `id-${(next += 1)}`,
   }).newBlock("foundation", 4, { setup: SETUP });
 }
 
 function filled(session: Session, exerciseCount: number): Session {
-  const rows = Array.from({ length: exerciseCount }, (_, index) => ({
-    id: `${session.id}-row-${index}`,
-    exerciseId: `e${index}`,
-  }));
+  const rows = Array.from(
+    { length: exerciseCount },
+    (_, index): ExerciseRow => ({
+      id: `${session.id}-row-${index}`,
+      exerciseId: `e${index}`,
+      slot: "A",
+      startSets: [],
+      restSeconds: 60,
+      lastSetTechnique: "none",
+      substitutions: [],
+      progression: { kind: "double" },
+      cues: "",
+      touched: [],
+    }),
+  );
 
   return { ...session, rows };
 }
@@ -75,6 +91,25 @@ describe("BlockLoss describe", () => {
       "Full Body B · 1 exercise",
     ]);
     expect(reset).toEqual(split);
+  });
+
+  it("names the exercises a cleared session loses", () => {
+    // arrange
+    const start = filledBlock(5, 1, 0);
+
+    // act
+    const cleared = BlockLoss.describe(start, {
+      kind: "clear-session",
+      sessionId: start.sessions[0].id,
+    });
+    const empty = BlockLoss.describe(start, {
+      kind: "clear-session",
+      sessionId: start.sessions[2].id,
+    });
+
+    // assert
+    expect(cleared).toEqual(["Full Body A · 5 exercises"]);
+    expect(empty).toEqual([]);
   });
 
   it("names the sessions and cardio that fewer or more training days drop", () => {

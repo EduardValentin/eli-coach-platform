@@ -101,7 +101,7 @@ export class ProgramBuilderPage {
     await expect(handle).toBeFocused();
   }
 
-  async expectAnnounced(message: string): Promise<void> {
+  async expectAnnounced(message: string | RegExp): Promise<void> {
     await expect(this.page.getByRole("status")).toHaveText(message);
   }
 
@@ -155,6 +155,14 @@ export class ProgramBuilderPage {
       .getByRole("button", { name: OVERVIEW })
       .click();
     await expect(this.placeHeading(OVERVIEW)).toBeVisible();
+  }
+
+  // A block opens with the exercise library beside it from 80em, which leaves
+  // the week too narrow for its seven-day row.
+  async closeExerciseLibrary(): Promise<void> {
+    await this.page
+      .getByRole("button", { name: "Exercise library", pressed: true })
+      .click();
   }
 
   async expectOnBlock(position: number, type: string): Promise<void> {
@@ -869,8 +877,55 @@ export class ProgramBuilderPage {
     ).toBeVisible();
   }
 
-  async expectOnlyDayMenusInTheWeek(): Promise<void> {
-    await expect(this.week.getByRole("button")).toHaveCount(7);
+  async expectOpenSessionOffered(): Promise<void> {
+    await expect(
+      this.page.getByRole("button", { name: "Open session" }),
+    ).toHaveCount(1);
+  }
+
+  async expectNoOpenSessionOffered(): Promise<void> {
+    await expect(
+      this.page.getByRole("button", { name: "Open session" }),
+    ).toHaveCount(0);
+  }
+
+  async openClientProfile(): Promise<void> {
+    await this.page.getByRole("button", { name: "Client profile" }).click();
+  }
+
+  async openLibraryFromDraftActions(): Promise<void> {
+    await this.page.getByRole("button", { name: "Draft actions" }).click();
+    await this.page
+      .getByRole("menuitem", { name: "Exercise library", exact: true })
+      .click();
+  }
+
+  async openClientProfileFromDraftActions(): Promise<void> {
+    await this.page.getByRole("button", { name: "Draft actions" }).click();
+    await this.page.getByRole("menuitem", { name: "Client profile" }).click();
+  }
+
+  async expectClientProfile(
+    name: string,
+    facts: Readonly<Record<string, string>>,
+  ): Promise<void> {
+    const profile = this.page.getByRole("dialog", { name });
+
+    await expect(profile.getByRole("term")).toHaveText(Object.keys(facts));
+    await expect(profile.getByRole("definition")).toHaveText(
+      Object.values(facts),
+    );
+  }
+
+  async closeClientProfile(name: string): Promise<void> {
+    await this.page.keyboard.press("Escape");
+    await expect(this.page.getByRole("dialog", { name })).toHaveCount(0);
+  }
+
+  async expectOnlyDayMenusAndStrengthFacesInTheWeek(
+    strengthDays: number,
+  ): Promise<void> {
+    await expect(this.week.getByRole("button")).toHaveCount(7 + strengthDays);
     await expect(
       this.week.getByRole("button", { name: /^[A-Z][a-z]+day options$/ }),
     ).toHaveCount(7);

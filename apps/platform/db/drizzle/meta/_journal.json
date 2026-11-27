@@ -463,6 +463,13 @@
       "when": 1795546407023,
       "tag": "0069_exercise_patterns_and_roles",
       "breakpoints": true
+    },
+    {
+      "idx": 70,
+      "version": "7",
+      "when": 1795594511753,
+      "tag": "0070_exercise_program_usages",
+      "breakpoints": true
     }
   ]
 }

@@ -14,6 +14,8 @@ import { TrainingProvider } from '../../../context/TrainingContext';
 import { UnitPreferencesProvider } from '../../../context/UnitPreferencesContext';
 
 
+const PAST_COUNT_ANNOUNCEMENT_MS = 900;
+
 function setStats(container: HTMLElement): string[] {
   const terms = within(container).getAllByRole('term');
   const values = within(container).getAllByRole('definition');
@@ -257,6 +259,19 @@ describe('LibraryPanel', () => {
     expect(within(library()).queryByRole('button', { name: 'Add Leg Press' })).not.toBeInTheDocument();
   });
 
+  it('lists exercises in name order, passing over spaces and punctuation', async () => {
+    // arrange
+    const user = await openFirstBlock('pseed=draft');
+    await showAllEquipment(user);
+
+    // act
+    await user.type(within(library()).getByRole('searchbox', { name: 'Search exercises' }), 'lat');
+
+    // assert
+    const offered = within(library()).getAllByRole('button', { name: /^Add / }).map(button => button.getAttribute('aria-label'));
+    expect(offered).toEqual(['Add Cable Lateral Raise', 'Add Lateral Lunge', 'Add Lateral Raises', 'Add Lat Pulldown', 'Add Single-Arm Lat Pulldown']);
+  });
+
   it('lists each filter that leaves nothing as a chip that removes only that filter', async () => {
     // arrange
     const user = await openFirstBlock('pseed=draft');
@@ -407,6 +422,107 @@ describe('LibraryPanel', () => {
     // assert
     expect(screen.queryByRole('dialog', { name: 'Exercise library' })).not.toBeInTheDocument();
     await waitFor(() => expect(opener).toHaveFocus());
+  });
+
+  it('keeps the announcement of an add made as the library opens instead of the count that follows', async () => {
+    // arrange
+    const user = await openFirstBlock('pseed=draft');
+    await user.click(within(firstSession()).getByRole('button', { name: 'Add exercise to warm-up' }));
+
+    // act
+    await user.click(within(library()).getByRole('button', { name: 'Add 90/90 Hip Switches' }));
+    await new Promise(resolve => setTimeout(resolve, PAST_COUNT_ANNOUNCEMENT_MS));
+
+    // assert
+    expect(screen.getByRole('status')).toHaveTextContent('90/90 Hip Switches is already in the warm-up');
+  });
+
+  it('keeps the drawer open and says why when an add is refused, where an add closes it', async () => {
+    // arrange
+    stubPhoneViewport();
+    const user = await openFirstBlock('pseed=draft');
+    await user.click(within(firstSession()).getByRole('button', { name: 'Add exercise to warm-up' }));
+    const drawer = screen.getByRole('dialog', { name: 'Exercise library' });
+
+    // act
+    await user.click(within(drawer).getByRole('button', { name: 'Add 90/90 Hip Switches' }));
+
+    // assert
+    expect(await screen.findByText('90/90 Hip Switches is already in the warm-up')).toBeInTheDocument();
+    expect(screen.getByRole('dialog', { name: 'Exercise library' })).toBeInTheDocument();
+
+    // act
+    await user.click(within(drawer).getByRole('button', { name: 'Add Jumping Jacks' }));
+
+    // assert
+    expect(await screen.findByText('Jumping Jacks added to Full Body A · Warm-up')).toBeInTheDocument();
+    expect(screen.queryByRole('dialog', { name: 'Exercise library' })).not.toBeInTheDocument();
+  });
+});
+
+describe('LibraryPanel drawer announcements', () => {
+  async function openDrawerForWarmUp() {
+    stubPhoneViewport();
+    const user = await openFirstBlock('pseed=draft');
+    await user.click(within(firstSession()).getByRole('button', { name: 'Add exercise to warm-up' }));
+
+    return { user, drawer: screen.getByRole('dialog', { name: 'Exercise library' }) };
+  }
+
+  it('speaks a refused add from a live region inside the drawer, which stays open', async () => {
+    // arrange
+    const { user, drawer } = await openDrawerForWarmUp();
+
+    // act
+    await user.click(within(drawer).getByRole('button', { name: 'Add 90/90 Hip Switches' }));
+
+    // assert
+    await waitFor(() => expect(within(drawer).getByRole('status')).toHaveTextContent('90/90 Hip Switches is already in the warm-up'));
+    expect(screen.getAllByRole('status')).toHaveLength(1);
+  });
+
+  it('speaks the count after a search from inside the drawer', async () => {
+    // arrange
+    const { user, drawer } = await openDrawerForWarmUp();
+
+    // act
+    await user.type(within(drawer).getByRole('searchbox', { name: 'Search exercises' }), 'zzzz');
+    await new Promise(resolve => setTimeout(resolve, PAST_COUNT_ANNOUNCEMENT_MS));
+
+    // assert
+    expect(within(drawer).getByRole('status')).toHaveTextContent('No exercises match');
+  });
+
+  it('speaks an add that leaves the drawer open from inside the drawer', async () => {
+    // arrange
+    stubPhoneViewport();
+    const user = await openFirstBlock('pseed=draft');
+    await user.click(screen.getByRole('button', { name: 'Draft actions' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Exercise library' }));
+    const drawer = await screen.findByRole('dialog', { name: 'Exercise library' });
+    const [first] = within(drawer).getAllByRole('button', { name: /^Add / });
+    const exerciseName = first.getAttribute('aria-label')!.replace(/^Add /, '');
+
+    // act
+    await user.click(first);
+
+    // assert
+    await waitFor(() => expect(within(drawer).getByRole('status')).toHaveTextContent(`${exerciseName} added`));
+    expect(screen.getByRole('dialog', { name: 'Exercise library' })).toBeInTheDocument();
+  });
+
+  it('hands the announcement of an add that closes the drawer to the page, once', async () => {
+    // arrange
+    const { user, drawer } = await openDrawerForWarmUp();
+
+    // act
+    await user.click(within(drawer).getByRole('button', { name: 'Add Jumping Jacks' }));
+
+    // assert
+    expect(screen.queryByRole('dialog', { name: 'Exercise library' })).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Jumping Jacks added to Full Body A · Warm-up'));
+    expect(screen.getAllByRole('status')).toHaveLength(1);
+    expect(screen.getAllByText('Jumping Jacks added to Full Body A · Warm-up')).toHaveLength(1);
   });
 });
 

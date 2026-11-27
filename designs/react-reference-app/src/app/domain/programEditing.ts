@@ -1,12 +1,12 @@
 import type { Exercise } from '../context/TrainingContext';
 import { mapCalendar, type Block, type BlockType, type CardioSession, type Session, type Slot } from './program';
 import { cardioEdits } from './programCardio';
-import { coolDownEdits } from './coolDownEditing';
+import { coolDownEdits, type CoolDownRefusal } from './coolDownEditing';
 import { blockSwitchedToDeload, reDefaultedBlock, type DeloadSwitch } from './programDefaults';
 import { sessionsCopiedFromFirstWeek } from './programProgression';
 import { spreadCalendar, type RowContext } from './programSuggestions';
-import { quickAddSlot, rowEdits } from './sessionEditing';
-import { warmUpEdits } from './warmUpEditing';
+import { quickAddSlot, rowEdits, type SubstitutionRefusal } from './sessionEditing';
+import { warmUpEdits, type WarmUpRefusal } from './warmUpEditing';
 
 export type LibraryTarget =
   | { kind: 'slot'; sessionId: string; slot: Slot }
@@ -18,15 +18,35 @@ export type LibraryTarget =
 
 export type LibraryPick = { exercise: Exercise; target: LibraryTarget | null; openSessionId: string | undefined };
 
+export type LibraryPickRefusal = WarmUpRefusal | CoolDownRefusal | SubstitutionRefusal | 'not-cardio';
+
 type PickedPlace = { block: Block; session: Session };
+
+type PickDestination = { place: 'substitution'; rowId: string } | { place: 'warm-up' } | { place: 'cool-down' } | { place: 'slot' };
+
+function destinationOf({ exercise, target }: LibraryPick): PickDestination {
+  if (target?.kind === 'substitution') return { place: 'substitution', rowId: target.rowId };
+  if (target?.kind === 'warm-up' || exercise.type === 'mobility') return { place: 'warm-up' };
+  if (target?.kind === 'cool-down' || exercise.type === 'stretching') return { place: 'cool-down' };
+  return { place: 'slot' };
+}
 
 function pickedSession({ block, session }: PickedPlace, pick: LibraryPick, context: RowContext): Session {
   const { exercise, target } = pick;
-  if (target?.kind === 'substitution') return rowEdits(session, context).addSubstitution(target.rowId, exercise.id);
-  if (target?.kind === 'warm-up' || exercise.type === 'mobility') return warmUpEdits(session, context.library).add(exercise.id);
-  if (target?.kind === 'cool-down' || exercise.type === 'stretching') return coolDownEdits(session).add(exercise.id);
+  const destination = destinationOf(pick);
+  if (destination.place === 'substitution') return rowEdits(session, context).addSubstitution(destination.rowId, exercise.id);
+  if (destination.place === 'warm-up') return warmUpEdits(session, context.library).add(exercise.id);
+  if (destination.place === 'cool-down') return coolDownEdits(session).add(exercise.id);
   const slot = target?.kind === 'slot' ? target.slot : quickAddSlot(block, session, exercise);
   return rowEdits(session, context).add(exercise, { slot });
+}
+
+function sessionRefusal(session: Session, pick: LibraryPick, context: RowContext): LibraryPickRefusal | undefined {
+  const destination = destinationOf(pick);
+  if (destination.place === 'substitution') return rowEdits(session, context).substitutionRefusalFor(destination.rowId, pick.exercise.id);
+  if (destination.place === 'warm-up') return warmUpEdits(session, context.library).refusalFor(pick.exercise.id);
+  if (destination.place === 'cool-down') return coolDownEdits(session).refusalFor(pick.exercise.id);
+  return undefined;
 }
 
 function pickedCardio(cardio: CardioSession, pick: LibraryPick, library: readonly Exercise[]): CardioSession {
@@ -49,6 +69,15 @@ export function blockWithLibraryPick(block: Block, pick: LibraryPick, context: R
     ...block,
     sessions: block.sessions.map(session => (session.id === sessionId ? pickedSession({ block, session }, pick, context) : session)),
   };
+}
+
+export function libraryPickRefusal(block: Block, pick: LibraryPick, context: RowContext): LibraryPickRefusal | undefined {
+  const sessionId = pick.target?.sessionId ?? pick.openSessionId;
+  if (block.cardioSessions.some(cardio => cardio.id === sessionId)) {
+    return pick.target === null && pick.exercise.type !== 'cardio' ? 'not-cardio' : undefined;
+  }
+  const session = block.sessions.find(other => other.id === sessionId);
+  return session && sessionRefusal(session, pick, context);
 }
 
 export function blockWithSession(block: Block, session: Session): Block {

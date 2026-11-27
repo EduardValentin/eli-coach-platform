@@ -1,12 +1,17 @@
 import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
+import { cn } from "../lib/cn";
+
+type EmptyStateDensity = "default" | "compact";
+
 type EmptyStateProps = {
-  icon: LucideIcon;
+  icon?: LucideIcon;
   title: string;
   description: string;
   descriptionParity?: string;
   action?: ReactNode;
+  density?: EmptyStateDensity;
 };
 
 export function EmptyState({
@@ -15,23 +20,47 @@ export function EmptyState({
   description,
   descriptionParity,
   action,
+  density = "default",
 }: EmptyStateProps) {
+  const compact = density === "compact";
+
   return (
-    <div className="flex flex-col items-center gap-3 py-12 text-center">
+    <div
+      className={cn("flex flex-col", {
+        "items-center gap-3 py-12 text-center": !compact,
+        "items-start gap-4 px-1 py-4 text-left": compact,
+      })}
+    >
+      {Icon && (
+        <div
+          className="flex size-12 items-center justify-center rounded-full bg-surface-muted text-text-secondary"
+          data-parity="empty-icon"
+        >
+          <Icon className="size-5" aria-hidden="true" />
+        </div>
+      )}
       <div
-        className="flex size-12 items-center justify-center rounded-full bg-surface-muted text-text-secondary"
-        data-parity="empty-icon"
+        className={cn("grid", {
+          "justify-items-center gap-3": !compact,
+          "gap-1": compact,
+        })}
       >
-        <Icon className="size-5" aria-hidden="true" />
+        <p
+          className={cn("font-semibold text-text-primary", {
+            "text-base": !compact,
+            "text-sm": compact,
+          })}
+        >
+          {title}
+        </p>
+        <p
+          className="max-w-sm text-sm text-text-secondary"
+          data-parity={descriptionParity}
+        >
+          {description}
+        </p>
       </div>
-      <p className="text-base font-semibold text-text-primary">{title}</p>
-      <p
-        className="max-w-sm text-sm text-text-secondary"
-        data-parity={descriptionParity}
-      >
-        {description}
-      </p>
-      {action && <div className="mt-1">{action}</div>}
+      {action && <div className={cn({ "mt-1": !compact })}>{action}</div>}
     </div>
   );
 }

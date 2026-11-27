@@ -1,8 +1,10 @@
-import { Ellipsis, type LucideIcon } from "lucide-react";
+import { Ellipsis, TriangleAlert, type LucideIcon } from "lucide-react";
 import { useRef, type Ref } from "react";
 
+import { cn } from "../lib/cn";
 import { Button } from "./button";
 import { DisabledActionHint } from "./disabled-action-hint";
+import { HintPopover } from "./hint-popover";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,6 +17,7 @@ import {
 
 export type RowMenuAction = {
   disabled?: boolean;
+  disabledHint?: string;
   disabledReason?: string;
   icon?: LucideIcon;
   label: string;
@@ -49,6 +52,10 @@ type RowActionsMenuProps = {
 
 type ChooseAction = (action: RowMenuAction) => (event: Event) => void;
 
+function isHeldBack({ disabledHint, disabledReason }: RowMenuAction): boolean {
+  return Boolean(disabledReason) || disabledHint !== undefined;
+}
+
 function isSubmenu(entry: RowMenuEntry): entry is RowMenuSubmenu {
   return "actions" in entry;
 }
@@ -58,21 +65,54 @@ function RowMenuItem(props: {
   chooseAction: ChooseAction;
 }) {
   const { action, chooseAction } = props;
-  const { disabled, disabledReason, icon: Icon, name, tone } = action;
+  const {
+    disabled,
+    disabledHint,
+    disabledReason,
+    icon: Icon,
+    name,
+    tone,
+  } = action;
+  const flagged = disabledHint !== undefined;
+  const heldBack = isHeldBack(action);
   const item = (
     <DropdownMenuItem
+      aria-disabled={flagged ? true : undefined}
+      className={cn({
+        "aria-disabled:opacity-100": heldBack,
+        "data-[variant=destructive]:focus:bg-primary-soft": flagged,
+      })}
       data-parity={`row-action-${name}`}
       disabled={disabled}
       onSelect={chooseAction(action)}
       variant={tone}
     >
-      {Icon && <Icon aria-hidden="true" />}
-      <span>{action.label}</span>
+      {Icon && (
+        <Icon aria-hidden="true" className={cn({ "opacity-50": heldBack })} />
+      )}
+      <span className={cn({ "opacity-50": heldBack })}>{action.label}</span>
+      {flagged && (
+        <span className="ml-auto flex pl-2">
+          <TriangleAlert aria-hidden="true" className="text-feedback-warning" />
+        </span>
+      )}
     </DropdownMenuItem>
   );
 
-  return disabledReason ? (
-    <DisabledActionHint reason={disabledReason}>{item}</DisabledActionHint>
+  if (disabledReason) {
+    return (
+      <DisabledActionHint reason={disabledReason}>{item}</DisabledActionHint>
+    );
+  }
+
+  return flagged ? (
+    <HintPopover
+      align="end"
+      contentParity={`row-action-${name}-hint`}
+      hint={disabledHint}
+    >
+      {item}
+    </HintPopover>
   ) : (
     item
   );
@@ -117,14 +157,18 @@ export function RowActionsMenu({
     return null;
   }
 
-  const runOnceFocusIsBackOnTheTrigger = () => {
+  const runChosenAction = (event: Event) => {
     const action = chosenAction.current;
     chosenAction.current = null;
-    action?.();
+    if (!action) return;
+
+    const focusedBefore = document.activeElement;
+    action();
+    if (document.activeElement !== focusedBefore) event.preventDefault();
   };
 
   const chooseAction: ChooseAction = (action) => (event) => {
-    if (action.disabledReason) {
+    if (isHeldBack(action)) {
       event.preventDefault();
       return;
     }
@@ -148,7 +192,7 @@ export function RowActionsMenu({
         align="end"
         className="min-w-40"
         data-parity-root={parityRoot}
-        onCloseAutoFocus={runOnceFocusIsBackOnTheTrigger}
+        onCloseAutoFocus={runChosenAction}
       >
         {actions.map((entry) =>
           isSubmenu(entry) ? (

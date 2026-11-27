@@ -1,6 +1,6 @@
 import { BlockWeeks } from "./block-weeks";
-import type { CardioExercise } from "./cardio-exercises-port";
 import { CardioPresets } from "./cardio-presets";
+import type { LibraryExercise } from "./library-exercise";
 import {
   mapCalendar,
   type Block,
@@ -11,6 +11,7 @@ import {
 } from "./program-content";
 import type { ProgramSetupValues } from "./program-setup";
 import { templateText } from "./program-templates";
+import { RowDefaults } from "./row-defaults";
 import { SplitTemplate } from "./split-template";
 import type { BlockType, ClientLevel, ProgramLanguage } from "./vocabulary";
 
@@ -48,7 +49,7 @@ export type BlockSetup = Pick<
 
 export type SuggestionSetup = BlockSetup & Pick<ProgramSetupValues, "level">;
 
-type NewBlockContext = { setup: BlockSetup; previous?: Block };
+type NewBlockContext = { setup: SuggestionSetup; previous?: Block };
 
 export type ProposedBlock = { type: BlockType; weeks: number };
 
@@ -61,15 +62,17 @@ type CopiedIds = {
 };
 
 type ProgramSuggestionsOptions = {
-  cardioExercises: readonly CardioExercise[];
+  libraryExercises: readonly LibraryExercise[];
   newId: () => string;
 };
 
 export class ProgramSuggestions {
   private readonly cardioPresets: CardioPresets;
+  private readonly rowDefaults: RowDefaults;
 
   constructor(private readonly options: ProgramSuggestionsOptions) {
     this.cardioPresets = new CardioPresets(options);
+    this.rowDefaults = new RowDefaults(options);
   }
 
   static proposedBlockAfter(
@@ -114,9 +117,20 @@ export class ProgramSuggestions {
     weeks: number,
     { setup, previous }: NewBlockContext,
   ): Block {
-    if (type === "deload" && previous) {
-      return this.deloadAfter(previous, weeks, setup);
-    }
+    if (!previous) return this.blockFrom(type, weeks, { setup });
+    if (type === "deload") return this.deloadAfter(previous, weeks, setup);
+
+    return this.rowDefaults.reDefaultedBlock(
+      this.blockFrom(type, weeks, { setup, previous }),
+      type,
+    );
+  }
+
+  private blockFrom(
+    type: BlockType,
+    weeks: number,
+    { setup, previous }: NewBlockContext,
+  ): Block {
     const { newId } = this.options;
     const shape = setup.splitShape;
     const sessions = previous
@@ -157,11 +171,18 @@ export class ProgramSuggestions {
   private deloadAfter(
     previous: Block,
     weeks: number,
-    setup: BlockSetup,
+    setup: SuggestionSetup,
   ): Block {
+    const deload = this.rowDefaults.deloadedBlock(
+      this.blockWithFreshIds(previous),
+      {
+        level: setup.level,
+        libraryExercises: this.options.libraryExercises,
+      },
+    );
+
     return {
-      ...this.blockWithFreshIds(previous),
-      type: "deload",
+      ...deload,
       ...this.blockTexts("deload", setup.language),
       originId: this.options.newId(),
       weeks,

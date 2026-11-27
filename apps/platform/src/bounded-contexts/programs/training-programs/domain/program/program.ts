@@ -3,7 +3,9 @@ import type {
   ClientCoachingFacts,
 } from "./client-coaching-port";
 import type { ClientIdentity } from "./client-identity-port";
+import type { VersionExerciseUsage } from "./exercise-usage-port";
 import type { ProgramContent } from "./program-content";
+import { ProgramExerciseIds } from "./program-exercise-ids";
 import type { ProgramSetup } from "./program-setup";
 import {
   ProgramVersion,
@@ -132,6 +134,19 @@ export class Program {
 
   draft(): DraftReading | null {
     return this.draftVersion()?.draftReading() ?? null;
+  }
+
+  draftUsage(coachAccountId: string): VersionExerciseUsage | null {
+    const draft = this.draft();
+
+    return (
+      draft && {
+        coachAccountId,
+        programId: this.id,
+        versionNumber: draft.versionNumber,
+        exerciseIds: ProgramExerciseIds.usedBy(draft.content),
+      }
+    );
   }
 
   saveDraft({ content, level, language, at }: DraftChanges): DraftSaving {

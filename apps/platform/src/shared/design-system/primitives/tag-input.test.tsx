@@ -185,6 +185,28 @@ describe("TagInput choosing tags", () => {
     expect(chosenTags()).toEqual(["Training"]);
   });
 
+  it("rings the highlighted suggestion inside its own box, so a keyboard user sees where Enter will act", async () => {
+    // arrange
+    const user = userEvent.setup();
+    render(<TagField />);
+    await user.type(tagsField(), "tr");
+
+    // act
+    await user.keyboard("{ArrowDown}");
+
+    // assert
+    const highlighted = screen.getAllByRole("option", { selected: true });
+    expect(highlighted).toHaveLength(1);
+    expect(highlighted[0]).toHaveClass(
+      "outline-2",
+      "-outline-offset-2",
+      "outline-focus-ring",
+    );
+    expect(
+      screen.getAllByRole("option", { selected: false })[0],
+    ).not.toHaveClass("outline-2");
+  });
+
   it("wraps the highlight from the first suggestion back to the last", async () => {
     // arrange
     const user = userEvent.setup();

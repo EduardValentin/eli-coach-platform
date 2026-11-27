@@ -49,6 +49,7 @@ export function ClientProfilePopover({ journey, open, onOpenChange, returnFocus,
     <Popover open={open} onOpenChange={onOpenChange}>
       <PopoverAnchor asChild>{children}</PopoverAnchor>
       <PopoverContent
+        data-parity-root="ClientProfilePopover"
         align="end"
         sideOffset={8}
         collisionPadding={16}

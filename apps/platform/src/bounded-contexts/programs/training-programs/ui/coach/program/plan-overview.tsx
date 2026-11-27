@@ -7,6 +7,7 @@ import {
   ProgramSuggestions,
   type Block,
   type ClientLevel,
+  type LibraryExercise,
   type ProgramContent,
 } from "~/bounded-contexts/programs/training-programs/public/program-editing";
 
@@ -18,6 +19,7 @@ import { weeksText } from "./plan-weeks";
 type PlanOverviewProps = {
   content: ProgramContent;
   level: ClientLevel;
+  libraryExercises: readonly LibraryExercise[];
   onChange: (update: BlocksUpdate) => void;
   onOpenBlock: (blockId: string) => void;
   onAddBlock: () => void;
@@ -79,6 +81,7 @@ function problemsByBlock(blocks: readonly Block[]): Map<string, string[]> {
 export function PlanOverview({
   content,
   level,
+  libraryExercises,
   onChange,
   onOpenBlock,
   onAddBlock,
@@ -106,6 +109,8 @@ export function PlanOverview({
           />
           <PlanBlockList
             blocks={blocks}
+            level={level}
+            libraryExercises={libraryExercises}
             onAddBlock={onAddBlock}
             onChange={onChange}
             onOpenBlock={onOpenBlock}

@@ -1,11 +1,9 @@
 import {
-  ExerciseNames,
   MAX_EXERCISE_VIDEO_BYTES,
   type ArchiveExerciseUseCase,
   type CreateExerciseUseCase,
   type DeleteExerciseUseCase,
   type EditExerciseUseCase,
-  type Exercise,
   type ExerciseReference,
   type ExerciseDraftInput,
   type ExerciseSaveProblems,
@@ -35,11 +33,13 @@ import { z } from "zod";
 
 import {
   EXERCISE_FORM_FIELDS,
+  exerciseInUseAnswerSchema,
   exerciseLifecycleAnswerSchema,
   exerciseProblemsAnswerSchema,
   exerciseRequestSchema,
   exerciseSavedAnswerSchema,
   presentExercise,
+  presentListedExercise,
   type ExerciseEditorView,
   type ExerciseLibraryView,
 } from "~/bounded-contexts/programs/exercise-library/public/exercises";
@@ -90,19 +90,16 @@ export class ExerciseLibraryController {
       coach.id,
     );
 
-    return { exercises: exercises.map(presentExercise) };
+    return { exercises: exercises.map(presentListedExercise) };
   }
 
   async loadNew(args: LoaderFunctionArgs): Promise<ExerciseEditorView> {
     const coach = args.context.get(accessContext).requirePortalAccess("COACH");
-    const { exercises } = await this.options.listExercisesUseCase.execute(
+    const { reservedNames } = await this.options.listExercisesUseCase.execute(
       coach.id,
     );
 
-    return {
-      exercise: null,
-      otherNames: ExerciseNames.reservedBy(exercises).toArray(),
-    };
+    return { exercise: null, otherNames: reservedNames };
   }
 
   async load(
@@ -214,7 +211,7 @@ export class ExerciseLibraryController {
 
     switch (result.status) {
       case "archived":
-        return this.lifecycleResponse(result.exercise);
+        return this.lifecycleResponse(result.exercise.name);
       case "not-found":
         return this.notFoundResponse();
     }
@@ -237,7 +234,7 @@ export class ExerciseLibraryController {
 
     switch (result.status) {
       case "restored":
-        return this.lifecycleResponse(result.exercise);
+        return this.lifecycleResponse(result.exercise.name);
       case "not-found":
         return this.notFoundResponse();
       case "failed":
@@ -262,7 +259,9 @@ export class ExerciseLibraryController {
 
     switch (result.status) {
       case "deleted":
-        return this.lifecycleResponse(result.exercise);
+        return this.lifecycleResponse(result.name);
+      case "in-use":
+        return this.inUseResponse(result.programCount);
       case "not-found":
         return this.notFoundResponse();
     }
@@ -415,9 +414,14 @@ export class ExerciseLibraryController {
       : null;
   }
 
-  private lifecycleResponse(exercise: Exercise): Response {
+  private lifecycleResponse(name: string): Response {
+    return Response.json(exerciseLifecycleAnswerSchema.parse({ name }));
+  }
+
+  private inUseResponse(programCount: number): Response {
     return Response.json(
-      exerciseLifecycleAnswerSchema.parse({ name: exercise.name }),
+      exerciseInUseAnswerSchema.parse({ error: "in-use", programCount }),
+      { status: 409 },
     );
   }
 

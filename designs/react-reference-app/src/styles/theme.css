@@ -776,10 +776,12 @@
 * utility beats anything in @layer base, so a layered rule loses to it.
 *
 * Menu and option items, and the `tabindex="-1"` containers that exist only to
-* receive skip-link focus, suppress their outline on purpose and show focus by
-* other means; drawing a second indicator over those is noise. An option that is
-* its own tab stop with no other focus look, such as an icon choice, opts back
-* in with `data-focus-ring`.
+* receive skip-link focus, are left out of the general selector: a menu or
+* listbox moves focus with the arrow keys and pointer, so only the items that
+* opt in draw the ring. An item or option that is its own focus target, such as
+* an icon choice or a menu item, opts in with `data-focus-ring`; a menu item
+* sets `--focus-ring-offset` to -2px and drops the halo so its ring sits inside
+* its own box, over the fill that already marks it.
 */
 :focus-visible:not([role='option']):not([role='menuitem']):not([role='menuitemcheckbox']):not([role='menuitemradio']):not([tabindex='-1']):not([data-field-entry]),
 [data-focus-ring]:focus-visible {

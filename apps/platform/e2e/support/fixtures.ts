@@ -57,6 +57,8 @@ import {
 import { MeasurementRecords } from "./measurement-records";
 import { MeasurementsSheet } from "./measurements-sheet";
 import { NotificationBell } from "./notification-bell";
+import { LibraryPanel } from "./library-panel";
+import { LiveRegions } from "./live-regions";
 import { NotificationRecords } from "./notification-records";
 import { NutritionLibraryPage } from "./nutrition-library-page";
 import { OnboardingRecords } from "./onboarding-records";
@@ -72,6 +74,7 @@ import { RecipeBuilderPage } from "./recipe-builder-page";
 import { RecipeRequests } from "./recipe-requests";
 import { ResourceDetailsDialog } from "./resource-details-dialog";
 import { ResourceRequests } from "./resource-requests";
+import { SessionCard } from "./session-card";
 import { ResourceToolbar } from "./resource-toolbar";
 import { ResourceViewer } from "./resource-viewer";
 import { StoreCartDrawer } from "./store-cart-drawer";
@@ -161,6 +164,9 @@ type PlatformFixtures = {
   coachClientResources: CoachClientResourcesPage;
   programSetup: ProgramSetupPage;
   programBuilder: ProgramBuilderPage;
+  sessionCard: SessionCard;
+  libraryPanel: LibraryPanel;
+  liveRegions: LiveRegions;
   coachCheckIns: CoachCheckInsPage;
   coachDashboard: CoachDashboardPage;
   coachMeetingRoom: CoachMeetingRoom;
@@ -557,6 +563,18 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
 
   programBuilder: async ({ page }, use) => {
     await use(new ProgramBuilderPage(page));
+  },
+
+  sessionCard: async ({ page }, use) => {
+    await use(new SessionCard(page));
+  },
+
+  libraryPanel: async ({ page }, use) => {
+    await use(new LibraryPanel(page));
+  },
+
+  liveRegions: async ({ page }, use) => {
+    await use(new LiveRegions(page));
   },
 
   coachCheckIns: async ({ page }, use) => {

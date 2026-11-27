@@ -2,7 +2,7 @@ import type { MiddlewareFunction } from "react-router";
 
 import { exerciseLibraryContext } from "~/bounded-contexts/programs/exercise-library/adapters/inbound/http/context.server";
 import {
-  composeCardioExercises,
+  composeExerciseLibraryFacades,
   composeExerciseLibraryFeature,
   composeExerciseVideoFiles,
 } from "~/bounded-contexts/programs/exercise-library/composition.server";
@@ -47,7 +47,7 @@ export function composePrograms(handles: ProgramsHandles): ProgramsComposition {
   });
   const trainingPrograms = composeTrainingProgramsFeature({
     ...handles,
-    ...composeCardioExercises({ database: handles.database }).handles,
+    ...composeExerciseLibraryFacades({ database: handles.database }).handles,
   });
 
   return {

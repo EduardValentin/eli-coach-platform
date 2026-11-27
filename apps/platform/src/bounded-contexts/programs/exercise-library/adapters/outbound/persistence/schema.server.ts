@@ -27,7 +27,9 @@ import { sql, type SQL } from "drizzle-orm";
 import {
   boolean,
   check,
+  index,
   integer,
+  primaryKey,
   text,
   timestamp,
   uniqueIndex,
@@ -152,6 +154,23 @@ export const exercisesTable = appSchema.table(
       "exercises_video_size_check",
       sql`${table.videoSizeBytes} between 1 and ${sql.raw(String(MAX_EXERCISE_VIDEO_BYTES))}`,
     ),
+  ],
+);
+
+export const exerciseProgramUsagesTable = appSchema.table(
+  "exercise_program_usages",
+  {
+    exerciseId: uuid("exercise_id")
+      .notNull()
+      .references(() => exercisesTable.id),
+    programId: uuid("program_id").notNull(),
+    versionNumber: integer("version_number").notNull(),
+  },
+  (table) => [
+    primaryKey({
+      columns: [table.programId, table.versionNumber, table.exerciseId],
+    }),
+    index("exercise_program_usages_exercise_idx").on(table.exerciseId),
   ],
 );
 

@@ -60,3 +60,22 @@ export const DAILY_STEP_TARGETS: readonly number[] = Array.from(
 
 export const VERSION_STATUSES = ["draft", "published", "superseded"] as const;
 export type VersionStatus = (typeof VERSION_STATUSES)[number];
+
+export const SLOTS = ["A", "B", "C", "D"] as const;
+export type Slot = (typeof SLOTS)[number];
+
+export const SET_KINDS = ["warm-up", "working"] as const;
+export type SetKind = (typeof SET_KINDS)[number];
+
+export const LAST_SET_TECHNIQUES = ["none", "drop-set", "rest-pause"] as const;
+export type LastSetTechnique = (typeof LAST_SET_TECHNIQUES)[number];
+
+export const ROW_FIELDS = [
+  "restSeconds",
+  "tempo",
+  "lastSetTechnique",
+  "substitutions",
+  "progression",
+  "cues",
+] as const;
+export type RowField = (typeof ROW_FIELDS)[number];

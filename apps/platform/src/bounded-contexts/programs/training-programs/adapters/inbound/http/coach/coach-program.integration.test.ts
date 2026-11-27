@@ -21,6 +21,7 @@ import {
 import {
   CLIENT_SESSION,
   COACH_SESSION,
+  OTHER_COACH_SESSION,
   PlatformRig,
   type AccountSession,
 } from "~integration-test-config/platform-rig";
@@ -35,6 +36,8 @@ import {
 import { SubscriptionsJourney } from "~integration-test-config/subscriptions-journey";
 import {
   coachClientPage,
+  exerciseRow,
+  planWithSession,
   programBuilderPage,
   programSetupPage,
   SIGNED_OUT,
@@ -59,6 +62,7 @@ const ANA_CLIENT: AccountSession = {
 };
 
 const UNKNOWN_CLIENT_ID = "0b8d2f7e-2f55-4d3e-9d7c-7d7a3f1c2b10";
+const UNKNOWN_EXERCISE_ID = "5c1e9a3d-7b2f-4e8a-a6d4-3f0b9c2e8d71";
 
 const PAID_THROUGH = new Date("2027-01-21T08:00:00.000Z");
 
@@ -186,6 +190,51 @@ const BACK_SQUAT: ExerciseFields = {
   role: "main-compound",
   tags: ["Strength"],
   cues: "",
+};
+
+const GOBLET_SQUAT: ExerciseFields = {
+  ...BACK_SQUAT,
+  name: "Goblet squat",
+  equipment: ["Dumbbells"],
+  difficulty: "Beginner",
+};
+
+const SPLIT_SQUAT: ExerciseFields = {
+  ...BACK_SQUAT,
+  name: "Bulgarian split squat",
+  perSide: true,
+  equipment: ["Dumbbells", "Bench"],
+  pattern: "lunge",
+  role: "secondary-compound",
+};
+
+const DUMBBELL_ROW: ExerciseFields = {
+  ...BACK_SQUAT,
+  name: "One-arm dumbbell row",
+  perSide: true,
+  primaryMuscles: ["Lats", "Upper back"],
+  secondaryMuscles: ["Biceps"],
+  equipment: ["Dumbbells", "Bench"],
+  pattern: "horizontal-pull",
+  role: "secondary-compound",
+};
+
+const HIP_CIRCLES: ExerciseFields = {
+  ...INCLINE_WALK,
+  name: "Hip circles",
+  type: "mobility",
+  unit: "time",
+  primaryMuscles: ["Hip flexors"],
+  equipment: [],
+};
+
+const PIGEON_STRETCH: ExerciseFields = {
+  ...INCLINE_WALK,
+  name: "Pigeon stretch",
+  type: "stretching",
+  unit: "time",
+  primaryMuscles: ["Glutes"],
+  equipment: ["Mat"],
 };
 
 describe("a client's training program, from her profile", () => {
@@ -1013,6 +1062,96 @@ describe("a client's training program, from her profile", () => {
     });
   });
 
+  describe("filling a session", () => {
+    it("saves a session filled from her library, details, warm-up and a switched-off cool-down included, and the builder opens it again after a reload", async () => {
+      // arrange
+      const clientId = await programs.approvedClient(ANA_CLIENT);
+      await programs.start(clientId, PREFILLED_BEGINNER_SETUP);
+      const content = planWithSession(await filledSession());
+      const [draft] = await programs.draftRowsOf(clientId);
+
+      // act
+      const response = await programs.saveDraft(COACH_SESSION, clientId, {
+        content,
+        level: "beginner",
+        language: "en",
+        updatedAt: draft?.updatedAt.toISOString(),
+      });
+
+      // assert
+      const reload = await programs.openBuilder(COACH_SESSION, clientId);
+
+      expect(response.status).toBe(200);
+      expect(await programs.draftRowsOf(clientId)).toEqual([
+        { content, updatedAt: expect.any(Date) },
+      ]);
+      expect(reload.status).toBe(200);
+      expect(textNodesOf(await visibleDocument(reload))).toContain(
+        "Foundation",
+      );
+    });
+
+    it("counts the filled session on the Program card of her page", async () => {
+      // arrange
+      const clientId = await programs.approvedClient(ANA_CLIENT);
+      await programs.start(clientId, PREFILLED_BEGINNER_SETUP);
+      await programs.saveOverStoredDraft(
+        clientId,
+        planWithSession(await filledSession()),
+      );
+
+      // act
+      const response = await programs.openClientPage(COACH_SESSION, clientId);
+
+      // assert
+      const texts = textNodesOf(await visibleDocument(response));
+
+      expect(response.status).toBe(200);
+      expect(texts).toContain("Foundation · 3 wk");
+      expect(texts).toContain("1 of 2 sessions");
+      expect(texts).toContain("Still missing");
+      expect(texts).toContain("1 session without exercises");
+    });
+
+    it("refuses a session naming another coach's exercise or an unknown one as not well formed and keeps the stored draft", async () => {
+      // arrange
+      const clientId = await programs.approvedClient(ANA_CLIENT);
+      await programs.start(clientId, PREFILLED_BEGINNER_SETUP);
+      const stored = await storedDraftOf(clientId);
+      const squat = await library.createAccepted(COACH_SESSION, BACK_SQUAT);
+      await rig.provisionOtherCoach();
+      const othersSquat = await library.createAccepted(
+        OTHER_COACH_SESSION,
+        GOBLET_SQUAT,
+      );
+      const save = (session: Parameters<typeof planWithSession>[0]) =>
+        programs.saveDraft(COACH_SESSION, clientId, {
+          content: planWithSession(session),
+          level: "beginner",
+          language: "en",
+          updatedAt: stored.updatedAt.toISOString(),
+        });
+
+      // act
+      const othersExercise = await save({
+        rows: [exerciseRow("row-1", othersSquat.id, { slot: "A" })],
+      });
+      const unknownSubstitution = await save({
+        rows: [
+          exerciseRow("row-1", squat.id, {
+            slot: "A",
+            substitutions: [UNKNOWN_EXERCISE_ID],
+          }),
+        ],
+      });
+
+      // assert
+      expect(othersExercise.status).toBe(400);
+      expect(unknownSubstitution.status).toBe(400);
+      expect(await programs.draftRowsOf(clientId)).toEqual([stored]);
+    });
+  });
+
   describe("access", () => {
     it("keeps a signed-in client out of the setup page", async () => {
       // arrange
@@ -1163,6 +1302,36 @@ describe("a client's training program, from her profile", () => {
     });
   });
 });
+
+async function filledSession() {
+  const squat = await library.createAccepted(COACH_SESSION, BACK_SQUAT);
+  const goblet = await library.createAccepted(COACH_SESSION, GOBLET_SQUAT);
+  const splitSquat = await library.createAccepted(COACH_SESSION, SPLIT_SQUAT);
+  const dumbbellRow = await library.createAccepted(COACH_SESSION, DUMBBELL_ROW);
+  const hipCircles = await library.createAccepted(COACH_SESSION, HIP_CIRCLES);
+  const pigeon = await library.createAccepted(COACH_SESSION, PIGEON_STRETCH);
+
+  return {
+    rows: [
+      exerciseRow("row-1", squat.id, {
+        slot: "A",
+        tempo: "3-1-1-0",
+        substitutions: [goblet.id],
+        cues: "Drive through the whole foot.",
+        touched: ["tempo"],
+      }),
+      exerciseRow("row-2", splitSquat.id, { supersetGroup: "superset-1" }),
+      exerciseRow("row-3", dumbbellRow.id, { supersetGroup: "superset-1" }),
+    ],
+    warmUp: [
+      { id: "warm-up-1", exerciseId: hipCircles.id, sets: 1, seconds: 45 },
+    ],
+    coolDown: {
+      enabled: false,
+      items: [{ id: "cool-down-1", exerciseId: pigeon.id, seconds: 30 }],
+    },
+  };
+}
 
 function submissionAnswering(
   goalAndWeek: Record<string, unknown>,

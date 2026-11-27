@@ -32,11 +32,13 @@ describe("the builder's editing rules, as the browser reaches them", () => {
   it("reshapes a plan: adds the proposed block, makes a day cardio, re-lays the week, and names what a change would lose", () => {
     // arrange
     const suggestions = new ProgramSuggestions({
-      cardioExercises: [],
+      libraryExercises: [],
       newId: idsFrom("suggested"),
     });
     const blockEditing = new BlockEditing({ newId: idsFrom("edited") });
-    const first = suggestions.newBlock("hypertrophy", 6, { setup: SETUP });
+    const first = suggestions.newBlock("hypertrophy", 6, {
+      setup: { ...SETUP, level: "beginner" },
+    });
     const cardioDay: DayChoice = { kind: "cardio" };
     const fewerDays: LossChange = { kind: "training-days", days: 2 };
 
@@ -44,7 +46,7 @@ describe("the builder's editing rules, as the browser reaches them", () => {
     const proposal: ProposedBlock =
       ProgramSuggestions.proposedBlockAfter(first);
     const added = suggestions.newBlock(proposal.type, proposal.weeks, {
-      setup: SETUP,
+      setup: { ...SETUP, level: "beginner" },
       previous: first,
     });
     const withCardioSunday = blockEditing.blockWithDay(first, "sun", cardioDay);
@@ -62,7 +64,11 @@ describe("the builder's editing rules, as the browser reaches them", () => {
     ]);
     expect(
       SessionTiming.estimatedDuration(
-        SessionTiming.routineMinutes(first.sessions[0]),
+        SessionTiming.longestWeekMinutes(first.sessions[0], {
+          block: first,
+          level: "beginner",
+          exercisesById: new Map(),
+        }),
       ),
     ).toBe("0 min");
     expect(SessionTiming.cardioMinutes(first.cardioSessions[0])).toBe(30);

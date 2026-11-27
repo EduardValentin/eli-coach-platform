@@ -3,6 +3,7 @@ import { useEffect, useEffectEvent, useState, type RefObject } from "react";
 import { useFetcher, useSubmit } from "react-router";
 
 import {
+  exerciseInUseAnswerSchema,
   exerciseLifecycleAnswerSchema,
   type ExerciseView,
 } from "~/bounded-contexts/programs/exercise-library/public/exercises";
@@ -93,6 +94,12 @@ export function useExerciseLifecycleAnswer(
   const { data, state } = useFetcher<unknown>({ key: pendingWrite.key });
 
   const settle = useEffectEvent((received: unknown) => {
+    if (exerciseInUseAnswerSchema.safeParse(received).success) {
+      toast.error(`"${pendingWrite.name}" is in use, so it was not deleted`);
+      outcomes.failed(pendingWrite.key);
+      return;
+    }
+
     const answer = exerciseLifecycleAnswerSchema.safeParse(received);
 
     if (answer.success) {

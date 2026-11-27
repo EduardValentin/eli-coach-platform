@@ -1,6 +1,14 @@
 import { BlockFilling } from "./block-filling";
 import { BlockWeeks } from "./block-weeks";
-import type { Block, ProgramContent } from "./program-content";
+import {
+  MAX_SUBSTITUTIONS,
+  MAX_WARM_UP_ITEMS,
+  SINGLE_UNIT_SLOTS,
+  type Block,
+  type ExerciseRow,
+  type ProgramContent,
+  type Session,
+} from "./program-content";
 import type { BlockType, VersionStatus } from "./vocabulary";
 
 export type ProgramVersionSnapshot = {
@@ -55,7 +63,8 @@ export class ProgramVersion {
     return content.plan.blocks.every(
       (block) =>
         BlockWeeks.isAllowed(block.type, block.weeks) &&
-        ProgramVersion.calendarNamesItsOwnDays(block),
+        ProgramVersion.calendarNamesItsOwnDays(block) &&
+        block.sessions.every(ProgramVersion.isSessionWellFormed),
     );
   }
 
@@ -108,6 +117,37 @@ export class ProgramVersion {
 
   toSnapshot(): ProgramVersionSnapshot {
     return { ...this.snapshot };
+  }
+
+  private static isSessionWellFormed(session: Session): boolean {
+    const { warmUp, coolDown, rows } = session;
+
+    return (
+      SINGLE_UNIT_SLOTS.every(
+        (slot) => rows.filter((row) => row.slot === slot).length <= 1,
+      ) &&
+      rows.every(ProgramVersion.isRowWellFormed) &&
+      warmUp.items.length <= MAX_WARM_UP_ITEMS &&
+      ProgramVersion.hasNoRepeats(warmUp.items) &&
+      ProgramVersion.hasNoRepeats(coolDown.items)
+    );
+  }
+
+  private static isRowWellFormed(row: ExerciseRow): boolean {
+    const supersetInPlace =
+      row.supersetGroup === undefined || !SINGLE_UNIT_SLOTS.includes(row.slot);
+
+    return (
+      supersetInPlace &&
+      row.substitutions.length <= MAX_SUBSTITUTIONS &&
+      !row.substitutions.includes(row.exerciseId)
+    );
+  }
+
+  private static hasNoRepeats(
+    items: readonly { exerciseId: string }[],
+  ): boolean {
+    return new Set(items.map((item) => item.exerciseId)).size === items.length;
   }
 
   private static calendarNamesItsOwnDays(block: Block): boolean {

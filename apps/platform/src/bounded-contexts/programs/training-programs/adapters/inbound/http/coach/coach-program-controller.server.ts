@@ -1,4 +1,5 @@
 import type {
+  ClientCoachingFacts,
   ProgramCardReading,
   ProgramIncidentsPort,
   ReadProgramCardUseCase,
@@ -30,6 +31,7 @@ import {
   programDraftRefusalSchema,
   programDraftSavedAnswerSchema,
   programDraftSaveRequestSchema,
+  type ProgramDraftClientProfile,
   type ProgramDraftView,
 } from "~/bounded-contexts/programs/training-programs/public/program-draft";
 import {
@@ -188,7 +190,8 @@ export class CoachProgramController {
       case "no-program":
         return { state: "no-program", client: reading.client };
       case "draft": {
-        const { client, coachingEnded, level, language, draft } = reading;
+        const { client, coachingEnded, level, language, draft, coachingFacts } =
+          reading;
 
         return {
           state: "draft",
@@ -200,7 +203,9 @@ export class CoachProgramController {
           content: draft.content,
           updatedAt: draft.updatedAt.toISOString(),
           startingBlockSetup: reading.startingBlockSetup,
-          cardioExercises: reading.cardioExercises,
+          libraryExercises: reading.libraryExercises,
+          clientProfile: coachingFacts && this.clientProfileOf(coachingFacts),
+          libraryEquipment: reading.libraryEquipment,
         };
       }
     }
@@ -210,7 +215,7 @@ export class CoachProgramController {
     args: ActionFunctionArgs,
     clientId: string | undefined,
   ): Promise<Response> {
-    args.context.get(accessContext).requirePortalAccess("COACH");
+    const coach = args.context.get(accessContext).requirePortalAccess("COACH");
     const target = this.requireClientId(clientId);
     const request = programDraftSaveRequestSchema.safeParse(
       await readJsonRequestBody(args.request, {
@@ -225,6 +230,7 @@ export class CoachProgramController {
     const { updatedAt, ...draft } = request.data;
     const result = await this.options.unitOfWork(() =>
       this.options.saveProgramDraftUseCase.execute({
+        coachAccountId: coach.id,
         clientId: target,
         ...draft,
         expectedUpdatedAt: new Date(updatedAt),
@@ -232,6 +238,24 @@ export class CoachProgramController {
     );
 
     return this.draftSaveResponse(result);
+  }
+
+  private clientProfileOf({
+    goal,
+    equipment,
+    trainingPlace,
+    trainingDays,
+    sessionMinutes,
+    limitations,
+  }: ClientCoachingFacts): ProgramDraftClientProfile {
+    return {
+      goal,
+      equipment,
+      trainingPlace,
+      trainingDays,
+      sessionMinutes,
+      limitations,
+    };
   }
 
   private draftSaveResponse(result: SaveProgramDraftResult): Response {

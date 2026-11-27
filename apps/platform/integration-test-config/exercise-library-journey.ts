@@ -190,6 +190,10 @@ export class ExerciseLibraryJourney {
     return this.send(requester, LIBRARY_PAGE);
   }
 
+  openArchivedLibrary(requester: Requester): Promise<Response> {
+    return this.send(requester, `${LIBRARY_PAGE}?status=archived`);
+  }
+
   openNewExercise(requester: Requester): Promise<Response> {
     return this.send(requester, `${LIBRARY_PAGE}/exercises/new`);
   }

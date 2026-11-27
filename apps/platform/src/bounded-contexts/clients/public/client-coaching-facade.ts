@@ -4,6 +4,8 @@ type ClientCoachingFactsDto = {
   trainingDays: number;
   sessionMinutes: number;
   equipment: string[];
+  trainingPlace: string | null;
+  limitations: string;
 };
 
 type EquipmentOptionDto = {

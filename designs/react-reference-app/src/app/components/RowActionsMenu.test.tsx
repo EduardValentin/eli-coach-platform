@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { CalendarClock, CalendarX, Pencil, Trash2 } from 'lucide-react';
 import { describe, expect, it, vi } from 'vitest';
@@ -43,6 +43,30 @@ describe('RowActionsMenu with a blocked action', () => {
     const deleteItem = screen.getByRole('menuitem', { name: 'Delete' });
     expect(deleteItem).toHaveFocus();
     expect(deleteItem).toHaveAttribute('aria-disabled', 'true');
+  });
+
+  it('takes the menu\'s own focus fill on a blocked destructive action, not the faint red tint', async () => {
+    // arrange
+    const { user } = renderBlockedDeleteMenu();
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Actions for Plank' }));
+
+    // assert
+    const deleteItem = screen.getByRole('menuitem', { name: 'Delete' });
+    expect(deleteItem).toHaveClass('data-[variant=destructive]:focus:bg-accent', 'dark:data-[variant=destructive]:focus:bg-accent');
+  });
+
+  it('keeps the red focus tint on a destructive action that can run', async () => {
+    // arrange
+    const user = userEvent.setup();
+    render(<RowActionsMenu label="Actions for Plank" actions={[{ name: 'delete', label: 'Delete', icon: Trash2, tone: 'destructive', onSelect: vi.fn() }]} />);
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Actions for Plank' }));
+
+    // assert
+    expect(screen.getByRole('menuitem', { name: 'Delete' })).not.toHaveClass('data-[variant=destructive]:focus:bg-accent');
   });
 
   it('does nothing and stays open when the blocked action is clicked', async () => {
@@ -240,5 +264,56 @@ describe('a row menu action that is not allowed right now', () => {
 
     // assert
     await waitFor(() => expect(onCancel).toHaveBeenCalledOnce());
+  });
+});
+
+describe('the fade on a blocked row action', () => {
+  function iconAndLabelOf(item: HTMLElement, label: string) {
+    return { icon: item.querySelector('svg'), label: within(item).getByText(label) };
+  }
+
+  it('sits on the icon and label of a held-back action, so its focus ring keeps full strength', async () => {
+    // arrange
+    const { user } = renderBlockedDeleteMenu();
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Actions for Plank' }));
+
+    // assert
+    const item = screen.getByRole('menuitem', { name: 'Delete' });
+    const { icon, label } = iconAndLabelOf(item, 'Delete');
+    expect(item).toHaveClass('aria-disabled:opacity-100');
+    expect(icon).toHaveClass('opacity-50');
+    expect(label).toHaveClass('opacity-50');
+  });
+
+  it('sits on the icon and label of an action held back with a reason, so its focus ring keeps full strength', async () => {
+    // arrange
+    const { user, trigger } = renderMovedCheckinMenu();
+
+    // act
+    await openMenu(user, trigger);
+
+    // assert
+    const item = screen.getByRole('menuitem', { name: 'Reschedule' });
+    const { icon, label } = iconAndLabelOf(item, 'Reschedule');
+    expect(item).toHaveClass('aria-disabled:opacity-100');
+    expect(icon).toHaveClass('opacity-50');
+    expect(label).toHaveClass('opacity-50');
+  });
+
+  it('leaves an available action unfaded', async () => {
+    // arrange
+    const { user, trigger } = renderMovedCheckinMenu();
+
+    // act
+    await openMenu(user, trigger);
+
+    // assert
+    const item = screen.getByRole('menuitem', { name: 'Cancel' });
+    const { icon, label } = iconAndLabelOf(item, 'Cancel');
+    expect(item).not.toHaveClass('aria-disabled:opacity-100');
+    expect(icon).not.toHaveClass('opacity-50');
+    expect(label).not.toHaveClass('opacity-50');
   });
 });

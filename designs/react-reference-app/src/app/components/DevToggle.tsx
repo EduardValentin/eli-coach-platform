@@ -75,6 +75,7 @@ import { FOOD_SEEDS } from '../services/foodSamples';
 import { FOOD_SAVE_OUTCOMES } from '../services/foodService';
 import { RECIPE_SAVE_OUTCOMES } from '../services/recipeService';
 import { PROGRAM_LOAD_OUTCOMES } from '../services/programLoadService';
+import { BUILDER_SESSIONS } from '../services/builderSessions';
 import { BUILDER_WEEK_DATES } from '../services/builderWeekDates';
 import { DRAFT_SAVE_OUTCOMES, PROGRAM_WRITE_OUTCOMES } from '../services/programWriteService';
 import { RECIPE_PHOTO_UPLOAD_OUTCOMES } from '../services/recipePhotoService';
@@ -1480,6 +1481,28 @@ export function DevToggle() {
                     <SelectContent className={SELECT_CONTENT_CLASS}>
                       <SelectItem value="from-today">From today until day 1</SelectItem>
                       <SelectItem value="undated">None (as production before publishing)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="dev-builder-sessions" className={DEV_LABEL_CLASS}>
+                    Builder sessions
+                  </Label>
+                  <Select
+                    value={appState.builderSessions}
+                    onValueChange={(value) =>
+                      setAppState({
+                        builderSessions: optionOrDefault(BUILDER_SESSIONS, value, 'full'),
+                      })
+                    }
+                  >
+                    <SelectTrigger id="dev-builder-sessions" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className={SELECT_CONTENT_CLASS}>
+                      <SelectItem value="full">Weekly sets and cardio</SelectItem>
+                      <SelectItem value="first-week">First week, no cardio (as production)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

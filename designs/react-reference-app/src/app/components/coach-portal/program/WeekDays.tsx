@@ -1,10 +1,12 @@
 import { useId, useRef, useState, type ReactNode, type RefObject } from 'react';
+import { useAppState } from '../../../context/AppContext';
 import type { Exercise } from '../../../context/TrainingContext';
 import { ArrowRight } from 'lucide-react';
 import { WEEKDAY_LABELS, WEEKDAYS, weekdayAbbreviation, type Block, type LevelHint, type Weekday } from '../../../domain/program';
 import { emptyCardioSession } from '../../../domain/programCardio';
 import { longestWeekOf, type TimingContext } from '../../../domain/sessionTiming';
 import { blockWithDay, describeLoss, type DayChoice } from '../../../domain/weekEditing';
+import { hasWeeklySetsAndCardio } from '../../../services/builderSessions';
 import { useContainerWidthRem } from '../../../hooks/useContainerWidthRem';
 import { DayFace, dayCellVariants, KIND_ICON } from '../../program-view/DayCell';
 import type { ExerciseLibrary } from '../../program-view/programView';
@@ -53,9 +55,15 @@ function DayMenu({ block, day, onChoose }: DayMenuProps) {
   );
 }
 
-function openableIdOf(plan: DayPlan): string | null {
+type OpenableId = (plan: DayPlan) => string | null;
+
+function openableIdWithCardio(plan: DayPlan): string | null {
   if (plan.kind === 'session') return plan.session.id;
   return plan.kind === 'cardio' ? plan.cardio.id : null;
+}
+
+function openableIdWithoutCardio(plan: DayPlan): string | null {
+  return plan.kind === 'session' ? plan.session.id : null;
 }
 
 function dayTitle(block: Block, day: Weekday, choice: DayChoice): string {
@@ -85,13 +93,17 @@ function useWeekLayout(): { ref: RefObject<HTMLElement>; layout: WeekLayout } {
   return { ref, layout: widthRem > 0 && widthRem < ROW_MIN_REM ? 'rail' : 'row' };
 }
 
-type DayCardProps = { day: WeekDay; exercisesById: ExerciseLibrary; menu: ReactNode; onOpenSession: (sessionId: string) => void };
+type DayCardProps = { day: WeekDay; exercisesById: ExerciseLibrary; menu: ReactNode; openableIdOf: OpenableId; onOpenSession: (sessionId: string) => void };
+
+/** A cardio face that opens nothing gives no hover cue, as in production. */
+const UNOPENABLE_CARDIO_CLASS = 'hover:border-training-recovery';
 
 /** The weekday and the options share the card's top line; the face below is the one open control, and its pointer area covers the card. */
-function DayCard({ day, exercisesById, menu, onOpenSession }: DayCardProps) {
+function DayCard({ day, exercisesById, menu, openableIdOf, onOpenSession }: DayCardProps) {
   const openableId = openableIdOf(day.plan);
+  const inert = openableId === null && day.plan.kind === 'cardio';
   return (
-    <div className={dayCellVariants({ variant: 'compact', kind: day.plan.kind })} data-parity={`day-${day.weekday}`}>
+    <div className={cn(dayCellVariants({ variant: 'compact', kind: day.plan.kind }), inert && UNOPENABLE_CARDIO_CLASS)} data-parity={`day-${day.weekday}`}>
       <h4 className={cn(EYEBROW_CLASS, 'col-start-1 row-start-1')}>
         <span aria-hidden="true">{weekdayAbbreviation(day.weekday)}</span>
         <span className="sr-only">{WEEKDAY_LABELS[day.weekday]}</span>
@@ -102,9 +114,9 @@ function DayCard({ day, exercisesById, menu, onOpenSession }: DayCardProps) {
   );
 }
 
-type BuilderWeekProps = { block: Block; days: WeekDay[]; exercisesById: ExerciseLibrary; onOpenSession: (sessionId: string) => void; onChoose: ChooseDay };
+type BuilderWeekProps = { block: Block; days: WeekDay[]; exercisesById: ExerciseLibrary; openableIdOf: OpenableId; onOpenSession: (sessionId: string) => void; onChoose: ChooseDay };
 
-function BuilderWeekRow({ block, days, exercisesById, onOpenSession, onChoose }: BuilderWeekProps) {
+function BuilderWeekRow({ block, days, exercisesById, openableIdOf, onOpenSession, onChoose }: BuilderWeekProps) {
   return (
     <ol className="grid grid-cols-7 gap-x-2" data-parity="week-row">
       {days.map(day => (
@@ -112,6 +124,7 @@ function BuilderWeekRow({ block, days, exercisesById, onOpenSession, onChoose }:
           <DayCard
             day={day}
             exercisesById={exercisesById}
+            openableIdOf={openableIdOf}
             onOpenSession={onOpenSession}
             menu={<DayMenu block={block} day={day.weekday} onChoose={(choice, trigger) => onChoose(day.weekday, choice, trigger)} />}
           />
@@ -121,12 +134,12 @@ function BuilderWeekRow({ block, days, exercisesById, onOpenSession, onChoose }:
   );
 }
 
-function initialRailDay(days: readonly WeekDay[]): Weekday {
+function initialRailDay(days: readonly WeekDay[], openableIdOf: OpenableId): Weekday {
   return (days.find(day => openableIdOf(day.plan) !== null) ?? days[0]).weekday;
 }
 
-function BuilderWeekTabs({ block, days, exercisesById, onOpenSession, onChoose }: BuilderWeekProps) {
-  const [selected, setSelected] = useState<Weekday>(() => initialRailDay(days));
+function BuilderWeekTabs({ block, days, exercisesById, openableIdOf, onOpenSession, onChoose }: BuilderWeekProps) {
+  const [selected, setSelected] = useState<Weekday>(() => initialRailDay(days, openableIdOf));
   const day = days.find(candidate => candidate.weekday === selected) ?? days[0];
   const openableId = openableIdOf(day.plan);
   const length = dayLengthOf(day.plan, exercisesById)?.shown;
@@ -178,6 +191,7 @@ export function WeekDays({ block, level, library, onChange, onOpenSession }: Wee
   const headingId = useId();
   const confirm = useDestructiveConfirm();
   const { ref, layout } = useWeekLayout();
+  const openableIdOf = hasWeeklySetsAndCardio(useAppState().appState.builderSessions) ? openableIdWithCardio : openableIdWithoutCardio;
   const exercisesById = new Map(library.map(exercise => [exercise.id, exercise]));
   const days = weekOf({ block, level, exercises: exercisesById });
 
@@ -191,7 +205,7 @@ export function WeekDays({ block, level, library, onChange, onOpenSession }: Wee
     });
   }
 
-  const view = { block, days, exercisesById, onOpenSession, onChoose: choose };
+  const view = { block, days, exercisesById, openableIdOf, onOpenSession, onChoose: choose };
   return (
     <WeekSection headingId={headingId} layoutRef={ref}>
       {layout === 'row' ? <BuilderWeekRow {...view} /> : <BuilderWeekTabs {...view} />}

@@ -15,12 +15,22 @@ const linkClasses = cva(
         inline:
           "font-medium text-brand-primary underline-offset-4 hover:text-brand-primary-hover hover:underline",
         subtle: "font-medium text-copy-muted hover:text-text-primary",
+        underlined:
+          "underline decoration-divider decoration-1 underline-offset-2 hover:decoration-current print:no-underline",
         "in-text": "py-3.5 text-brand-primary hover:underline",
         pill: "inline-flex items-center rounded-full border border-border-subtle bg-surface-base/80 px-3 py-2 text-sm font-medium text-text-primary shadow-soft hover:border-brand-primary hover:text-brand-primary",
       },
+      reach: {
+        line: "",
+        touch: "inline-flex min-h-12 items-center print:min-h-0",
+      },
     },
+    compoundVariants: [
+      { variant: "underlined", reach: "line", class: "py-1 -my-1" },
+    ],
     defaultVariants: {
       variant: "inline",
+      reach: "line",
     },
   },
 );
@@ -34,11 +44,11 @@ export function linkVariants(options?: LinkVariantProps): string {
 type LinkProps = RouterLinkProps & LinkVariantProps;
 
 export const Link = React.forwardRef<HTMLAnchorElement, LinkProps>(
-  ({ className, prefetch = "intent", variant, ...props }, ref) => (
+  ({ className, prefetch = "intent", reach, variant, ...props }, ref) => (
     <RouterLink
       ref={ref}
       prefetch={prefetch}
-      className={cn(linkClasses({ variant }), className)}
+      className={cn(linkClasses({ reach, variant }), className)}
       {...props}
     />
   ),

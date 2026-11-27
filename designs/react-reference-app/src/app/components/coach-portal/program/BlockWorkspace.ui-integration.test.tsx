@@ -85,6 +85,21 @@ async function addFromLibrary(user: User, name: string) {
   await user.click(within(library()).getByRole('button', { name: `Add ${name}` }));
 }
 
+async function openSubstitutionPickerWithOneHeld() {
+  const user = await openFirstBlock();
+  const main = card(/^A /);
+  const [mainName] = within(main).getAllByRole('heading', { level: 5 }).map(heading => within(heading).getByRole('button').textContent ?? '');
+  await user.click(within(main).getByRole('button', { name: /^Details for / }));
+  const substitutions = within(main).getByRole('group', { name: 'Substitutions' });
+  const [held, removed] = within(substitutions)
+    .getAllByRole('button', { name: /^Remove / })
+    .map(button => (button.getAttribute('aria-label') ?? '').replace(/^Remove /, ''));
+  await user.click(within(substitutions).getByRole('button', { name: `Remove ${removed}` }));
+  await user.click(within(substitutions).getByRole('button', { name: `Add substitution for ${mainName}` }));
+  await showAllEquipment(user);
+  return { user, substitutions, mainName, held };
+}
+
 function pointAt(element: HTMLElement) {
   Object.assign(document, { elementFromPoint: () => element, elementsFromPoint: () => [element] });
 }
@@ -868,6 +883,109 @@ describe('BlockWorkspace', () => {
     expect(within(stretches).getByRole('spinbutton', { name: 'Couch Stretch seconds' })).toHaveValue(30);
   });
 
+  it('says an exercise is already in the warm-up instead of that it was added, and keeps one of it', async () => {
+    // arrange
+    const user = await openFirstBlock();
+    await user.click(within(session('Full Body A')).getByRole('button', { name: 'Add exercise to warm-up' }));
+
+    // act
+    await addFromLibrary(user, '90/90 Hip Switches');
+
+    // assert
+    expect(await screen.findByText('90/90 Hip Switches is already in the warm-up')).toBeInTheDocument();
+    expect(screen.queryByText(/90\/90 Hip Switches added/)).not.toBeInTheDocument();
+    const warmUp = within(session('Full Body A')).getByRole('region', { name: 'Warm-up' });
+    expect(within(warmUp).getAllByRole('spinbutton', { name: '90/90 Hip Switches sets' })).toHaveLength(1);
+  });
+
+  it('says the warm-up holds four exercises instead of that a fifth was added', async () => {
+    // arrange
+    const user = await openFirstBlock();
+    await user.click(within(session('Full Body A')).getByRole('button', { name: 'Add exercise to warm-up' }));
+    await addFromLibrary(user, 'Jumping Jacks');
+    await user.click(within(library()).getByRole('button', { name: 'Add Burpee' }));
+    await user.click(within(library()).getByRole('button', { name: 'Add Mountain Climber' }));
+    expect(await screen.findByText('Mountain Climber added to Full Body A · Warm-up')).toBeInTheDocument();
+
+    // act
+    await user.click(within(library()).getByRole('button', { name: 'Add Squat Jump' }));
+
+    // assert
+    expect(await screen.findByText('Squat Jump not added: the warm-up holds four exercises')).toBeInTheDocument();
+    expect(screen.queryByText('Squat Jump added to Full Body A · Warm-up')).not.toBeInTheDocument();
+    const warmUp = within(session('Full Body A')).getByRole('region', { name: 'Warm-up' });
+    expect(within(warmUp).queryByRole('spinbutton', { name: 'Squat Jump sets' })).not.toBeInTheDocument();
+  });
+
+  it('says a stretch is already in the cool-down instead of that it was added', async () => {
+    // arrange
+    const user = await openFirstBlock();
+    await user.click(within(session('Full Body A')).getByRole('switch', { name: 'Cool-down' }));
+    await user.click(within(session('Full Body A')).getByRole('button', { name: 'Add stretch to cool-down' }));
+    await addFromLibrary(user, 'Couch Stretch');
+    expect(await screen.findByText('Couch Stretch added to Full Body A · Cool-down')).toBeInTheDocument();
+
+    // act
+    await user.click(within(library()).getByRole('button', { name: 'Add Couch Stretch' }));
+
+    // assert
+    expect(await screen.findByText('Couch Stretch is already in the cool-down')).toBeInTheDocument();
+    const stretches = within(session('Full Body A')).getByRole('region', { name: 'Cool-down' });
+    expect(within(stretches).getAllByRole('spinbutton', { name: 'Couch Stretch seconds' })).toHaveLength(1);
+  });
+
+  it('says an exercise cannot be its own substitution, or one it already has, instead of that it was added', async () => {
+    // arrange
+    const { user, substitutions, mainName, held } = await openSubstitutionPickerWithOneHeld();
+
+    // act
+    await user.click(within(library()).getByRole('button', { name: `Add ${mainName}` }));
+
+    // assert
+    expect(await screen.findByText(`${mainName} can’t be its own substitution`)).toBeInTheDocument();
+
+    // act
+    await user.click(within(library()).getByRole('button', { name: `Add ${held}` }));
+
+    // assert
+    expect(await screen.findByText(`${held} is already one of its substitutions`)).toBeInTheDocument();
+    expect(within(substitutions).getAllByRole('button', { name: /^Remove / })).toHaveLength(1);
+  });
+
+  it('says an exercise holds two substitutions instead of that a third was added', async () => {
+    // arrange
+    const { user, substitutions, mainName, held } = await openSubstitutionPickerWithOneHeld();
+    const [second, third] = within(library())
+      .getAllByRole('button', { name: /^Add / })
+      .map(button => (button.getAttribute('aria-label') ?? '').replace(/^Add /, ''))
+      .filter(name => name !== mainName && name !== held);
+    await user.click(within(library()).getByRole('button', { name: `Add ${second}` }));
+    expect(await screen.findByText(`${second} added to the substitutions for ${mainName}`)).toBeInTheDocument();
+
+    // act
+    await user.click(within(library()).getByRole('button', { name: `Add ${third}` }));
+
+    // assert
+    expect(await screen.findByText(`${third} not added: an exercise holds two substitutions`)).toBeInTheDocument();
+    expect(within(substitutions).getAllByRole('button', { name: /^Remove / })).toHaveLength(2);
+    expect(within(substitutions).queryByRole('button', { name: `Remove ${third}` })).not.toBeInTheDocument();
+  });
+
+  it('says a cardio session takes cardio exercises instead of that a lifting exercise was added', async () => {
+    // arrange
+    const user = await openFirstBlock();
+    await chooseInDayMenu(user, 'Saturday', 'Cardio');
+    await user.click(within(day('Saturday')).getByRole('button', { name: 'Cardio' }));
+    await user.click(within(session('Cardio')).getByRole('button', { name: 'Moderate cardio' }));
+
+    // act
+    await addFromLibrary(user, 'Plank');
+
+    // assert
+    expect(await screen.findByText('Plank not added: a cardio session takes cardio exercises')).toBeInTheDocument();
+    expect(screen.queryByText(/Plank added/)).not.toBeInTheDocument();
+  });
+
   it('removes substitutions and suggests them again', async () => {
     // arrange
     const user = await openFirstBlock();
@@ -1383,5 +1501,93 @@ describe('BlockWorkspace weeks of a Hypertrophy block', () => {
     expect(within(within(squat).getByRole('list', { name: 'Sets for Barbell Back Squat, week by week' })).getAllByRole('listitem')).toHaveLength(1);
     expect(weekField(squat, 'Week 11 set 1 RIR')).toHaveValue('4');
     expect(within(squat).getByText('Set by you.')).toBeInTheDocument();
+  });
+});
+
+describe('BlockWorkspace with the first week and no cardio', () => {
+  async function openFirstWeekBlock() {
+    const user = renderProgramEditor('&pseed=draft&jstage=approved&psessions=first-week');
+    await user.click(within(screen.getByRole('navigation', { name: 'Program sections' })).getByRole('button', { name: /^1 Foundation\b/ }));
+    return user;
+  }
+
+  function stubNarrowWeek() {
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        constructor(private readonly onResize: (entries: { contentRect: { width: number } }[]) => void) {}
+        observe() {
+          this.onResize([{ contentRect: { width: 320 } }]);
+        }
+        unobserve() {}
+        disconnect() {}
+      },
+    );
+  }
+
+  it('offers Details only on a card, with no Sets disclosure, no Progression item and no reset in its menu', async () => {
+    // arrange
+    const user = await openFirstWeekBlock();
+    const main = card(/^A /);
+
+    // act
+    await user.click(within(main).getByRole('button', { name: / actions$/ }));
+
+    // assert
+    expect(within(main).getByRole('button', { name: /^Details for / })).toBeInTheDocument();
+    expect(within(main).queryByRole('button', { name: /^Sets for / })).not.toBeInTheDocument();
+    expect(setStats(main)).toEqual(['Warm-up 2 sets', 'Working 3 sets × 12–15', 'RIR 3', 'Rest 1:15']);
+    expect(await screen.findByRole('menuitem', { name: 'Remove' })).toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: 'Reset to block defaults' })).not.toBeInTheDocument();
+  });
+
+  it('shows a cardio day as a face that is not a button, and lists no cardio card', async () => {
+    // arrange
+    const user = await openFirstWeekBlock();
+
+    // act
+    await chooseInDayMenu(user, 'Saturday', 'Cardio');
+
+    // assert
+    const saturday = day('Saturday');
+    expect(within(saturday).getByText('Cardio')).toBeInTheDocument();
+    expect(within(saturday).getAllByRole('button').map(button => button.getAttribute('aria-label'))).toEqual(['Saturday options']);
+    expect(screen.queryByRole('article', { name: 'Cardio' })).not.toBeInTheDocument();
+    expect(within(day('Monday')).getByRole('button', { name: /^Full Body A\s+about \d+ min$/ })).toBeInTheDocument();
+  });
+
+  it('gives a cardio day in the narrow week no Open session and starts the rail on the first strength day', async () => {
+    // arrange
+    stubNarrowWeek();
+    const user = await openFirstWeekBlock();
+
+    // act
+    const days = within(week()).getByRole('tablist', { name: 'Days' });
+    await user.click(within(days).getByRole('tab', { name: /^Saturday/ }));
+    await chooseInDayMenu(user, 'Saturday', 'Cardio');
+
+    // assert
+    expect(within(week()).getByRole('tab', { name: /^Saturday.*Cardio/, selected: true })).toBeInTheDocument();
+    expect(within(week()).queryByRole('button', { name: 'Open session' })).not.toBeInTheDocument();
+
+    // act
+    await user.click(within(days).getByRole('tab', { name: /^Monday/ }));
+
+    // assert
+    expect(within(week()).getByRole('button', { name: 'Open session' })).toBeInTheDocument();
+  });
+
+  it('opens the first strength session when a cardio day comes first in the week', async () => {
+    // arrange
+    const user = await openFirstWeekBlock();
+
+    // act
+    await chooseInDayMenu(user, 'Monday', 'Cardio');
+    const confirm = screen.queryByRole('alertdialog');
+    if (confirm) await user.click(within(confirm).getByRole('button', { name: 'Change day' }));
+
+    // assert
+    expect(within(week()).queryByRole('button', { name: 'Cardio' })).not.toBeInTheDocument();
+    expect(within(session('Full Body B')).getAllByRole('article').length).toBeGreaterThan(0);
   });
 });

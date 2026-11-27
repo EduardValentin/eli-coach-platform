@@ -30,6 +30,7 @@ import {
   type BlockType,
   type ClientLevel,
   type ProgramContent,
+  type Session,
 } from "~/bounded-contexts/programs/training-programs/public/program-editing";
 
 import { EditorAnnouncerProvider } from "./editor-announcer";
@@ -51,12 +52,29 @@ function idsFrom(prefix: string): () => string {
 }
 
 const suggestions = new ProgramSuggestions({
-  cardioExercises: [],
+  libraryExercises: [],
   newId: idsFrom("fixture"),
 });
 
 function blockOf(type: BlockType, weeks: number): Block {
-  return suggestions.newBlock(type, weeks, { setup: SETUP });
+  return suggestions.newBlock(type, weeks, {
+    setup: { ...SETUP, level: "beginner" },
+  });
+}
+
+function row(id: string, exerciseId: string): Session["rows"][number] {
+  return {
+    id,
+    exerciseId,
+    slot: "C",
+    startSets: [],
+    restSeconds: 60,
+    lastSetTechnique: "none",
+    substitutions: [],
+    progression: { kind: "double" },
+    cues: "",
+    touched: [],
+  };
 }
 
 function withExercises(block: Block, sessionCount: number): Block {
@@ -67,8 +85,8 @@ function withExercises(block: Block, sessionCount: number): Block {
         ? {
             ...session,
             rows: [
-              { id: `${session.id}-row-1`, exerciseId: "squat" },
-              { id: `${session.id}-row-2`, exerciseId: "row" },
+              row(`${session.id}-row-1`, "squat"),
+              row(`${session.id}-row-2`, "row"),
             ],
           }
         : session,
@@ -121,6 +139,7 @@ function Harness({
         <PlanOverview
           content={content}
           level={level}
+          libraryExercises={[]}
           onAddBlock={onAddBlock}
           onChange={change}
           onOpenBlock={onOpenBlock}

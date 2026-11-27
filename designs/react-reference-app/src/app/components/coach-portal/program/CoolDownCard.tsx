@@ -31,6 +31,7 @@ export function CoolDownCard({ session, library, edits, onChange, onPickStretch 
   const filling = useIsLibraryTarget({ kind: 'cool-down', sessionId: session.id });
   return (
     <DropZone
+      parityRoot="CoolDownCard"
       rules={{ sessionId: session.id, onDrop: dragged => dragged.kind === LIBRARY_EXERCISE && onChange(edits.add(dragged.item.exercise.id)) }}
       accepts={acceptsStretch}
       className={cn('rounded-control border border-border-subtle bg-surface-subtle p-3', { [LIBRARY_TARGET_CLASS]: filling })}

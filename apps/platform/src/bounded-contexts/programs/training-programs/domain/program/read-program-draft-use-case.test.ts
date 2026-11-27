@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import type { CardioExercise } from "./cardio-exercises-port";
 import type { ClientCoaching } from "./client-coaching-port";
 import type { ClientIdentity } from "./client-identity-port";
+import { EQUIPMENT, type LibraryExercise } from "./library-exercise";
 import { Program } from "./program";
 import type { ProgramContent } from "./program-content";
 import type { ProgramVersionSnapshot } from "./program-version";
@@ -22,6 +22,8 @@ const APPROVED: ClientCoaching = {
       trainingDays: 4,
       sessionMinutes: 45,
       equipment: ["Full gym"],
+      trainingPlace: "Gym",
+      limitations: "Lower back, no heavy hinges",
     },
   },
   equipmentOptions: [],
@@ -34,7 +36,36 @@ const NOT_APPROVED: ClientCoaching = {
   goalOptions: [],
 };
 
-const WALKING: CardioExercise = { id: "exercise-walk", name: "Walking" };
+function libraryExercise(
+  id: string,
+  name: string,
+  overrides: Partial<LibraryExercise> = {},
+): LibraryExercise {
+  return {
+    id,
+    name,
+    type: "cardio",
+    unit: "time",
+    perSide: false,
+    pattern: null,
+    role: null,
+    primaryMuscles: [],
+    secondaryMuscles: [],
+    equipment: [],
+    tags: [],
+    cues: "",
+    videoPath: null,
+    archived: false,
+    ...overrides,
+  };
+}
+
+const WALKING = libraryExercise("exercise-walk", "Walking");
+const ARCHIVED_SQUAT = libraryExercise("exercise-squat", "Back squat", {
+  type: "resistance",
+  unit: "reps",
+  archived: true,
+});
 
 const ANA: ClientIdentity = {
   clientId: CLIENT_ID,
@@ -91,9 +122,9 @@ function readDraft({
     },
     coachingEndedPort: { hasEnded: async () => coachingEnded },
     clientCoachingPort: { find: async () => clientCoaching },
-    cardioExercisesPort: {
+    libraryExercisesPort: {
       listFor: async (coachAccountId) =>
-        coachAccountId === COACH_ACCOUNT_ID ? [WALKING] : [],
+        coachAccountId === COACH_ACCOUNT_ID ? [WALKING, ARCHIVED_SQUAT] : [],
     },
     programStorePort: {
       findByClientId: async (clientId) =>
@@ -130,7 +161,72 @@ describe("ReadProgramDraftUseCase", () => {
         dailySteps: 6000,
         language: "ro",
       },
-      cardioExercises: [WALKING],
+      libraryExercises: [WALKING, ARCHIVED_SQUAT],
+      coachingFacts: {
+        goal: "Build muscle",
+        level: "intermediate",
+        trainingDays: 4,
+        sessionMinutes: 45,
+        equipment: ["Full gym"],
+        trainingPlace: "Gym",
+        limitations: "Lower back, no heavy hinges",
+      },
+      libraryEquipment: [...EQUIPMENT],
+    });
+  });
+
+  it("maps her equipment to the library's equipment", async () => {
+    // arrange
+    const readProgramDraftUseCase = readDraft({
+      clientCoaching: {
+        ...APPROVED,
+        answers: {
+          status: "approved",
+          coachingFacts: {
+            goal: "Build muscle",
+            level: "intermediate",
+            trainingDays: 4,
+            sessionMinutes: 45,
+            equipment: ["Dumbbells", "Resistance bands"],
+            trainingPlace: "Home",
+            limitations: "",
+          },
+        },
+      },
+      programs: [anasProgram([DRAFT_VERSION])],
+    });
+
+    // act
+    const reading = await readProgramDraftUseCase.execute({
+      clientId: CLIENT_ID,
+      coachAccountId: COACH_ACCOUNT_ID,
+    });
+
+    // assert
+    expect(reading).toMatchObject({
+      status: "draft",
+      libraryEquipment: ["Dumbbells", "Bench", "Bands"],
+    });
+  });
+
+  it("shows no client profile and none of her equipment while her answers are not approved", async () => {
+    // arrange
+    const readProgramDraftUseCase = readDraft({
+      clientCoaching: NOT_APPROVED,
+      programs: [anasProgram([DRAFT_VERSION])],
+    });
+
+    // act
+    const reading = await readProgramDraftUseCase.execute({
+      clientId: CLIENT_ID,
+      coachAccountId: COACH_ACCOUNT_ID,
+    });
+
+    // assert
+    expect(reading).toMatchObject({
+      status: "draft",
+      coachingFacts: null,
+      libraryEquipment: [],
     });
   });
 

@@ -1,6 +1,7 @@
 import type {
   Exercise,
   ExerciseDraftInput,
+  ExerciseListingEntry,
   ExerciseSaveProblems,
   ExerciseSnapshot,
   ExerciseStatus,
@@ -15,9 +16,14 @@ type ExerciseVideoView = { path: string; format: ExerciseVideoFormat };
 export type ExerciseView = Omit<
   ExerciseSnapshot,
   "ownerAccountId" | "archivedAt" | "createdAt" | "updatedAt" | "video"
-> & { video: ExerciseVideoView | null; status: ExerciseStatus };
+> & {
+  video: ExerciseVideoView | null;
+  status: ExerciseStatus;
+};
 
-export type ExerciseLibraryView = { exercises: ExerciseView[] };
+export type ExerciseListingView = ExerciseView & { programCount: number };
+
+export type ExerciseLibraryView = { exercises: ExerciseListingView[] };
 
 export type ExerciseEditorView = {
   exercise: ExerciseView | null;
@@ -49,6 +55,11 @@ export type ExerciseRequest = z.infer<typeof exerciseRequestSchema>;
 
 export const exerciseLifecycleAnswerSchema = z.object({ name: z.string() });
 
+export const exerciseInUseAnswerSchema = z.object({
+  error: z.literal("in-use"),
+  programCount: z.number().int().positive(),
+});
+
 export const exerciseSavedAnswerSchema = z.object({
   redirectTo: z.string().regex(/^\/(?!\/)/),
 });
@@ -74,7 +85,20 @@ export const exerciseProblemsAnswerSchema = z.object({
   problems: exerciseProblemsSchema,
 });
 
+export function presentListedExercise({
+  programCount,
+  ...exercise
+}: ExerciseListingEntry): ExerciseListingView {
+  return { ...exerciseViewOf(exercise), programCount };
+}
+
 export function presentExercise(exercise: Exercise): ExerciseView {
+  return exerciseViewOf({ ...exercise.toSnapshot(), status: exercise.status });
+}
+
+function exerciseViewOf(
+  exercise: ExerciseSnapshot & { status: ExerciseStatus },
+): ExerciseView {
   const {
     ownerAccountId: _ownerAccountId,
     archivedAt: _archivedAt,
@@ -82,7 +106,7 @@ export function presentExercise(exercise: Exercise): ExerciseView {
     updatedAt: _updatedAt,
     video,
     ...view
-  } = exercise.toSnapshot();
+  } = exercise;
 
   return {
     ...view,
@@ -90,6 +114,5 @@ export function presentExercise(exercise: Exercise): ExerciseView {
       path: exerciseVideoPath(view.id, video.videoId),
       format: video.format,
     },
-    status: exercise.status,
   };
 }

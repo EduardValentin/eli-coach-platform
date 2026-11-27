@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import type { CardioExercise } from "./cardio-exercises-port";
-import type { Block } from "./program-content";
+import type { LibraryExercise } from "./library-exercise";
+import type { Block, ExerciseRow, PlannedSet } from "./program-content";
 import type { ProgramSetupValues } from "./program-setup";
 import { ProgramSuggestions } from "./program-suggestions";
 
@@ -16,13 +16,37 @@ const SETUP: ProgramSetupValues = {
   equipment: ["Dumbbells"],
 };
 
-const BIKE: CardioExercise = { id: "bike", name: "Stationary bike" };
+function libraryExercise(
+  id: string,
+  name: string,
+  overrides: Partial<LibraryExercise> = {},
+): LibraryExercise {
+  return {
+    id,
+    name,
+    type: "cardio",
+    unit: "time",
+    perSide: false,
+    pattern: null,
+    role: null,
+    primaryMuscles: [],
+    secondaryMuscles: [],
+    equipment: [],
+    tags: [],
+    cues: "",
+    videoPath: null,
+    archived: false,
+    ...overrides,
+  };
+}
 
-function suggestionsOver(cardioExercises: CardioExercise[]) {
+const BIKE = libraryExercise("bike", "Stationary bike");
+
+function suggestionsOver(libraryExercises: LibraryExercise[]) {
   let next = 0;
 
   return new ProgramSuggestions({
-    cardioExercises,
+    libraryExercises,
     newId: () => `id-${(next += 1)}`,
   });
 }
@@ -365,6 +389,95 @@ describe("ProgramSuggestions newBlock", () => {
       "Lower B",
       "Upper B",
     ]);
+  });
+});
+
+function squatRow(weightKg: number): ExerciseRow {
+  return {
+    id: "row-1",
+    exerciseId: "squat",
+    slot: "A",
+    startSets: [3, 3, 3, 2].map((rir, index): PlannedSet => ({
+      id: `set-${index + 1}`,
+      kind: "working",
+      start: { reps: { min: 6, max: 8 }, rir, weightKg },
+    })),
+    restSeconds: 90,
+    lastSetTechnique: "none",
+    substitutions: [],
+    progression: { kind: "double" },
+    cues: "",
+    touched: [],
+  };
+}
+
+function withSquatInFirstSession(block: Block): Block {
+  const [first, ...others] = block.sessions;
+
+  return {
+    ...block,
+    sessions: [{ ...first, rows: [squatRow(70)] }, ...others],
+  };
+}
+
+const SQUAT = libraryExercise("squat", "Back squat", {
+  type: "resistance",
+  unit: "reps",
+  pattern: "squat",
+  role: "main-compound",
+  equipment: ["Barbell"],
+});
+
+describe("ProgramSuggestions newBlock rows", () => {
+  it("copies the rows of the block before it with fresh ids and the new block's defaults", () => {
+    // arrange
+    const suggestions = suggestionsOver([SQUAT]);
+    const previous = {
+      ...withSquatInFirstSession(
+        suggestions.initialContent(SETUP).plan.blocks[1],
+      ),
+      type: "hypertrophy" as const,
+    };
+
+    // act
+    const block = suggestions.newBlock("strength", 4, {
+      setup: SETUP,
+      previous,
+    });
+
+    // assert
+    const [copied] = block.sessions[0].rows;
+    expect(copied.id).not.toBe("row-1");
+    expect(copied.exerciseId).toBe("squat");
+    expect(copied.restSeconds).toBe(150);
+    expect(copied.startSets.map((set) => set.start.reps)).toEqual(
+      [1, 2, 3, 4].map(() => ({ min: 3, max: 6 })),
+    );
+  });
+
+  it("prefills a Deload's rows from the last week of the block before it", () => {
+    // arrange
+    const suggestions = suggestionsOver([SQUAT]);
+    const previous = {
+      ...withSquatInFirstSession(
+        suggestions.initialContent(SETUP).plan.blocks[1],
+      ),
+      type: "hypertrophy" as const,
+      weeks: 6,
+    };
+
+    // act
+    const deload = suggestions.newBlock("deload", 1, {
+      setup: { ...SETUP, level: "intermediate" },
+      previous,
+    });
+
+    // assert
+    expect(
+      deload.sessions[0].rows[0].startSets.map((set) => set.start),
+    ).toEqual(
+      [1, 2].map(() => ({ reps: { min: 7, max: 8 }, rir: 4, weightKg: 65 })),
+    );
   });
 });
 

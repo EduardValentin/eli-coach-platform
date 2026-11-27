@@ -8,7 +8,12 @@ import {
   type AccountSession,
   type PlatformRig,
 } from "./platform-rig";
-import { ANA } from "./subscriptions-journey";
+import {
+  ANA,
+  FIRST_PURCHASE,
+  type Purchase,
+  type Visitor,
+} from "./subscriptions-journey";
 
 export const SIGNED_OUT = "signed-out";
 
@@ -58,6 +63,112 @@ export type DraftRow = {
   updatedAt: Date;
 };
 
+export type ClientAdmission = { visitor: Visitor; purchase: Purchase };
+
+type WarmUpItem = {
+  id: string;
+  exerciseId: string;
+  sets: number;
+  seconds: number;
+};
+
+type CoolDownItem = { id: string; exerciseId: string; seconds: number };
+
+export type FilledSession = {
+  rows: ReturnType<typeof exerciseRow>[];
+  warmUp: WarmUpItem[];
+  coolDown: { enabled: boolean; items: CoolDownItem[] };
+};
+
+const ANAS_ADMISSION: ClientAdmission = {
+  visitor: ANA,
+  purchase: FIRST_PURCHASE,
+};
+
+const REST_DAY = { kind: "rest" } as const;
+
+/** A row of the builder's wire content: one working set, on slot C unless the details say otherwise. */
+export function exerciseRow(
+  id: string,
+  exerciseId: string,
+  details: Record<string, unknown> = {},
+) {
+  return {
+    id,
+    exerciseId,
+    slot: "C",
+    startSets: [
+      {
+        id: `${id}-set-1`,
+        kind: "working",
+        start: { reps: { min: 8, max: 10 }, rir: 2 },
+      },
+    ],
+    restSeconds: 90,
+    lastSetTechnique: "none",
+    substitutions: [] as string[],
+    progression: { kind: "double" },
+    cues: "",
+    touched: [] as string[],
+    ...details,
+  };
+}
+
+/** One three-week Foundation block whose Tuesday session holds the given exercises and whose Friday session is empty. */
+export function planWithSession(session: Partial<FilledSession>) {
+  return {
+    header: { title: "", focus: "", personalNote: "" },
+    plan: {
+      blocks: [
+        {
+          id: "block-1",
+          originId: "block-1",
+          type: "foundation",
+          weeks: 3,
+          trainingDays: 2,
+          calibrationWeek: false,
+          introText: "",
+          clientNote: "",
+          split: { shape: "full-body", name: "", text: "" },
+          targetMinutes: 45,
+          calendar: {
+            mon: REST_DAY,
+            tue: { kind: "session", sessionId: "session-a" },
+            wed: REST_DAY,
+            thu: REST_DAY,
+            fri: { kind: "session", sessionId: "session-b" },
+            sat: REST_DAY,
+            sun: REST_DAY,
+          },
+          sessions: [
+            {
+              id: "session-a",
+              originId: "session-a",
+              name: "Full Body A",
+              warmUp: { items: session.warmUp ?? [] },
+              coolDown: session.coolDown ?? { enabled: false, items: [] },
+              rows: session.rows ?? [],
+            },
+            {
+              id: "session-b",
+              originId: "session-b",
+              name: "Full Body B",
+              warmUp: { items: [] },
+              coolDown: { enabled: false, items: [] },
+              rows: [],
+            },
+          ],
+          cardioSessions: [],
+          dailySteps: 8000,
+          missedDayNote: "",
+        },
+      ],
+    },
+    nutritionNotes: "",
+    lifestyleNotes: "",
+  };
+}
+
 export function coachClientPage(clientId: string): string {
   return `/coach/clients/${clientId}`;
 }
@@ -87,8 +198,9 @@ export class TrainingProgramsJourney {
   async submittedClient(
     session: AccountSession,
     submission: OnboardingSubmission = regularSubmission(),
+    { visitor, purchase }: ClientAdmission = ANAS_ADMISSION,
   ): Promise<string> {
-    await this.onboarding.admit(ANA, session);
+    await this.onboarding.admit(visitor, session, purchase);
     await this.onboarding.submitWith(session, submission);
 
     return this.onboarding.clientIdOf(session);
@@ -97,8 +209,9 @@ export class TrainingProgramsJourney {
   async approvedClient(
     session: AccountSession,
     submission: OnboardingSubmission = regularSubmission(),
+    admission: ClientAdmission = ANAS_ADMISSION,
   ): Promise<string> {
-    const clientId = await this.submittedClient(session, submission);
+    const clientId = await this.submittedClient(session, submission, admission);
     await this.onboarding.approve(COACH_SESSION, clientId);
 
     return clientId;
@@ -155,6 +268,29 @@ export class TrainingProgramsJourney {
 
     if (response.status !== 302) {
       throw new Error(`Starting her program answered ${response.status}.`);
+    }
+  }
+
+  /** Saves the content over her stored draft, as the builder does from the copy it read. */
+  async saveOverStoredDraft(clientId: string, content: unknown): Promise<void> {
+    const [program] = await this.programRowsOf(clientId);
+    const [draft] = await this.draftRowsOf(clientId);
+
+    if (!program || !draft) {
+      throw new Error("Her program holds no draft to save over.");
+    }
+
+    const response = await this.saveDraft(COACH_SESSION, clientId, {
+      content,
+      level: program.level,
+      language: program.language,
+      updatedAt: draft.updatedAt.toISOString(),
+    });
+
+    if (response.status !== 200) {
+      throw new Error(
+        `Saving her draft answered ${response.status}: ${await response.text()}`,
+      );
     }
   }
 

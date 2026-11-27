@@ -1,13 +1,29 @@
 import { describe, expect, it } from "vitest";
 
 import { BlockFilling } from "./block-filling";
+import type { ExerciseRow } from "./program-content";
 import { ProgramSuggestions } from "./program-suggestions";
+
+function row(id: string, exerciseId: string): ExerciseRow {
+  return {
+    id,
+    exerciseId,
+    slot: "A",
+    startSets: [],
+    restSeconds: 60,
+    lastSetTechnique: "none",
+    substitutions: [],
+    progression: { kind: "double" },
+    cues: "",
+    touched: [],
+  };
+}
 
 function fullBodyBlock() {
   let id = 0;
 
   return new ProgramSuggestions({
-    cardioExercises: [],
+    libraryExercises: [],
     newId: () => `id-${(id += 1)}`,
   }).newBlock("foundation", 4, {
     setup: {
@@ -16,6 +32,7 @@ function fullBodyBlock() {
       sessionMinutes: 60,
       dailySteps: 6000,
       language: "en",
+      level: "beginner",
     },
   });
 }
@@ -28,8 +45,8 @@ describe("BlockFilling", () => {
     const filled = {
       ...block,
       sessions: [
-        { ...first, rows: [{ id: "row-1", exerciseId: "squat" }] },
-        { ...second, rows: [{ id: "row-2", exerciseId: "" }] },
+        { ...first, rows: [row("row-1", "squat")] },
+        { ...second, rows: [row("row-2", "")] },
         third,
       ],
     };

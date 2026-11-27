@@ -203,6 +203,63 @@ describe('DevToggle exercise video upload', () => {
     expect(new URLSearchParams(window.location.search).get('exupload')).toBe('holds-uploading');
   });
 
+  it('offers the builder sessions setting under the builder week dates, defaulting to the weekly sets and cardio', async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderDevToggle();
+    await openDevSettings();
+    await user.click(screen.getByRole('tab', { name: 'Journey' }));
+
+    // act
+    const weekDates = screen.getByRole('combobox', { name: 'Builder week dates' });
+    const select = screen.getByRole('combobox', { name: 'Builder sessions' });
+    await user.click(select);
+
+    // assert
+    expect(weekDates.compareDocumentPosition(select) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(select).toHaveTextContent('Weekly sets and cardio');
+    expect(screen.getAllByRole('option').map((option) => option.textContent)).toEqual([
+      'Weekly sets and cardio',
+      'First week, no cardio (as production)',
+    ]);
+    expect(new URLSearchParams(window.location.search).has('psessions')).toBe(false);
+  });
+
+  it('keeps the builder sessions in the address only while they are not the default', async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderDevToggle();
+    await openDevSettings();
+    await user.click(screen.getByRole('tab', { name: 'Journey' }));
+    await user.click(screen.getByRole('combobox', { name: 'Builder sessions' }));
+
+    // act
+    await user.click(screen.getByRole('option', { name: 'First week, no cardio (as production)' }));
+
+    // assert
+    expect(new URLSearchParams(window.location.search).get('psessions')).toBe('first-week');
+
+    // act
+    await user.click(screen.getByRole('combobox', { name: 'Builder sessions' }));
+    await user.click(screen.getByRole('option', { name: 'Weekly sets and cardio' }));
+
+    // assert
+    expect(new URLSearchParams(window.location.search).has('psessions')).toBe(false);
+  });
+
+  it('reads the builder sessions from a shared address', async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderDevToggle('?psessions=first-week');
+    await openDevSettings();
+
+    // act
+    await user.click(screen.getByRole('tab', { name: 'Journey' }));
+
+    // assert
+    expect(screen.getByRole('combobox', { name: 'Builder sessions' })).toHaveTextContent('First week, no cardio (as production)');
+  });
+
   it('reads the outcome from a shared address', async () => {
     // arrange
     const user = userEvent.setup();

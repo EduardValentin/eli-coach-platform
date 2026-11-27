@@ -32,6 +32,8 @@ const ANA: ClientCoachingDto = {
     trainingDays: 3,
     sessionMinutes: 60,
     equipment: ["Dumbbells"],
+    trainingPlace: "Gym",
+    limitations: "",
   },
   equipmentOptions: [
     { equipment: "Dumbbells", exclusive: false },
@@ -138,8 +140,11 @@ describe("composeTrainingProgramsFeature", () => {
     // assert
     expect(outcome).toEqual({ status: "failed" });
     expect(
-      handles.cardioExercisesFacade.listCardioExercises,
+      handles.libraryExercisesFacade.listLibraryExercises,
     ).toHaveBeenCalledWith(COACH.id);
+    expect(
+      handles.exerciseUsageFacade.recordVersionUsage,
+    ).not.toHaveBeenCalled();
     expect(handles.loggerPort.error).toHaveBeenCalledOnce();
     expect(handles.loggerPort.error).toHaveBeenCalledWith(
       "Program could not be started; nothing was saved.",
@@ -155,8 +160,11 @@ describe("composeTrainingProgramsFeature", () => {
 
 function createHandles() {
   return {
-    cardioExercisesFacade: {
-      listCardioExercises: vi.fn().mockResolvedValue([]),
+    libraryExercisesFacade: {
+      listLibraryExercises: vi.fn().mockResolvedValue([]),
+    },
+    exerciseUsageFacade: {
+      recordVersionUsage: vi.fn().mockResolvedValue({ status: "recorded" }),
     },
     clientCoachingFacade: {
       coachingOf: vi.fn().mockResolvedValue(ANA),

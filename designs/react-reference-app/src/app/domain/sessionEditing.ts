@@ -1,12 +1,15 @@
 import type { Exercise } from '../context/TrainingContext';
 import { newId, SLOTS, withField, type Block, type PlacedRow, type Row, type Session, type Slot } from './program';
 import { resetRowDefaults } from './programDefaults';
+import { inNameOrder } from './libraryLifecycle';
 import { filledRow, type RowContext } from './programSuggestions';
 import { slotPlanFor } from './splitTemplates';
 import { MAX_SUBSTITUTIONS, substitutionsFor } from './substitutions';
 
 export type Placement = { slot: Slot; beforeRowId?: string };
 export type SlotUnit<Unit extends PlacedRow = Row> = { key: string; group?: string; rows: Unit[] };
+
+export type SubstitutionRefusal = 'own-substitution' | 'already-a-substitution' | 'substitutions-full';
 
 export const SINGLE_CARD_SLOTS: readonly Slot[] = ['A', 'B'];
 
@@ -81,7 +84,8 @@ export function quickAddSlot(block: Block, session: Session, exercise: Exercise)
   return matching ?? 'C';
 }
 
-export function rowEdits(session: Session, context: RowContext) {
+export function rowEdits(session: Session, rowContext: RowContext) {
+  const context: RowContext = { ...rowContext, library: inNameOrder(rowContext.library) };
   const { rows } = session;
   const withRows = (next: Row[]): Session => ({ ...session, rows: tidy(next) });
   const rowOf = (rowId: string) => rows.find(row => row.id === rowId);
@@ -103,6 +107,14 @@ export function rowEdits(session: Session, context: RowContext) {
   function neighbour(rowId: string, step: number): Row | undefined {
     const index = rows.findIndex(row => row.id === rowId);
     return index < 0 ? undefined : rows[index + step];
+  }
+
+  function substitutionRefusalFor(rowId: string, exerciseId: string): SubstitutionRefusal | undefined {
+    const row = rowOf(rowId);
+    if (!row) return undefined;
+    if (row.exerciseId === exerciseId) return 'own-substitution';
+    if (row.substitutions.includes(exerciseId)) return 'already-a-substitution';
+    return row.substitutions.length >= MAX_SUBSTITUTIONS ? 'substitutions-full' : undefined;
   }
 
   function add(exercise: Exercise, placement: Placement): Session {
@@ -178,11 +190,10 @@ export function rowEdits(session: Session, context: RowContext) {
     clear(): Session {
       return { ...session, rows: [] };
     },
+    substitutionRefusalFor,
     addSubstitution(rowId: string, exerciseId: string): Session {
-      return mapRow(rowId, row => {
-        if (row.exerciseId === exerciseId || row.substitutions.includes(exerciseId)) return row;
-        return { ...row, substitutions: [...row.substitutions, exerciseId].slice(0, MAX_SUBSTITUTIONS) };
-      });
+      if (substitutionRefusalFor(rowId, exerciseId)) return session;
+      return mapRow(rowId, row => ({ ...row, substitutions: [...row.substitutions, exerciseId] }));
     },
     removeSubstitution(rowId: string, exerciseId: string): Session {
       return mapRow(rowId, row => withField(row, 'substitutions', row.substitutions.filter(id => id !== exerciseId)));

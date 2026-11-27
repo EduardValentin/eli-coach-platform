@@ -264,6 +264,14 @@ export class ExerciseLibraryPage {
   }
 
   private async chooseRowActionWithKeyboard(name: string, action: RowAction) {
+    await this.focusRowActionByKeyboard(name, action);
+    await this.page.keyboard.press("Enter");
+  }
+
+  async focusRowActionByKeyboard(
+    name: string,
+    action: RowAction,
+  ): Promise<void> {
     await expect(async () => {
       if (!(await this.rowMenu.isVisible())) {
         await this.tabFromHeadingTo(this.actionsTriggerOf(name));
@@ -275,10 +283,32 @@ export class ExerciseLibraryPage {
     }).toPass();
     await expect(this.rowMenu.getByRole("menuitem").first()).toBeFocused();
     await this.arrowDownTo(this.rowMenuItem(action));
+  }
+
+  async focusedActionFill(): Promise<string> {
+    return this.page
+      .locator('[role="menuitem"]:focus')
+      .evaluate((item) => getComputedStyle(item).backgroundColor);
+  }
+
+  async expectHintShown(reason: string): Promise<void> {
+    await expect(this.page.getByText(reason, { exact: true })).toBeVisible();
+  }
+
+  async pressEnterOnFocusedAction(): Promise<void> {
     await this.page.keyboard.press("Enter");
   }
 
-  private async expectDeleteAsked(name: string): Promise<void> {
+  async clickHeldBackDelete(): Promise<void> {
+    await this.rowMenuItem("Delete").click({ force: true });
+  }
+
+  async expectHeldBackDeleteDidNothing(): Promise<void> {
+    await expect(this.rowMenu).toBeVisible();
+    await expect(this.deleteDialog).toHaveCount(0);
+  }
+
+  async expectDeleteAsked(name: string): Promise<void> {
     await expect(this.deleteDialog).toHaveAccessibleName(`Delete “${name}”?`);
     await expect(this.deleteDialog).toHaveAccessibleDescription(
       DELETE_DESCRIPTION,
@@ -655,6 +685,41 @@ export class ExerciseLibraryPage {
     }).toPass();
     await this.page.keyboard.press("Escape");
     await expect(this.rowMenu).toBeHidden();
+  }
+
+  async expectDeleteHeldBack(name: string, reason: string): Promise<void> {
+    await expect(async () => {
+      await this.actionsTriggerOf(name).click({
+        timeout: HYDRATION_RETRY_TIMEOUT_MS,
+      });
+      await expect(this.rowMenuItem("Delete")).toBeDisabled({
+        timeout: HYDRATION_RETRY_TIMEOUT_MS,
+      });
+      await this.rowMenuItem("Delete").hover();
+      await expect(this.page.getByText(reason, { exact: true })).toBeVisible({
+        timeout: HYDRATION_RETRY_TIMEOUT_MS,
+      });
+    }).toPass();
+    await this.closeRowMenuAndHint();
+  }
+
+  async closeRowMenuAndHint(): Promise<void> {
+    await expect(async () => {
+      await this.page.keyboard.press("Escape");
+      await expect(this.rowMenu).toBeHidden({ timeout: ARROW_SETTLE_MS });
+    }).toPass();
+  }
+
+  async expectDeleteAllowed(name: string): Promise<void> {
+    await expect(async () => {
+      await this.actionsTriggerOf(name).click({
+        timeout: HYDRATION_RETRY_TIMEOUT_MS,
+      });
+      await expect(this.rowMenuItem("Delete")).toBeEnabled({
+        timeout: HYDRATION_RETRY_TIMEOUT_MS,
+      });
+    }).toPass();
+    await this.closeRowMenuAndHint();
   }
 
   async archive(name: string): Promise<void> {

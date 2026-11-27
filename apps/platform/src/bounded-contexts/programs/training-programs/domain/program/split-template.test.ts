@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import type { CardioSession } from "./program-content";
+import type { Block, CardioSession, Session } from "./program-content";
 import { SplitTemplate } from "./split-template";
-import { WEEKDAYS, type SplitShape } from "./vocabulary";
+import { SLOTS, WEEKDAYS, type SplitShape } from "./vocabulary";
 
 function cardio(id: string): CardioSession {
   return { id, originId: id, name: "Easy cardio", segments: [] };
@@ -162,3 +162,128 @@ function sessionDaysOf(shape: SplitShape, sessionCount: number) {
 
   return WEEKDAYS.filter((day) => calendar[day].kind === "session");
 }
+
+function session(id: string): Session {
+  return {
+    id,
+    originId: id,
+    name: id,
+    warmUp: { items: [] },
+    coolDown: { enabled: false, items: [] },
+    rows: [],
+  };
+}
+
+function blockWith(shape: SplitShape, sessions: Session[]): Block {
+  return {
+    id: "block",
+    originId: "block",
+    type: "hypertrophy",
+    weeks: 6,
+    trainingDays: 4,
+    calibrationWeek: false,
+    introText: "",
+    clientNote: "",
+    split: { shape, name: "", text: "" },
+    targetMinutes: 60,
+    calendar: {
+      mon: { kind: "rest" },
+      tue: { kind: "rest" },
+      wed: { kind: "rest" },
+      thu: { kind: "rest" },
+      fri: { kind: "rest" },
+      sat: { kind: "rest" },
+      sun: { kind: "rest" },
+    },
+    sessions,
+    cardioSessions: [],
+    dailySteps: 6000,
+    missedDayNote: "",
+  };
+}
+
+describe("SplitTemplate slotPlanOrUsual", () => {
+  it("reads the slot plan of a session in the block", () => {
+    // arrange
+    const sessions = [session("a"), session("b")];
+    const block = blockWith("full-body", sessions);
+
+    // act
+    const plan = SplitTemplate.slotPlanOrUsual(block, sessions[0], "A");
+
+    // assert
+    expect(plan).toEqual({
+      slot: "A",
+      patterns: ["squat"],
+      label: "Main lift",
+    });
+  });
+
+  it("plans a session outside the block by its slot's usual label", () => {
+    // arrange
+    const block = blockWith("full-body", [session("a"), session("b")]);
+
+    // act
+    const plans = SLOTS.map((slot) =>
+      SplitTemplate.slotPlanOrUsual(block, session("elsewhere"), slot),
+    );
+
+    // assert
+    expect(plans).toEqual([
+      { slot: "A", patterns: [], label: "Main lift" },
+      { slot: "B", patterns: [], label: "Secondary" },
+      { slot: "C", patterns: ["isolation"], label: "Accessories" },
+      { slot: "D", patterns: ["core"], label: "Core / finisher" },
+    ]);
+  });
+});
+
+describe("SplitTemplate slotPlanFor", () => {
+  it("reads the slot plan of the session at its position in the block", () => {
+    // arrange
+    const sessions = ["lower-a", "upper-a", "lower-b", "upper-b"].map(session);
+    const block = blockWith("upper-lower", sessions);
+
+    // act
+    const plan = SplitTemplate.slotPlanFor(block, sessions[3], "B");
+
+    // assert
+    expect(plan).toEqual({
+      slot: "B",
+      patterns: ["vertical-push", "horizontal-push"],
+      label: "Secondary",
+    });
+  });
+
+  it("joins the patterns of a slot planned as a superset", () => {
+    // arrange
+    const sessions = [session("a"), session("b")];
+    const block = blockWith("full-body", sessions);
+
+    // act
+    const plan = SplitTemplate.slotPlanFor(block, sessions[1], "C");
+
+    // assert
+    expect(plan).toEqual({
+      slot: "C",
+      patterns: [
+        "horizontal-push",
+        "vertical-push",
+        "horizontal-pull",
+        "vertical-pull",
+      ],
+      label: "Accessories",
+    });
+  });
+
+  it("finds nothing for a session outside the block", () => {
+    // arrange
+    const block = blockWith("full-body", [session("a"), session("b")]);
+
+    // act
+    const plan = SplitTemplate.slotPlanFor(block, session("elsewhere"), "A");
+
+    // assert
+    expect(plan).toBeUndefined();
+  });
+});

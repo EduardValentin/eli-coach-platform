@@ -1,8 +1,14 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import type { ClientIdentity } from "./client-identity-port";
+import type {
+  ExerciseUsagePort,
+  VersionExerciseUsage,
+} from "./exercise-usage-port";
+import type { LibraryExercise } from "./library-exercise";
 import { Program } from "./program";
-import type { ProgramContent } from "./program-content";
+import type { ExerciseRow, ProgramContent } from "./program-content";
+import { ProgramSuggestions } from "./program-suggestions";
 import type { DraftSaveOutcome, DraftWrite } from "./program-store-port";
 import type { ProgramVersionSnapshot } from "./program-version";
 import { SaveProgramDraftUseCase } from "./save-program-draft-use-case";
@@ -10,6 +16,7 @@ import { SaveProgramDraftUseCase } from "./save-program-draft-use-case";
 const CREATED = new Date("2026-11-20T09:00:00.000Z");
 const NOW = new Date("2026-11-21T10:30:00.000Z");
 const CLIENT_ID = "client-1";
+const COACH_ACCOUNT_ID = "coach-account-1";
 
 const ANA: ClientIdentity = {
   clientId: CLIENT_ID,
@@ -38,6 +45,103 @@ const DRAFT_VERSION: ProgramVersionSnapshot = {
   updatedAt: CREATED,
 };
 
+function libraryExercise(
+  id: string,
+  overrides: Partial<LibraryExercise> = {},
+): LibraryExercise {
+  return {
+    id,
+    name: id,
+    type: "resistance",
+    unit: "reps",
+    perSide: false,
+    pattern: null,
+    role: null,
+    primaryMuscles: [],
+    secondaryMuscles: [],
+    equipment: [],
+    tags: [],
+    cues: "",
+    videoPath: null,
+    archived: false,
+    ...overrides,
+  };
+}
+
+const HER_LIBRARY: LibraryExercise[] = [
+  libraryExercise("bike", { type: "cardio", unit: "time" }),
+  libraryExercise("squat"),
+  libraryExercise("lunge", { archived: true }),
+  libraryExercise("hips", { type: "mobility", unit: "time" }),
+  libraryExercise("pigeon", { type: "stretching", unit: "time" }),
+];
+
+function row(exerciseId: string, substitutions: string[]): ExerciseRow {
+  return {
+    id: `row-${exerciseId}`,
+    exerciseId,
+    slot: "C",
+    startSets: [],
+    restSeconds: 60,
+    lastSetTechnique: "none",
+    substitutions,
+    progression: { kind: "double" },
+    cues: "",
+    touched: [],
+  };
+}
+
+function filledContent(): ProgramContent {
+  let next = 0;
+  const suggested = new ProgramSuggestions({
+    libraryExercises: [HER_LIBRARY[0]],
+    newId: () => `id-${(next += 1)}`,
+  }).initialContent({
+    level: "beginner",
+    trainingDays: 3,
+    sessionMinutes: 60,
+    language: "en",
+    dailySteps: 6000,
+    splitShape: "full-body",
+  });
+  const [first, ...others] = suggested.plan.blocks;
+  const [session, ...sessions] = first.sessions;
+
+  return {
+    ...suggested,
+    plan: {
+      blocks: [
+        {
+          ...first,
+          sessions: [
+            {
+              ...session,
+              rows: [row("squat", ["lunge"])],
+              warmUp: {
+                items: [{ id: "w1", exerciseId: "hips", sets: 1, seconds: 45 }],
+              },
+              coolDown: {
+                enabled: false,
+                items: [{ id: "c1", exerciseId: "pigeon", seconds: 30 }],
+              },
+            },
+            ...sessions,
+          ],
+        },
+        ...others,
+      ],
+    },
+  };
+}
+
+class InMemoryExerciseUsageAdapter implements ExerciseUsagePort {
+  readonly recorded: VersionExerciseUsage[] = [];
+
+  async recordVersionUsage(usage: VersionExerciseUsage): Promise<void> {
+    this.recorded.push(usage);
+  }
+}
+
 function anasProgram(versions: ProgramVersionSnapshot[]): Program {
   return Program.reconstitute({
     id: "program-1",
@@ -55,14 +159,18 @@ type Arrangement = {
   clients?: ClientIdentity[];
   programs?: Program[];
   storeOutcome?: DraftSaveOutcome;
+  libraryExercises?: LibraryExercise[];
 };
 
 function saveDraft({
   clients = [ANA],
   programs = [anasProgram([DRAFT_VERSION])],
   storeOutcome = "saved",
+  libraryExercises = HER_LIBRARY,
 }: Arrangement = {}) {
   const writes: DraftWrite[] = [];
+  const libraryExercisesPort = { listFor: vi.fn(async () => libraryExercises) };
+  const inMemoryExerciseUsageAdapter = new InMemoryExerciseUsageAdapter();
   const saveProgramDraftUseCase = new SaveProgramDraftUseCase({
     clientIdentityPort: {
       find: async (clientId) =>
@@ -77,13 +185,21 @@ function saveDraft({
         return storeOutcome;
       },
     },
+    libraryExercisesPort,
+    exerciseUsagePort: inMemoryExerciseUsageAdapter,
     clockPort: { now: () => NOW },
   });
 
-  return { saveProgramDraftUseCase, writes };
+  return {
+    saveProgramDraftUseCase,
+    writes,
+    libraryExercisesPort,
+    inMemoryExerciseUsageAdapter,
+  };
 }
 
 const COMMAND = {
+  coachAccountId: COACH_ACCOUNT_ID,
   clientId: CLIENT_ID,
   content: EDITED_CONTENT,
   level: "intermediate",
@@ -111,24 +227,129 @@ describe("SaveProgramDraftUseCase", () => {
     });
   });
 
-  it("answers that the draft changed elsewhere when the store holds a newer copy", async () => {
+  it("answers that the draft changed elsewhere when the store holds a newer copy, recording nothing", async () => {
     // arrange
-    const { saveProgramDraftUseCase } = saveDraft({
-      storeOutcome: "changed-elsewhere",
-    });
+    const { saveProgramDraftUseCase, inMemoryExerciseUsageAdapter } = saveDraft(
+      {
+        storeOutcome: "changed-elsewhere",
+      },
+    );
 
     // act
-    const result = await saveProgramDraftUseCase.execute(COMMAND);
+    const result = await saveProgramDraftUseCase.execute({
+      ...COMMAND,
+      content: filledContent(),
+    });
 
     // assert
     expect(result).toEqual({ status: "changed-elsewhere" });
+    expect(inMemoryExerciseUsageAdapter.recorded).toEqual([]);
+  });
+
+  it("records, for the coach, every exercise the saved draft uses under its version number, archived ones of hers included", async () => {
+    // arrange
+    const {
+      saveProgramDraftUseCase,
+      libraryExercisesPort,
+      inMemoryExerciseUsageAdapter,
+    } = saveDraft();
+
+    // act
+    const result = await saveProgramDraftUseCase.execute({
+      ...COMMAND,
+      content: filledContent(),
+    });
+
+    // assert
+    expect(result).toEqual({ status: "saved", updatedAt: NOW });
+    expect(libraryExercisesPort.listFor).toHaveBeenCalledWith(COACH_ACCOUNT_ID);
+    expect(inMemoryExerciseUsageAdapter.recorded).toHaveLength(1);
+    expect(inMemoryExerciseUsageAdapter.recorded[0]).toMatchObject({
+      coachAccountId: COACH_ACCOUNT_ID,
+      programId: "program-1",
+      versionNumber: 1,
+    });
+    expect(
+      [...inMemoryExerciseUsageAdapter.recorded[0].exerciseIds].sort(),
+    ).toEqual(["bike", "hips", "lunge", "pigeon", "squat"]);
+  });
+
+  it("records an empty set when the saved draft uses no exercise any more", async () => {
+    // arrange
+    const { saveProgramDraftUseCase, inMemoryExerciseUsageAdapter } =
+      saveDraft();
+
+    // act
+    await saveProgramDraftUseCase.execute(COMMAND);
+
+    // assert
+    expect(inMemoryExerciseUsageAdapter.recorded).toEqual([
+      {
+        coachAccountId: COACH_ACCOUNT_ID,
+        programId: "program-1",
+        versionNumber: 1,
+        exerciseIds: [],
+      },
+    ]);
+  });
+
+  it.each([
+    [
+      "a switched-off cool-down's exercise outside her library",
+      HER_LIBRARY.slice(0, 4),
+    ],
+    [
+      "a substitution outside her library",
+      HER_LIBRARY.filter(({ id }) => id !== "lunge"),
+    ],
+  ])(
+    "refuses content naming %s as not well formed, writing and recording nothing",
+    async (_case, libraryExercises) => {
+      // arrange
+      const { saveProgramDraftUseCase, writes, inMemoryExerciseUsageAdapter } =
+        saveDraft({
+          libraryExercises,
+        });
+
+      // act
+      const result = await saveProgramDraftUseCase.execute({
+        ...COMMAND,
+        content: filledContent(),
+      });
+
+      // assert
+      expect(result).toEqual({ status: "not-well-formed" });
+      expect(writes).toEqual([]);
+      expect(inMemoryExerciseUsageAdapter.recorded).toEqual([]);
+    },
+  );
+
+  it("fails whole when the library cannot record what the saved draft uses, so the unit of work rolls the save back", async () => {
+    // arrange
+    const failure = new Error("usage refused");
+    const { saveProgramDraftUseCase, inMemoryExerciseUsageAdapter } =
+      saveDraft();
+    vi.spyOn(
+      inMemoryExerciseUsageAdapter,
+      "recordVersionUsage",
+    ).mockRejectedValue(failure);
+
+    // act
+    const saved = saveProgramDraftUseCase.execute({
+      ...COMMAND,
+      content: filledContent(),
+    });
+
+    // assert
+    await expect(saved).rejects.toBe(failure);
   });
 
   it("refuses a program that holds no draft and writes nothing", async () => {
     // arrange
-    const { saveProgramDraftUseCase, writes } = saveDraft({
-      programs: [anasProgram([{ ...DRAFT_VERSION, status: "published" }])],
-    });
+    const { saveProgramDraftUseCase, writes, inMemoryExerciseUsageAdapter } =
+      saveDraft({
+        programs: [anasProgram([{ ...DRAFT_VERSION, status: "published" }])],
+      });
 
     // act
     const result = await saveProgramDraftUseCase.execute(COMMAND);
@@ -136,11 +357,13 @@ describe("SaveProgramDraftUseCase", () => {
     // assert
     expect(result).toEqual({ status: "not-a-draft" });
     expect(writes).toEqual([]);
+    expect(inMemoryExerciseUsageAdapter.recorded).toEqual([]);
   });
 
   it("refuses content that is not well formed and writes nothing", async () => {
     // arrange
-    const { saveProgramDraftUseCase, writes } = saveDraft();
+    const { saveProgramDraftUseCase, writes, inMemoryExerciseUsageAdapter } =
+      saveDraft();
     const twoWeekDeload: ProgramContent = {
       ...EDITED_CONTENT,
       plan: {
@@ -183,11 +406,15 @@ describe("SaveProgramDraftUseCase", () => {
     // assert
     expect(result).toEqual({ status: "not-well-formed" });
     expect(writes).toEqual([]);
+    expect(inMemoryExerciseUsageAdapter.recorded).toEqual([]);
   });
 
   it("says she has no program yet", async () => {
     // arrange
-    const { saveProgramDraftUseCase, writes } = saveDraft({ programs: [] });
+    const { saveProgramDraftUseCase, writes, inMemoryExerciseUsageAdapter } =
+      saveDraft({
+        programs: [],
+      });
 
     // act
     const result = await saveProgramDraftUseCase.execute(COMMAND);
@@ -195,11 +422,15 @@ describe("SaveProgramDraftUseCase", () => {
     // assert
     expect(result).toEqual({ status: "no-program" });
     expect(writes).toEqual([]);
+    expect(inMemoryExerciseUsageAdapter.recorded).toEqual([]);
   });
 
   it("does not know a client no one paid for", async () => {
     // arrange
-    const { saveProgramDraftUseCase, writes } = saveDraft({ clients: [] });
+    const { saveProgramDraftUseCase, writes, inMemoryExerciseUsageAdapter } =
+      saveDraft({
+        clients: [],
+      });
 
     // act
     const result = await saveProgramDraftUseCase.execute(COMMAND);
@@ -207,5 +438,6 @@ describe("SaveProgramDraftUseCase", () => {
     // assert
     expect(result).toEqual({ status: "unknown-client" });
     expect(writes).toEqual([]);
+    expect(inMemoryExerciseUsageAdapter.recorded).toEqual([]);
   });
 });

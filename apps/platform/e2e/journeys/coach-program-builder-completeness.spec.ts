@@ -259,9 +259,10 @@ test(
 
     // act
     await programBuilder.openBlockFromSections(1, "Foundation");
+    await programBuilder.closeExerciseLibrary();
 
     // assert
-    await programBuilder.expectOnlyDayMenusInTheWeek();
+    await programBuilder.expectOnlyDayMenusAndStrengthFacesInTheWeek(3);
     await expectLayoutFits(page);
 
     // act
@@ -277,9 +278,14 @@ test(
     await programBuilder.chooseDayTab("Wednesday");
 
     // assert
-    await expect(
-      page.getByRole("button", { name: "Open session" }),
-    ).toHaveCount(0);
+    await programBuilder.expectOpenSessionOffered();
+    await expectLayoutFits(page);
+
+    // act
+    await programBuilder.chooseDayTab("Tuesday");
+
+    // assert
+    await programBuilder.expectNoOpenSessionOffered();
     await expectLayoutFits(page);
   },
 );

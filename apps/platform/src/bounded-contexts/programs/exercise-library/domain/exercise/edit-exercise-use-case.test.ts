@@ -141,6 +141,8 @@ function createUseCase() {
     add: vi.fn(),
     replace: vi.fn(async (): Promise<ExerciseReplacement> => "replaced"),
     remove: vi.fn(),
+    replaceVersionUsage: vi.fn(),
+    programCountsOf: vi.fn(),
   } satisfies ExerciseLibraryPort;
   const incidents = {
     exerciseCreationFailed: vi.fn(),
