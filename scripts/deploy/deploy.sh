@@ -12,6 +12,8 @@ readonly EXIT_FAILED_BEFORE_SWITCH=12
 readonly EXIT_SWITCHED_BACK=20
 readonly EXIT_SWITCH_BACK_FAILED=30
 
+readonly IPV4_OCTET='(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])'
+
 fail() {
   printf 'ERROR: %s\n' "$*" >&2
   exit "${EXIT_FAILED_BEFORE_SWITCH}"
@@ -57,6 +59,7 @@ APP_NAME="${APP_NAME:-eli-coach-platform}"
 APP_DIR="${APP_DIR:-/srv/apps/${APP_NAME}}"
 DEPLOY_ENV_FILE="${APP_DIR}/deploy/env/${DEPLOY_ENV}.env"
 EDGE_DYNAMIC_DIR="${EDGE_DYNAMIC_DIR:-/srv/edge/dynamic}"
+EDGE_ENV_FILE="${EDGE_ENV_FILE:-/srv/edge/.env}"
 EDGE_HOSTNAME="${EDGE_HOSTNAME:-}"
 HOST_LABEL="${HOST_LABEL:-$EDGE_HOSTNAME}"
 APP_ENV_FILE="${APP_ENV_FILE:-${APP_DIR}/.env}"
@@ -192,11 +195,28 @@ load_metrics_bind_ip() {
 
   METRICS_BIND_IP="$(read_env_file_value "${OBSERVABILITY_ENV_FILE}" METRICS_BIND_IP)"
 
-  local octet='(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])'
-  [[ "${METRICS_BIND_IP}" =~ ^100\.(6[4-9]|[7-9][0-9]|1[01][0-9]|12[0-7])\.${octet}\.${octet}$ ]] \
+  [[ "${METRICS_BIND_IP}" =~ ^100\.(6[4-9]|[7-9][0-9]|1[01][0-9]|12[0-7])\.${IPV4_OCTET}\.${IPV4_OCTET}$ ]] \
     || fail "METRICS_BIND_IP in ${OBSERVABILITY_ENV_FILE} must be the host's Tailscale address (100.64.0.0/10)"
 
   export METRICS_BIND_IP
+}
+
+# The edge publishes 443 only on TRAEFIK_BIND_IP; a wildcard bind answers on loopback.
+load_edge_address() {
+  local bind_ip=""
+
+  ensure_file_exists "${EDGE_ENV_FILE}"
+
+  bind_ip="$(read_env_file_value "${EDGE_ENV_FILE}" TRAEFIK_BIND_IP)"
+
+  [[ "${bind_ip}" =~ ^${IPV4_OCTET}\.${IPV4_OCTET}\.${IPV4_OCTET}\.${IPV4_OCTET}$ ]] \
+    || fail "TRAEFIK_BIND_IP in ${EDGE_ENV_FILE} must be the IPv4 address the edge listens on"
+
+  if [[ "${bind_ip}" == "0.0.0.0" ]]; then
+    EDGE_ADDRESS="127.0.0.1"
+  else
+    EDGE_ADDRESS="${bind_ip}"
+  fi
 }
 
 require_inputs() {
@@ -615,7 +635,7 @@ edge_probe_passes() {
   headers_file="$(mktemp)"
   status="$(curl --silent --max-time 10 --output /dev/null --dump-header "${headers_file}" --write-out '%{http_code}' \
     ${tls_options[@]+"${tls_options[@]}"} \
-    --connect-to "${EDGE_HOSTNAME}:443:127.0.0.1:443" \
+    --connect-to "${EDGE_HOSTNAME}:443:${EDGE_ADDRESS}:443" \
     "https://${EDGE_HOSTNAME}${APP_BASE_PATH%/}/readyz" 2>/dev/null)" || status="000"
   color="$(tr -d '\r' < "${headers_file}" | awk -F': *' 'tolower($1) == "x-stack-color" {print $2; exit}')"
   rm -f "${headers_file}"
@@ -628,7 +648,7 @@ public_check_passes() {
   local passes=0
   local deadline=$((SECONDS + PUBLIC_CHECK_TIMEOUT_SECONDS))
 
-  log "public check: ${PUBLIC_CHECK_CONSECUTIVE_PASSES} consecutive 200s from ${expected_color} through https://${EDGE_HOSTNAME}${APP_BASE_PATH%/}/readyz"
+  log "public check: ${PUBLIC_CHECK_CONSECUTIVE_PASSES} consecutive 200s from ${expected_color} through https://${EDGE_HOSTNAME}${APP_BASE_PATH%/}/readyz at ${EDGE_ADDRESS}"
 
   while (( SECONDS < deadline )); do
     if edge_probe_passes "${expected_color}"; then
@@ -698,6 +718,7 @@ promote_target_color() {
 
 load_deploy_settings
 load_metrics_bind_ip
+load_edge_address
 require_inputs
 require_release_identity
 require_plain_image_references
