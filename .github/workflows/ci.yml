@@ -101,6 +101,20 @@ jobs:
       - name: Run the integration suites
         run: pnpm test:integration
 
+  deploy_simulation:
+    name: Deploy simulation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7.0.1
+
+      - name: Lint the workflows
+        run: npm run check:workflows
+
+      - name: Run the deploy script against a simulated host
+        run: npm run test:deploy-simulation
+
   build_and_push:
     name: Build and Push Images
     runs-on: ubuntu-24.04
@@ -380,103 +394,229 @@ jobs:
             exit 1
           fi
 
-          echo "node_hostname=${TEST_NODE_HOSTNAME%.}" >> "$GITHUB_OUTPUT"
-          printf "ssh_known_hosts<<EOF\n%s\nEOF\n" "${TEST_SSH_KNOWN_HOSTS}" >> "$GITHUB_OUTPUT"
-          echo "edge_hostname=${TEST_EDGE_HOSTNAME}" >> "$GITHUB_OUTPUT"
+          {
+            echo "node_hostname=${TEST_NODE_HOSTNAME%.}"
+            printf "ssh_known_hosts<<EOF\n%s\nEOF\n" "${TEST_SSH_KNOWN_HOSTS}"
+            echo "edge_hostname=${TEST_EDGE_HOSTNAME}"
+          } >> "$GITHUB_OUTPUT"
 
-      - name: Connect to Tailscale
-        uses: tailscale/github-action@064b10558093f38325e838ddea35486bdc6b1d5c
+      - name: Connect to the TEST host
+        uses: ./.github/actions/remote-connect
         with:
-          oauth-client-id: ${{ secrets.TAILSCALE_OAUTH_CLIENT_ID }}
-          oauth-secret: ${{ secrets.TAILSCALE_OAUTH_SECRET }}
-          hostname: gha-eli-coach-platform-ci
-          tags: tag:ci-app-deploy
-          ping: ${{ steps.target.outputs.node_hostname }}
+          node-hostname: ${{ steps.target.outputs.node_hostname }}
+          ssh-known-hosts: ${{ steps.target.outputs.ssh_known_hosts }}
+          tailscale-oauth-client-id: ${{ secrets.TAILSCALE_OAUTH_CLIENT_ID }}
+          tailscale-oauth-secret: ${{ secrets.TAILSCALE_OAUTH_SECRET }}
+          tailscale-hostname: gha-eli-coach-platform-ci
+          tailscale-tags: tag:ci-app-deploy
 
-      - name: Resolve TEST host over Tailscale
-        id: ssh
+      - name: Deploy image set to TEST
+        uses: ./.github/actions/remote-deploy
+        with:
+          deploy-env: test
+          edge-hostname: ${{ steps.target.outputs.edge_hostname }}
+          host-label: ${{ steps.target.outputs.edge_hostname }}
+          release-sha: ${{ github.sha }}
+          ghcr-username: ${{ secrets.GHCR_PULL_USERNAME }}
+          ghcr-token: ${{ secrets.GHCR_PULL_TOKEN }}
+          platform-image: ${{ needs.build_and_push.outputs.platform_image }}
+          migration-image: ${{ needs.build_and_push.outputs.migration_image }}
+          design-reference-image: ${{ needs.build_and_push.outputs.design_reference_image }}
+          postgres-runtime-image: ${{ needs.build_and_push.outputs.postgres_runtime_image }}
+
+      - name: Cleanup temporary SSH state
+        if: always()
+        run: rm -rf "${RUNNER_TEMP}/remote-deploy"
+
+  deploy_prod:
+    name: Deploy to PROD
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    needs:
+      - build_and_push
+      - deploy_test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    # `deployment: false` keeps the reviewers and the environment secrets but
+    # stops GitHub from recording its own deployment: the job records the
+    # digests itself. No `concurrency` key: a second approval queues behind the
+    # first, and the host lock plus EXPECTED_LIVE_SHA settle which one wins.
+    environment:
+      name: production
+      deployment: false
+    permissions:
+      contents: read
+      deployments: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      # Nothing below reaches PROD until every value exists, so a missing
+      # variable, secret or pinned host key stops the run here.
+      - name: Resolve PROD config
+        id: target
         shell: bash
         env:
-          NODE_HOSTNAME: ${{ steps.target.outputs.node_hostname }}
+          PROD_NODE_HOSTNAME: ${{ vars.PROD_NODE_HOSTNAME }}
+          PROD_EDGE_HOSTNAME: ${{ vars.PROD_EDGE_HOSTNAME }}
+          PROD_SSH_KNOWN_HOSTS: ${{ secrets.PROD_SSH_KNOWN_HOSTS }}
+          PROD_TAILSCALE_OAUTH_CLIENT_ID: ${{ secrets.PROD_TAILSCALE_OAUTH_CLIENT_ID }}
+          PROD_TAILSCALE_OAUTH_SECRET: ${{ secrets.PROD_TAILSCALE_OAUTH_SECRET }}
+          GHCR_PULL_USERNAME: ${{ secrets.GHCR_PULL_USERNAME }}
+          GHCR_PULL_TOKEN: ${{ secrets.GHCR_PULL_TOKEN }}
         run: |
           set -euo pipefail
 
-          node_hostname="${NODE_HOSTNAME%.}"
-          short_hostname="${node_hostname%%.*}"
-          ssh_ip="$(tailscale status --json | jq -r --arg fqdn "${node_hostname}." --arg raw "$node_hostname" --arg host "$short_hostname" '
-            [(.Peer // [])[] | select(.DNSName == $fqdn or .DNSName == $raw or .HostName == $host) | .TailscaleIPs[0]][0] // empty
-          ')"
+          missing=()
+          for name in PROD_NODE_HOSTNAME PROD_EDGE_HOSTNAME PROD_SSH_KNOWN_HOSTS PROD_TAILSCALE_OAUTH_CLIENT_ID PROD_TAILSCALE_OAUTH_SECRET GHCR_PULL_USERNAME GHCR_PULL_TOKEN; do
+            if [[ -z "${!name}" ]]; then
+              missing+=("${name}")
+            fi
+          done
 
-          if [[ -z "${ssh_ip}" ]]; then
-            echo "Could not resolve TEST node ${node_hostname} to a Tailscale IP"
+          if (( ${#missing[@]} > 0 )); then
+            echo "::error::PROD is not configured in the production environment: missing ${missing[*]}"
             exit 1
           fi
 
-          echo "ssh_target=root@${ssh_ip}" >> "$GITHUB_OUTPUT"
-          echo "host_key_alias=${node_hostname}" >> "$GITHUB_OUTPUT"
+          if ! grep -Eq '^[^ #]+ (ssh-ed25519|ssh-rsa|ecdsa-sha2-nistp[0-9]+) [A-Za-z0-9+/=]+' <<< "${PROD_SSH_KNOWN_HOSTS}"; then
+            echo "::error::PROD_SSH_KNOWN_HOSTS does not hold a pinned host key yet"
+            exit 1
+          fi
 
-      - name: Write pinned SSH known_hosts
-        run: |
-          set -euo pipefail
-          printf '%s\n' "${{ steps.target.outputs.ssh_known_hosts }}" > /tmp/known_hosts
-          chmod 600 /tmp/known_hosts
+          echo "node_hostname=${PROD_NODE_HOSTNAME%.}" >> "$GITHUB_OUTPUT"
+          echo "edge_hostname=${PROD_EDGE_HOSTNAME}" >> "$GITHUB_OUTPUT"
 
-      - name: Install deploy assets on TEST host
+      - name: Connect to the PROD host
+        uses: ./.github/actions/remote-connect
+        with:
+          node-hostname: ${{ steps.target.outputs.node_hostname }}
+          ssh-known-hosts: ${{ secrets.PROD_SSH_KNOWN_HOSTS }}
+          tailscale-oauth-client-id: ${{ secrets.PROD_TAILSCALE_OAUTH_CLIENT_ID }}
+          tailscale-oauth-secret: ${{ secrets.PROD_TAILSCALE_OAUTH_SECRET }}
+          tailscale-hostname: gha-eli-coach-platform-prod-ci
+          tailscale-tags: tag:ci-prod-deploy
+
+      - name: Read the live PROD release
+        id: live
+        uses: ./.github/actions/remote-live-release
+
+      - name: Decide whether this commit may be promoted
+        id: verdict
+        shell: bash
         env:
-          SSH_TARGET: ${{ steps.ssh.outputs.ssh_target }}
-          SSH_HOST_KEY_ALIAS: ${{ steps.ssh.outputs.host_key_alias }}
-        run: |
-          set -euo pipefail
-
-          remote_command=$(cat <<'EOF'
-          set -euo pipefail
-          sudo install -d -m 0755 /srv/apps/eli-coach-platform /srv/apps/eli-coach-platform/deploy /srv/apps/eli-coach-platform/scripts/deploy
-          sudo rm -rf /srv/apps/eli-coach-platform/deploy/test /srv/apps/eli-coach-platform/scripts/deploy/deploy_test.sh /srv/apps/eli-coach-platform/scripts/deploy/run_test_migrations.sh
-          sudo tar --no-same-owner --no-same-permissions -xzf - -C /srv/apps/eli-coach-platform
-          sudo chmod 0755 /srv/apps/eli-coach-platform/scripts/deploy/deploy.sh /srv/apps/eli-coach-platform/scripts/deploy/run_migrations.sh
-          EOF
-          )
-
-          tar -czf - \
-            scripts/deploy/deploy.sh \
-            scripts/deploy/run_migrations.sh \
-            deploy/docker-compose.application.yml \
-            deploy/docker-compose.infrastructure.yml \
-            deploy/env/test.env \
-            deploy/traefik/test.yml.template \
-            | ssh -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/tmp/known_hosts -o HostKeyAlias="$SSH_HOST_KEY_ALIAS" -o ProxyCommand='tailscale nc %h %p' "$SSH_TARGET" "$remote_command"
-
-      - name: Verify runtime env files exist on TEST
-        env:
-          SSH_TARGET: ${{ steps.ssh.outputs.ssh_target }}
-          SSH_HOST_KEY_ALIAS: ${{ steps.ssh.outputs.host_key_alias }}
+          LIVE_RELEASE: ${{ steps.live.outputs.live-release }}
         run: |
           set -euo pipefail
 
-          ssh -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/tmp/known_hosts -o HostKeyAlias="$SSH_HOST_KEY_ALIAS" -o ProxyCommand='tailscale nc %h %p' "$SSH_TARGET" "sudo test -s /srv/apps/eli-coach-platform/.env && sudo test -s /srv/postgres/eli-coach-platform.env"
+          live_sha="none"
+          if [[ -n "${LIVE_RELEASE}" ]]; then
+            live_sha="$(jq -r '.sha' <<< "${LIVE_RELEASE}")"
+          fi
 
-      - name: Deploy image set to TEST
+          node scripts/deploy/release-plan.mjs promote "${live_sha}" "${GITHUB_SHA}"
+
+          echo "live_sha=${live_sha}" >> "$GITHUB_OUTPUT"
+
+      - name: Record the PROD deployment as in progress
+        id: deployment
+        shell: bash
         env:
-          SSH_TARGET: ${{ steps.ssh.outputs.ssh_target }}
-          SSH_HOST_KEY_ALIAS: ${{ steps.ssh.outputs.host_key_alias }}
-          EDGE_HOSTNAME: ${{ steps.target.outputs.edge_hostname }}
-          GHCR_PULL_USERNAME: ${{ secrets.GHCR_PULL_USERNAME }}
-          GHCR_PULL_TOKEN: ${{ secrets.GHCR_PULL_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+          LIVE_SHA: ${{ steps.verdict.outputs.live_sha }}
           PLATFORM_IMAGE: ${{ needs.build_and_push.outputs.platform_image }}
           MIGRATION_IMAGE: ${{ needs.build_and_push.outputs.migration_image }}
-          DESIGN_REFERENCE_IMAGE: ${{ needs.build_and_push.outputs.design_reference_image }}
           POSTGRES_RUNTIME_IMAGE: ${{ needs.build_and_push.outputs.postgres_runtime_image }}
         run: |
           set -euo pipefail
 
-          if [[ -z "${GHCR_PULL_USERNAME}" || -z "${GHCR_PULL_TOKEN}" ]]; then
-            echo "Missing GHCR pull credentials for remote deploy"
-            exit 1
+          previous_sha="${LIVE_SHA}"
+          if [[ "${previous_sha}" == "none" ]]; then
+            previous_sha=""
           fi
 
-          ssh -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/tmp/known_hosts -o HostKeyAlias="$SSH_HOST_KEY_ALIAS" -o ProxyCommand='tailscale nc %h %p' "$SSH_TARGET" \
-            "sudo DEPLOY_ENV=test EDGE_HOSTNAME='${EDGE_HOSTNAME}' HOST_LABEL='${EDGE_HOSTNAME}' GHCR_USERNAME='${GHCR_PULL_USERNAME}' GHCR_TOKEN='${GHCR_PULL_TOKEN}' PLATFORM_IMAGE='${PLATFORM_IMAGE}' MIGRATION_IMAGE='${MIGRATION_IMAGE}' DESIGN_REFERENCE_IMAGE='${DESIGN_REFERENCE_IMAGE}' POSTGRES_RUNTIME_IMAGE='${POSTGRES_RUNTIME_IMAGE}' bash /srv/apps/eli-coach-platform/scripts/deploy/deploy.sh"
+          request="$(jq -n \
+            --arg ref "${GITHUB_SHA}" \
+            --arg previous "${previous_sha}" \
+            --arg platform "${PLATFORM_IMAGE}" \
+            --arg migration "${MIGRATION_IMAGE}" \
+            --arg postgres "${POSTGRES_RUNTIME_IMAGE}" \
+            '{
+              ref: $ref,
+              environment: "production",
+              task: "deploy",
+              auto_merge: false,
+              required_contexts: [],
+              production_environment: true,
+              description: "Release to PROD",
+              payload: {
+                schema: "prod-release/v1",
+                kind: "release",
+                sha: $ref,
+                previousSha: $previous,
+                images: { platform: $platform, migration: $migration, postgresRuntime: $postgres }
+              }
+            }')"
 
-      - name: Cleanup temporary known_hosts
+          deployment_id="$(gh api "repos/${GITHUB_REPOSITORY}/deployments" --input - --jq '.id' <<< "${request}")"
+          echo "id=${deployment_id}" >> "$GITHUB_OUTPUT"
+
+          gh api "repos/${GITHUB_REPOSITORY}/deployments/${deployment_id}/statuses" \
+            -f state=in_progress \
+            -f environment=production \
+            -f log_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" \
+            -f description="Deploy started" > /dev/null
+
+      - name: Deploy the image set to PROD
+        id: deploy
+        uses: ./.github/actions/remote-deploy
+        with:
+          deploy-env: prod
+          edge-hostname: ${{ steps.target.outputs.edge_hostname }}
+          host-label: ${{ steps.target.outputs.node_hostname }}
+          release-sha: ${{ github.sha }}
+          expected-live-sha: ${{ steps.verdict.outputs.live_sha }}
+          ghcr-username: ${{ secrets.GHCR_PULL_USERNAME }}
+          ghcr-token: ${{ secrets.GHCR_PULL_TOKEN }}
+          platform-image: ${{ needs.build_and_push.outputs.platform_image }}
+          migration-image: ${{ needs.build_and_push.outputs.migration_image }}
+          postgres-runtime-image: ${{ needs.build_and_push.outputs.postgres_runtime_image }}
+
+      - name: Record the PROD deployment result
+        if: always() && steps.deployment.outputs.id != ''
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DEPLOYMENT_ID: ${{ steps.deployment.outputs.id }}
+          DEPLOY_OUTCOME: ${{ steps.deploy.outcome }}
+        run: |
+          set -euo pipefail
+
+          exit_code=""
+          exit_code_file="${RUNNER_TEMP}/remote-deploy/deploy-exit-code"
+          if [[ -f "${exit_code_file}" ]]; then
+            exit_code="$(cat "${exit_code_file}")"
+          fi
+
+          case "${exit_code}" in
+            0) state=success; description="Deployed" ;;
+            10) state=failure; description="Refused: another deploy is running or the live release changed (exit 10)" ;;
+            11) state=failure; description="Stopped: the pre-deploy backup failed (exit 11)" ;;
+            12) state=failure; description="Failed before the switch; the live release was not touched (exit 12)" ;;
+            20) state=failure; description="Public check failed; switched back to the previous release (exit 20)" ;;
+            30) state=failure; description="Switch-back failed; PROD needs a person (exit 30)" ;;
+            "") state=failure; description="The deploy did not start (${DEPLOY_OUTCOME})" ;;
+            *) state=failure; description="Failed: deploy exit ${exit_code}, step ${DEPLOY_OUTCOME}" ;;
+          esac
+
+          gh api "repos/${GITHUB_REPOSITORY}/deployments/${DEPLOYMENT_ID}/statuses" \
+            -f state="${state}" \
+            -f environment=production \
+            -f log_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" \
+            -f description="${description}" > /dev/null
+
+      - name: Cleanup temporary SSH state
         if: always()
-        run: rm -f /tmp/known_hosts
+        run: rm -rf "${RUNNER_TEMP}/remote-deploy"

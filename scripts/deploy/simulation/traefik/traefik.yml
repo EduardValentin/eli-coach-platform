@@ -1,0 +1,24 @@
+entryPoints:
+  web:
+    address: ":80"
+  websecure:
+    address: ":443"
+
+providers:
+  file:
+    directory: /dynamic
+    watch: true
+
+# PROD's template names this resolver. Its CA server is unreachable here; the
+# self-signed certificate in dynamic/00-base.yml answers the TLS handshake.
+certificatesResolvers:
+  letsencrypt:
+    acme:
+      email: sim@example.test
+      storage: /tmp/acme.json
+      caServer: https://127.0.0.1:1/directory
+      httpChallenge:
+        entryPoint: web
+
+log:
+  level: INFO

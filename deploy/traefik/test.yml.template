@@ -1,5 +1,10 @@
 http:
   middlewares:
+    eli-coach-platform-test-stack-colour:
+      headers:
+        customResponseHeaders:
+          X-Stack-Color: __STACK_COLOR__
+
     eli-coach-platform-test-design-reference-strip:
       stripPrefix:
         prefixes:
@@ -19,6 +24,8 @@ http:
     eli-coach-platform-test-platform:
       entryPoints:
         - websecure
+      middlewares:
+        - eli-coach-platform-test-stack-colour
       priority: 1
       rule: Host(`__EDGE_HOSTNAME__`) && PathPrefix(`__APP_BASE_PATH__`)
       service: eli-coach-platform-test-platform

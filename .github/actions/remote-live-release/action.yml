@@ -1,0 +1,28 @@
+name: Read the live release
+description: >-
+  Prints the last line of the host's release ledger. The ledger, not
+  scripts/deploy/deploy.sh, is read because a fresh host has no script yet.
+
+outputs:
+  live-release:
+    description: The ledger's last line, empty when nothing was ever released
+    value: ${{ steps.read.outputs.live_release }}
+
+runs:
+  using: composite
+  steps:
+    - name: Read the host ledger
+      id: read
+      shell: bash
+      run: |
+        set -euo pipefail
+        source "${GITHUB_ACTION_PATH}/../remote.sh"
+
+        live_release="$(remote "sudo sh -c 'if [ -s ${REMOTE_APP_DIRECTORY}/releases.jsonl ]; then tail -n 1 ${REMOTE_APP_DIRECTORY}/releases.jsonl; fi'")"
+
+        if [[ -n "${live_release}" ]] && ! jq -e '.sha | test("^[0-9a-f]{40}$")' <<< "${live_release}" > /dev/null; then
+          echo "The host ledger's last line is not a release record"
+          exit 1
+        fi
+
+        echo "live_release=${live_release}" >> "$GITHUB_OUTPUT"

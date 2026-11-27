@@ -1,0 +1,62 @@
+name: Connect to an app host
+description: >-
+  Joins the tailnet, resolves the host's Tailscale IP and pins its SSH host key
+  for the remote-live-release and remote-deploy actions that follow.
+
+inputs:
+  node-hostname:
+    description: The host's tailnet name
+    required: true
+  ssh-known-hosts:
+    description: The pinned known_hosts line for the host
+    required: true
+  tailscale-oauth-client-id:
+    description: Tailscale OAuth client id
+    required: true
+  tailscale-oauth-secret:
+    description: Tailscale OAuth client secret
+    required: true
+  tailscale-hostname:
+    description: Name this runner takes on the tailnet
+    required: true
+  tailscale-tags:
+    description: The tag the OAuth client advertises
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Connect to Tailscale
+      uses: tailscale/github-action@064b10558093f38325e838ddea35486bdc6b1d5c
+      with:
+        oauth-client-id: ${{ inputs.tailscale-oauth-client-id }}
+        oauth-secret: ${{ inputs.tailscale-oauth-secret }}
+        hostname: ${{ inputs.tailscale-hostname }}
+        tags: ${{ inputs.tailscale-tags }}
+        ping: ${{ inputs.node-hostname }}
+
+    - name: Resolve the host over Tailscale and pin its SSH key
+      shell: bash
+      env:
+        NODE_HOSTNAME: ${{ inputs.node-hostname }}
+        SSH_KNOWN_HOSTS: ${{ inputs.ssh-known-hosts }}
+      run: |
+        set -euo pipefail
+        source "${GITHUB_ACTION_PATH}/../remote.sh"
+
+        node_hostname="${NODE_HOSTNAME%.}"
+        short_hostname="${node_hostname%%.*}"
+        ssh_ip="$(tailscale status --json | jq -r --arg fqdn "${node_hostname}." --arg raw "$node_hostname" --arg host "$short_hostname" '
+          [(.Peer // [])[] | select(.DNSName == $fqdn or .DNSName == $raw or .HostName == $host) | .TailscaleIPs[0]][0] // empty
+        ')"
+
+        if [[ -z "${ssh_ip}" ]]; then
+          echo "Could not resolve ${node_hostname} to a Tailscale IP"
+          exit 1
+        fi
+
+        install -d -m 0700 "${REMOTE_STATE_DIRECTORY}"
+        printf 'root@%s' "${ssh_ip}" > "${REMOTE_STATE_DIRECTORY}/ssh-target"
+        printf '%s' "${node_hostname}" > "${REMOTE_STATE_DIRECTORY}/host-key-alias"
+        install -m 0600 /dev/null "${REMOTE_STATE_DIRECTORY}/known_hosts"
+        printf '%s\n' "${SSH_KNOWN_HOSTS}" > "${REMOTE_STATE_DIRECTORY}/known_hosts"
