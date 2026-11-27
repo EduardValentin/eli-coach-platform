@@ -50,6 +50,10 @@ RUN set -eux; \
     libc6 \
     libcap2 \
     libgnutls30 \
+    libpam-modules \
+    libpam-modules-bin \
+    libpam-runtime \
+    libpam0g \
     libpcre2-8-0 \
     libsystemd0 \
     libudev1 \
