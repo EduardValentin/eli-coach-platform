@@ -9,6 +9,7 @@ import {
   screen,
   waitFor,
   within,
+  type RenderOptions,
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
@@ -359,6 +360,21 @@ describe("saving the draft as she works", () => {
     ]);
   });
 
+  it("says saved once the change is sent when strict mode replays the builder's effects, as in development", async () => {
+    // arrange
+    answerSaves(savedAt(FIRST_SAVE_AT));
+    const user = await renderBuilder({ reactStrictMode: true });
+
+    // act
+    await chooseLevel(user, "Intermediate");
+    await advance(SAVE_DELAY_MS);
+
+    // assert
+    await waitFor(() =>
+      expect(draftLine()).toHaveTextContent("Jane Doe · v1 draft · Saved"),
+    );
+  });
+
   it("sends the next save with the marker the last save answered", async () => {
     // arrange
     answerSaves(savedAt(FIRST_SAVE_AT));
@@ -699,7 +715,7 @@ function chooseLanguage(
   return chooseOption(user, "Language", language);
 }
 
-async function renderBuilder() {
+async function renderBuilder(options?: RenderOptions) {
   const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
   router = createMemoryRouter(
     [
@@ -716,7 +732,7 @@ async function renderBuilder() {
     { initialEntries: [programBuilderPath(CLIENT_ID)] },
   );
 
-  render(<RouterProvider router={router} />);
+  render(<RouterProvider router={router} />, options);
   await screen.findAllByRole("heading", { level: 1 });
 
   return user;

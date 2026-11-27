@@ -187,13 +187,16 @@ export function useAutosavedDraft(stored: StoredDraft) {
 
   // Leaving with a change still queued sends it rather than dropping it. Its
   // answer arrives after the builder is gone, so nothing on screen is updated.
-  useEffect(
-    () => () => {
+  // In development strict mode replays this effect on the builder that stays
+  // open, so running it again marks the builder as not left.
+  useEffect(() => {
+    left.current = false;
+
+    return () => {
       left.current = true;
       if (queuedSave.current !== null) void saveNow();
-    },
-    [],
-  );
+    };
+  }, []);
 
   const saving: DraftSaving = {
     state,
