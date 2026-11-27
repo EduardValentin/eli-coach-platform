@@ -96,6 +96,8 @@ http://localhost:3000/?ff.WAITLIST_MODE=default
 `ENVIRONMENT` is `local` or `test`) or `none` (the default everywhere else).
 `ENVIRONMENT=production` refuses `browser` at startup.
 
+`COMING_SOON_MODE` (`on` or `off`) replaces every page with the coming-soon placeholder, noindexed, and answers 404 for everything but the health checks, the Clerk and Stripe webhooks and the management API. Unset, it is `on` when `ENVIRONMENT=production` and `off` elsewhere; any other value stops the server at startup. Try it locally with `COMING_SOON_MODE=on`.
+
 Booking, store requests and the waitlist refuse a subaddressed email (`name+tag@domain`) when `ENVIRONMENT=production` and accept it on LOCAL and TEST.
 
 One build serves any URL prefix: the server reads `APP_BASE_PATH` (default `/`) when it starts. The integration suites and the dev server serve it at `/`.

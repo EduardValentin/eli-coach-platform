@@ -8,6 +8,7 @@ import { isBeforeStage, type ClientJourney } from '../domain/journey';
 import { Link, useLocation, useNavigate } from 'react-router';
 import { completeSignIn } from '../services/authService';
 import { keepingSignInReturn, signInReturnTarget } from '../utils/signInReturn';
+import { BrandMark } from './BrandMark';
 import { buttonVariants } from './ui/button';
 import { NavigationDialog } from './ui/navigation-dialog';
 
@@ -231,17 +232,7 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
                 className="flex items-center gap-2 cursor-pointer z-[60]"
                 onClick={topBar.menu.close}
               >
-                <div
-                  className={`w-8 h-8 flex items-center justify-center border-2 rounded-tile transform rotate-45 transition-colors ${
-                    isSolid ? 'border-brand' : 'border-current'
-                  }`}
-                >
-                  <div
-                    className={`w-3 h-3 transform -rotate-45 transition-colors ${
-                      isSolid ? 'bg-brand' : 'bg-current'
-                    }`}
-                  />
-                </div>
+                <BrandMark appearance={isSolid ? 'solid' : 'transparent'} />
                 <span
                   className={`font-serif font-semibold text-xl tracking-wide ml-2 transition-colors ${
                     isSolid ? 'text-foreground' : 'text-white'

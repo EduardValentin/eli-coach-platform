@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { isValidElement, type ReactElement, type ReactNode } from 'react';
 import { ArrowLeft, ArrowRight, type LucideIcon } from 'lucide-react';
 import { Link, type LinkProps } from 'react-router';
 import { SectionEyebrow } from './SectionEyebrow';
@@ -32,8 +32,21 @@ export const FULL_PAGE_MESSAGE_SHELL_CLASS =
 
 type DeadEndHeadingLevel = 'h1' | 'h2';
 
+type DeadEndIcon = LucideIcon | ReactElement;
+
+function isIconElement(icon: DeadEndIcon): icon is ReactElement {
+  return isValidElement(icon);
+}
+
+function DeadEndIconGlyph({ icon }: { icon: DeadEndIcon }) {
+  if (isIconElement(icon)) return icon;
+
+  const Icon = icon;
+  return <Icon size={36} aria-hidden="true" />;
+}
+
 export function DeadEndContent({
-  icon: Icon,
+  icon,
   eyebrow,
   title,
   headingLevel: Heading = 'h1',
@@ -41,7 +54,7 @@ export function DeadEndContent({
   detail,
   children,
 }: {
-  icon: LucideIcon;
+  icon: DeadEndIcon;
   eyebrow?: string;
   title: string;
   headingLevel?: DeadEndHeadingLevel;
@@ -55,7 +68,7 @@ export function DeadEndContent({
         className="w-20 h-20 bg-surface-subtle text-muted-foreground rounded-full flex items-center justify-center mb-6"
         data-parity="dead-end-icon"
       >
-        <Icon size={36} aria-hidden="true" />
+        <DeadEndIconGlyph icon={icon} />
       </div>
       {eyebrow ? <SectionEyebrow variant="muted">{eyebrow}</SectionEyebrow> : null}
       <Heading className="font-serif text-display-md text-text-primary tracking-tight">
@@ -92,7 +105,7 @@ export function DeadEndPanel({
   action,
   announcement = 'alert',
 }: {
-  icon: LucideIcon;
+  icon: DeadEndIcon;
   title: string;
   headingLevel?: DeadEndHeadingLevel;
   description: ReactNode;
@@ -121,7 +134,7 @@ export function ErrorPage({
   landmarkLabel = 'Error',
   parityRoot,
 }: {
-  icon: LucideIcon;
+  icon: DeadEndIcon;
   eyebrow?: string;
   title: string;
   description: ReactNode;

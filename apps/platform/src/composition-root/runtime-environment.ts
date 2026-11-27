@@ -30,6 +30,7 @@ import {
   featureFlagsShape,
   refineFeatureFlagOverrides,
 } from "~/bounded-contexts/operations/feature-flags/config.server";
+import { comingSoonShape } from "~/composition-root/coming-soon/config.server";
 import { databaseShape } from "~/shared/database/connection";
 import {
   productEmailShape,
@@ -80,6 +81,7 @@ const runtimeEnvironmentSchema = z
     ...recipePhotosShape,
     ...assessmentCallsShape,
     ...featureFlagsShape,
+    ...comingSoonShape,
   })
   .superRefine(refineBotDetection)
   .superRefine(refineFeatureFlagOverrides)

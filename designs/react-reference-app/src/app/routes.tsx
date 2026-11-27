@@ -1,4 +1,4 @@
-import { createBrowserRouter, Outlet } from "react-router";
+import { createBrowserRouter } from "react-router";
 import { Toaster } from "./components/ui/sonner";
 import { Home } from "./pages/Home";
 import { Book } from "./pages/Book";
@@ -17,7 +17,7 @@ import { MessagingProvider } from "./context/MessagingContext";
 import { ResourceProvider } from "./context/ResourceContext";
 import { Store } from "./pages/Store";
 import { ProductDetails } from "./pages/ProductDetails";
-import { CartDrawer } from "./components/CartDrawer";
+import { PrototypeSurface } from "./components/PrototypeSurface";
 import { Pricing } from "./pages/Pricing";
 import { SelectBundle } from "./pages/SelectBundle";
 import { CheckoutStandIn } from "./pages/CheckoutStandIn";
@@ -96,8 +96,7 @@ function Root() {
               <div className="relative min-h-screen bg-surface-subtle text-foreground font-sans selection:bg-brand selection:text-white">
                 <Toaster position="top-right" richColors />
                 <DevToggle />
-                <CartDrawer />
-                <Outlet />
+                <PrototypeSurface />
               </div>
             </ResourceProvider>
             </MessagingProvider>

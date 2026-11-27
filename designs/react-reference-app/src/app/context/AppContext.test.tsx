@@ -323,3 +323,73 @@ describe('resource changes dev param', () => {
     });
   });
 });
+
+function ComingSoonProbe() {
+  const { appState, setAppState } = useAppState();
+
+  return (
+    <>
+      <output>{String(appState.isComingSoonMode)}</output>
+      <button type="button" onClick={() => setAppState({ isComingSoonMode: true })}>
+        Turn on
+      </button>
+      <button type="button" onClick={() => setAppState({ isComingSoonMode: false })}>
+        Turn off
+      </button>
+    </>
+  );
+}
+
+function renderComingSoonProbe(search = '') {
+  window.history.replaceState(null, '', `/${search}`);
+
+  return render(
+    <MemoryRouter>
+      <AppProvider>
+        <ComingSoonProbe />
+      </AppProvider>
+    </MemoryRouter>,
+  );
+}
+
+describe('coming-soon mode', () => {
+  it('is off by default', () => {
+    // arrange
+    renderComingSoonProbe();
+
+    // act
+    const mode = screen.getByRole('status');
+
+    // assert
+    expect(mode).toHaveTextContent('false');
+  });
+
+  it('is restored from the URL', () => {
+    // arrange
+    renderComingSoonProbe('?comingsoon=1');
+
+    // act
+    const mode = screen.getByRole('status');
+
+    // assert
+    expect(mode).toHaveTextContent('true');
+  });
+
+  it('writes the URL parameter when on and removes it when off', async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderComingSoonProbe();
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Turn on' }));
+
+    // assert
+    await waitFor(() => expect(window.location.search).toContain('comingsoon=1'));
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Turn off' }));
+
+    // assert
+    await waitFor(() => expect(window.location.search).not.toContain('comingsoon'));
+  });
+});

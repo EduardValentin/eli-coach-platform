@@ -1,4 +1,5 @@
 import { DeadEndLink, DeadEndPage } from "~/shared/design-system/layout";
+import { BrandMark } from "~/shared/design-system/primitives";
 import { Compass } from "lucide-react";
 
 type RootErrorPageProps = {
@@ -22,5 +23,18 @@ export function RootErrorPage(props: RootErrorPageProps) {
         Back to home
       </DeadEndLink>
     </DeadEndPage>
+  );
+}
+
+export function ComingSoonPage() {
+  return (
+    <DeadEndPage
+      data-parity-root="ComingSoon"
+      description="Strength, nutrition, and cycle-aware coaching. The full site opens soon."
+      eyebrow="Coming soon"
+      icon={<BrandMark />}
+      landmarkLabel="Coming soon"
+      title="Evoa is almost here."
+    />
   );
 }

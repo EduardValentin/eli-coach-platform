@@ -11,6 +11,7 @@ import type { ComponentType } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 import {
   createMemoryRouter,
+  data,
   createRoutesStub,
   Outlet,
   RouterProvider,
@@ -444,9 +445,102 @@ describe("root ErrorBoundary", () => {
       screen.getByRole("link", { name: /back to home/i }),
     ).toBeInTheDocument();
   });
+
+  it("shows the coming-soon placeholder when the gate hands over its marker", async () => {
+    // arrange
+    const heldBackByTheGate = () => {
+      throw data({ comingSoon: true }, { status: 200 });
+    };
+
+    // act
+    renderRouteWithRootErrorBoundary({
+      initialEntry: "/",
+      loader: heldBackByTheGate,
+    });
+
+    // assert
+    expect(
+      await screen.findByRole("heading", {
+        level: 1,
+        name: "Evoa is almost here.",
+      }),
+    ).toBeInTheDocument();
+    expect(screen.getAllByRole("heading")).toHaveLength(1);
+    expect(
+      screen.getByRole("main", { name: "Coming soon" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Coming soon", { selector: "p" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Strength, nutrition, and cycle-aware coaching. The full site opens soon.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("link")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+    expect(
+      document.querySelector('[data-parity="brand-mark"]'),
+    ).toHaveAttribute("aria-hidden", "true");
+  });
+
+  it("passes the placeholder an accessibility check", async () => {
+    // arrange
+    const heldBackByTheGate = () => {
+      throw data({ comingSoon: true }, { status: 200 });
+    };
+    const { container } = renderRouteWithRootErrorBoundary({
+      initialEntry: "/",
+      loader: heldBackByTheGate,
+    });
+    await screen.findByRole("heading", { level: 1 });
+
+    // act
+    const results = await axe(container);
+
+    // assert
+    expect(results.violations).toEqual([]);
+  });
+
+  it("keeps a thrown 200 that is not the marker from showing the placeholder", async () => {
+    // arrange
+    const unrelated = () => {
+      throw data({ other: true }, { status: 200 });
+    };
+
+    // act
+    renderRouteWithRootErrorBoundary({ initialEntry: "/", loader: unrelated });
+
+    // assert
+    expect(
+      await screen.findByRole("heading", {
+        level: 1,
+        name: "Something went wrong",
+      }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Evoa is almost here.")).not.toBeInTheDocument();
+  });
 });
 
 describe("root meta", () => {
+  it("titles the placeholder and keeps it out of search results", () => {
+    // arrange
+    const marker = {
+      data: { comingSoon: true },
+      internal: true,
+      status: 200,
+      statusText: "",
+    };
+
+    // act
+    const descriptors = meta({ error: marker } as Parameters<typeof meta>[0]);
+
+    // assert
+    expect(descriptors).toEqual([
+      { title: "Evoa — Coming soon" },
+      { name: "robots", content: "noindex" },
+    ]);
+  });
   it("titles a missing page as such rather than leaving the app's default title", () => {
     // arrange
     const notFound = routeErrorResponse(404, "Not Found");
