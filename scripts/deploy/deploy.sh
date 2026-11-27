@@ -55,6 +55,13 @@ case "${DEPLOY_ENV}" in
   *) fail "DEPLOY_ENV must be test or prod, got: ${DEPLOY_ENV}" ;;
 esac
 
+DEPLOY_MODE="${DEPLOY_MODE:-release}"
+
+case "${DEPLOY_MODE}" in
+  release | rollback) ;;
+  *) fail "DEPLOY_MODE must be release or rollback, got: ${DEPLOY_MODE}" ;;
+esac
+
 APP_NAME="${APP_NAME:-eli-coach-platform}"
 APP_DIR="${APP_DIR:-/srv/apps/${APP_NAME}}"
 DEPLOY_ENV_FILE="${APP_DIR}/deploy/env/${DEPLOY_ENV}.env"
@@ -170,6 +177,10 @@ has_design_reference() {
   [[ "${DEPLOY_ENV}" == "test" ]]
 }
 
+is_rollback() {
+  [[ "${DEPLOY_MODE}" == "rollback" ]]
+}
+
 read_deploy_env_setting() {
   sed -n "s/^$1=//p" "${DEPLOY_ENV_FILE}" | head -n 1
 }
@@ -222,8 +233,10 @@ load_edge_address() {
 require_inputs() {
   require_env EDGE_HOSTNAME
   require_env PLATFORM_IMAGE
-  require_env MIGRATION_IMAGE
-  require_env POSTGRES_RUNTIME_IMAGE
+  if ! is_rollback; then
+    require_env MIGRATION_IMAGE
+    require_env POSTGRES_RUNTIME_IMAGE
+  fi
   if has_design_reference; then
     require_env DESIGN_REFERENCE_IMAGE
   fi
@@ -500,9 +513,25 @@ remove_unswitched_target_color() {
 
 # --- release ledger, lock and compare-and-swap ---
 
-live_release_sha() {
+live_ledger_line() {
   [[ -s "${LEDGER_FILE}" ]] || return 0
-  tail -n 1 "${LEDGER_FILE}" | sed -n 's/.*"sha":"\([0-9a-f]\{40\}\)".*/\1/p'
+  tail -n 1 "${LEDGER_FILE}"
+}
+
+live_release_sha() {
+  live_ledger_line | sed -n 's/.*"sha":"\([0-9a-f]\{40\}\)".*/\1/p'
+}
+
+# Reads one image reference from the ledger line on stdin.
+ledger_image() {
+  local image_name="$1"
+
+  sed -n "s/.*\"${image_name}\":\"\([^\"]*\)\".*/\\1/p"
+}
+
+last_ledger_line_of_release() {
+  [[ -s "${LEDGER_FILE}" ]] || return 0
+  grep -F "\"sha\":\"${RELEASE_SHA}\"" "${LEDGER_FILE}" | tail -n 1 || true
 }
 
 require_release_identity() {
@@ -568,10 +597,35 @@ record_release() {
     snapshot_json="\"${BACKUP_SNAPSHOT}\""
   fi
 
-  printf '{"time":"%s","kind":"release","sha":"%s","images":{"platform":"%s","migration":"%s","postgresRuntime":"%s"},"color":"%s","snapshot":%s}\n' \
-    "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "${RELEASE_SHA}" "${PLATFORM_IMAGE}" "${MIGRATION_IMAGE}" "${POSTGRES_RUNTIME_IMAGE}" "${TARGET_COLOR}" "${snapshot_json}" \
+  printf '{"time":"%s","kind":"%s","sha":"%s","images":{"platform":"%s","migration":"%s","postgresRuntime":"%s"},"color":"%s","snapshot":%s}\n' \
+    "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "${DEPLOY_MODE}" "${RELEASE_SHA}" "${PLATFORM_IMAGE}" "${MIGRATION_IMAGE}" "${POSTGRES_RUNTIME_IMAGE}" "${TARGET_COLOR}" "${snapshot_json}" \
     >> "${LEDGER_FILE}" \
     && log "recorded release ${RELEASE_SHA} in ${LEDGER_FILE}"
+}
+
+# GitHub's deployment records can be written by any workflow run in the
+# repository; only this host's ledger proves which image a commit ran with.
+refuse_rollback_this_host_cannot_perform() {
+  local live_sha=""
+  local recorded_platform_image=""
+  live_sha="$(live_release_sha)"
+
+  [[ -n "${live_sha}" ]] || fail "no live release on this host to roll back from"
+  [[ "${RELEASE_SHA}" != "${live_sha}" ]] || refuse "${RELEASE_SHA} is already live"
+
+  recorded_platform_image="$(last_ledger_line_of_release | ledger_image platform)"
+  [[ -n "${recorded_platform_image}" && "${recorded_platform_image}" == "${PLATFORM_IMAGE}" ]] \
+    || refuse "this host's ledger has no release ${RELEASE_SHA} that ran ${PLATFORM_IMAGE}"
+}
+
+# A rollback changes only the platform image. The database keeps the live
+# release's schema and Postgres runtime, so those stay in the ledger.
+keep_live_database_images() {
+  MIGRATION_IMAGE="$(live_ledger_line | ledger_image migration)"
+  POSTGRES_RUNTIME_IMAGE="$(live_ledger_line | ledger_image postgresRuntime)"
+  [[ -n "${MIGRATION_IMAGE}" && -n "${POSTGRES_RUNTIME_IMAGE}" ]] \
+    || fail "the live ledger line does not name its migration and Postgres runtime images"
+  require_plain_image_references
 }
 
 # --- pre-deploy backup (PROD only) ---
@@ -716,8 +770,26 @@ promote_target_color() {
   switch_back_to_previous_color
 }
 
+prepare_release() {
+  write_postgres_exporter_env_file
+  write_stack_env_files
+  pull_application_images "${TARGET_ENV_FILE}"
+  back_up_database_before_deploy
+  start_infrastructure
+  run_migrations
+}
+
+# The earlier platform image starts against the running database: no backup,
+# no infrastructure change and no migrations.
+prepare_rollback() {
+  write_stack_env_files
+  pull_application_images "${TARGET_ENV_FILE}"
+}
+
 load_deploy_settings
-load_metrics_bind_ip
+if ! is_rollback; then
+  load_metrics_bind_ip
+fi
 load_edge_address
 require_inputs
 require_release_identity
@@ -728,6 +800,10 @@ prepare_host_directories
 acquire_deploy_lock
 survive_dropped_session
 refuse_unexpected_live_release
+if is_rollback; then
+  refuse_rollback_this_host_cannot_perform
+  keep_live_database_images
+fi
 login_to_ghcr
 reclaim_docker_disk_space
 ensure_network_exists "${EDGE_NETWORK}"
@@ -743,16 +819,15 @@ fi
 TARGET_ENV_FILE="${APP_DIR}/deploy-${TARGET_COLOR}.env"
 ACTIVE_ENV_FILE="${APP_DIR}/deploy-${ACTIVE_COLOR}.env"
 
-log "starting ${DEPLOY_ENV} deploy of ${RELEASE_SHA}"
+log "starting ${DEPLOY_ENV} ${DEPLOY_MODE} of ${RELEASE_SHA}"
 log "active color=${ACTIVE_COLOR} target color=${TARGET_COLOR}"
 
 remember_previous_routing
-write_postgres_exporter_env_file
-write_stack_env_files
-pull_application_images "${TARGET_ENV_FILE}"
-back_up_database_before_deploy
-start_infrastructure
-run_migrations
+if is_rollback; then
+  prepare_rollback
+else
+  prepare_release
+fi
 start_target_color
 promote_target_color
 

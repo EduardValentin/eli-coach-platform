@@ -1,0 +1,198 @@
+name: Rollback PROD
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_sha:
+        description: Full commit of a past PROD release. Empty rolls back to the release before the live one.
+        required: false
+        default: ""
+        type: string
+      confirm_migration_releases:
+        description: Only when going back past the previous release, the count M the plan prints (releases gone back over that changed the migrations).
+        required: false
+        default: ""
+        type: string
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+permissions:
+  contents: read
+
+# No `concurrency` key: the host lock and EXPECTED_LIVE_SHA settle which of two
+# runs wins, as for a release.
+jobs:
+  plan:
+    name: Plan the rollback
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      deployments: read
+      packages: read
+    outputs:
+      target_sha: ${{ steps.plan.outputs.target_sha }}
+      live_sha: ${{ steps.plan.outputs.live_sha }}
+      platform_image: ${{ steps.plan.outputs.platform_image }}
+      live_migration_image: ${{ steps.plan.outputs.live_migration_image }}
+      live_postgres_runtime_image: ${{ steps.plan.outputs.live_postgres_runtime_image }}
+    steps:
+      - name: Run only from main
+        if: github.ref != 'refs/heads/main'
+        run: |
+          echo "::error::Rollback PROD runs only from main, not ${GITHUB_REF}"
+          exit 1
+
+      - name: Checkout code
+        uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Read the PROD deployment records
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          records_directory="${RUNNER_TEMP}/deployment-records"
+          mkdir -p "${records_directory}"
+          gh api --paginate "repos/${GITHUB_REPOSITORY}/deployments?environment=production&per_page=100" \
+            --jq '.[] | {id, sha, created_at, creator: .creator.login, payload} | tojson' \
+            > "${records_directory}/deployments.jsonl"
+
+          while IFS= read -r deployment; do
+            deployment_id="$(jq -r '.id' <<< "${deployment}")"
+            gh api --paginate "repos/${GITHUB_REPOSITORY}/deployments/${deployment_id}/statuses?per_page=100" \
+              --jq '.[] | {state, created_at, creator: .creator.login} | tojson' \
+              > "${records_directory}/statuses.jsonl"
+            jq --slurp --argjson deployment "${deployment}" '$deployment + {statuses: .}' \
+              "${records_directory}/statuses.jsonl" >> "${records_directory}/with-statuses.jsonl"
+          done < "${records_directory}/deployments.jsonl"
+
+          touch "${records_directory}/with-statuses.jsonl"
+          jq --slurp '.' "${records_directory}/with-statuses.jsonl" > "${RUNNER_TEMP}/deployments.json"
+
+      - name: Choose the release to roll back to
+        id: plan
+        shell: bash
+        env:
+          TARGET_SHA: ${{ inputs.target_sha }}
+          CONFIRM_MIGRATION_RELEASES: ${{ inputs.confirm_migration_releases }}
+        run: |
+          set -euo pipefail
+
+          plan_file="${RUNNER_TEMP}/rollback-plan.json"
+          node scripts/deploy/release-plan.mjs rollback \
+            --deployments "${RUNNER_TEMP}/deployments.json" \
+            --plan "${plan_file}" \
+            --target "${TARGET_SHA}" \
+            --confirm-migration-releases "${CONFIRM_MIGRATION_RELEASES}" \
+            | tee -a "$GITHUB_STEP_SUMMARY"
+
+          jq -r '
+            "target_sha=\(.targetSha)",
+            "live_sha=\(.liveSha)",
+            "platform_image=\(.platformImage)",
+            "live_migration_image=\(.liveMigrationImage)",
+            "live_postgres_runtime_image=\(.livePostgresRuntimeImage)"
+          ' "${plan_file}" >> "$GITHUB_OUTPUT"
+
+      - name: Login to GHCR
+        uses: docker/login-action@v4.7.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      - name: Check the target's platform image is still in GHCR
+        shell: bash
+        env:
+          PLATFORM_IMAGE: ${{ steps.plan.outputs.platform_image }}
+        run: |
+          set -euo pipefail
+
+          if ! docker buildx imagetools inspect "${PLATFORM_IMAGE}" > /dev/null; then
+            echo "::error::${PLATFORM_IMAGE} is gone from GHCR; this release cannot be rolled back to"
+            exit 1
+          fi
+
+  rollback:
+    name: Roll back PROD
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    needs: plan
+    # Waits for the production approval like a release. Deploy files come from
+    # main, not the target commit; the target's image only has to pass the
+    # health check before traffic moves.
+    environment:
+      name: production
+      deployment: false
+    permissions:
+      contents: read
+      deployments: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Resolve PROD config
+        id: prod_config
+        uses: ./.github/actions/resolve-prod-config
+        with:
+          node-hostname: ${{ vars.PROD_NODE_HOSTNAME }}
+          edge-hostname: ${{ vars.PROD_EDGE_HOSTNAME }}
+          ssh-known-hosts: ${{ secrets.PROD_SSH_KNOWN_HOSTS }}
+          tailscale-oauth-client-id: ${{ secrets.PROD_TAILSCALE_OAUTH_CLIENT_ID }}
+          tailscale-oauth-secret: ${{ secrets.PROD_TAILSCALE_OAUTH_SECRET }}
+          ghcr-username: ${{ secrets.GHCR_PULL_USERNAME }}
+          ghcr-token: ${{ secrets.GHCR_PULL_TOKEN }}
+
+      - name: Connect to the PROD host
+        uses: ./.github/actions/remote-connect
+        with:
+          node-hostname: ${{ steps.prod_config.outputs.node-hostname }}
+          ssh-known-hosts: ${{ secrets.PROD_SSH_KNOWN_HOSTS }}
+          tailscale-oauth-client-id: ${{ secrets.PROD_TAILSCALE_OAUTH_CLIENT_ID }}
+          tailscale-oauth-secret: ${{ secrets.PROD_TAILSCALE_OAUTH_SECRET }}
+          tailscale-hostname: gha-eli-coach-platform-prod-ci
+          tailscale-tags: tag:ci-prod-deploy
+
+      - name: Record the PROD deployment as in progress
+        id: deployment
+        uses: ./.github/actions/record-prod-deployment-start
+        with:
+          sha: ${{ needs.plan.outputs.target_sha }}
+          kind: rollback
+          previous-sha: ${{ needs.plan.outputs.live_sha }}
+          platform-image: ${{ needs.plan.outputs.platform_image }}
+          migration-image: ${{ needs.plan.outputs.live_migration_image }}
+          postgres-runtime-image: ${{ needs.plan.outputs.live_postgres_runtime_image }}
+
+      - name: Roll PROD back to the target release
+        id: deploy
+        uses: ./.github/actions/remote-deploy
+        with:
+          deploy-env: prod
+          deploy-mode: rollback
+          edge-hostname: ${{ steps.prod_config.outputs.edge-hostname }}
+          host-label: ${{ steps.prod_config.outputs.node-hostname }}
+          release-sha: ${{ needs.plan.outputs.target_sha }}
+          expected-live-sha: ${{ needs.plan.outputs.live_sha }}
+          ghcr-username: ${{ secrets.GHCR_PULL_USERNAME }}
+          ghcr-token: ${{ secrets.GHCR_PULL_TOKEN }}
+          platform-image: ${{ needs.plan.outputs.platform_image }}
+
+      - name: Record the PROD deployment result
+        if: always() && steps.deployment.outputs.id != ''
+        uses: ./.github/actions/record-prod-deployment-result
+        with:
+          deployment-id: ${{ steps.deployment.outputs.id }}
+          deploy-outcome: ${{ steps.deploy.outcome }}
+
+      - name: Cleanup temporary SSH state
+        if: always()
+        run: rm -rf "${RUNNER_TEMP}/remote-deploy"

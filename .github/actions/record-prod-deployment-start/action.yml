@@ -1,0 +1,84 @@
+name: Record a PROD deployment as in progress
+description: >-
+  Creates the prod-release/v1 GitHub deployment that records which images a
+  PROD release or rollback puts live, and marks it in progress.
+
+inputs:
+  sha:
+    description: The commit going live
+    required: true
+  kind:
+    description: release or rollback
+    required: true
+  previous-sha:
+    description: The commit live before, or none
+    required: true
+  platform-image:
+    description: Platform image reference by digest
+    required: true
+  migration-image:
+    description: Migration image reference by digest
+    required: true
+  postgres-runtime-image:
+    description: Postgres runtime image reference by digest
+    required: true
+
+outputs:
+  id:
+    description: The deployment id
+    value: ${{ steps.create.outputs.id }}
+
+runs:
+  using: composite
+  steps:
+    - name: Create the deployment
+      id: create
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+        RELEASE_SHA: ${{ inputs.sha }}
+        KIND: ${{ inputs.kind }}
+        PREVIOUS_SHA: ${{ inputs.previous-sha }}
+        PLATFORM_IMAGE: ${{ inputs.platform-image }}
+        MIGRATION_IMAGE: ${{ inputs.migration-image }}
+        POSTGRES_RUNTIME_IMAGE: ${{ inputs.postgres-runtime-image }}
+      run: |
+        set -euo pipefail
+
+        previous_sha="${PREVIOUS_SHA}"
+        if [[ "${previous_sha}" == "none" ]]; then
+          previous_sha=""
+        fi
+
+        request="$(jq -n \
+          --arg ref "${RELEASE_SHA}" \
+          --arg kind "${KIND}" \
+          --arg previous "${previous_sha}" \
+          --arg platform "${PLATFORM_IMAGE}" \
+          --arg migration "${MIGRATION_IMAGE}" \
+          --arg postgres "${POSTGRES_RUNTIME_IMAGE}" \
+          '{
+            ref: $ref,
+            environment: "production",
+            task: "deploy",
+            auto_merge: false,
+            required_contexts: [],
+            production_environment: true,
+            description: (if $kind == "rollback" then "Rollback on PROD" else "Release to PROD" end),
+            payload: {
+              schema: "prod-release/v1",
+              kind: $kind,
+              sha: $ref,
+              previousSha: $previous,
+              images: { platform: $platform, migration: $migration, postgresRuntime: $postgres }
+            }
+          }')"
+
+        deployment_id="$(gh api "repos/${GITHUB_REPOSITORY}/deployments" --input - --jq '.id' <<< "${request}")"
+        echo "id=${deployment_id}" >> "$GITHUB_OUTPUT"
+
+        gh api "repos/${GITHUB_REPOSITORY}/deployments/${deployment_id}/statuses" \
+          -f state=in_progress \
+          -f environment=production \
+          -f log_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" \
+          -f description="Deploy started" > /dev/null

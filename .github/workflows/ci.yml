@@ -456,43 +456,21 @@ jobs:
       # Nothing below reaches PROD until every value exists, so a missing
       # variable, secret or pinned host key stops the run here.
       - name: Resolve PROD config
-        id: target
-        shell: bash
-        env:
-          PROD_NODE_HOSTNAME: ${{ vars.PROD_NODE_HOSTNAME }}
-          PROD_EDGE_HOSTNAME: ${{ vars.PROD_EDGE_HOSTNAME }}
-          PROD_SSH_KNOWN_HOSTS: ${{ secrets.PROD_SSH_KNOWN_HOSTS }}
-          PROD_TAILSCALE_OAUTH_CLIENT_ID: ${{ secrets.PROD_TAILSCALE_OAUTH_CLIENT_ID }}
-          PROD_TAILSCALE_OAUTH_SECRET: ${{ secrets.PROD_TAILSCALE_OAUTH_SECRET }}
-          GHCR_PULL_USERNAME: ${{ secrets.GHCR_PULL_USERNAME }}
-          GHCR_PULL_TOKEN: ${{ secrets.GHCR_PULL_TOKEN }}
-        run: |
-          set -euo pipefail
-
-          missing=()
-          for name in PROD_NODE_HOSTNAME PROD_EDGE_HOSTNAME PROD_SSH_KNOWN_HOSTS PROD_TAILSCALE_OAUTH_CLIENT_ID PROD_TAILSCALE_OAUTH_SECRET GHCR_PULL_USERNAME GHCR_PULL_TOKEN; do
-            if [[ -z "${!name}" ]]; then
-              missing+=("${name}")
-            fi
-          done
-
-          if (( ${#missing[@]} > 0 )); then
-            echo "::error::PROD is not configured in the production environment: missing ${missing[*]}"
-            exit 1
-          fi
-
-          if ! grep -Eq '^[^ #]+ (ssh-ed25519|ssh-rsa|ecdsa-sha2-nistp[0-9]+) [A-Za-z0-9+/=]+' <<< "${PROD_SSH_KNOWN_HOSTS}"; then
-            echo "::error::PROD_SSH_KNOWN_HOSTS does not hold a pinned host key yet"
-            exit 1
-          fi
-
-          echo "node_hostname=${PROD_NODE_HOSTNAME%.}" >> "$GITHUB_OUTPUT"
-          echo "edge_hostname=${PROD_EDGE_HOSTNAME}" >> "$GITHUB_OUTPUT"
+        id: prod_config
+        uses: ./.github/actions/resolve-prod-config
+        with:
+          node-hostname: ${{ vars.PROD_NODE_HOSTNAME }}
+          edge-hostname: ${{ vars.PROD_EDGE_HOSTNAME }}
+          ssh-known-hosts: ${{ secrets.PROD_SSH_KNOWN_HOSTS }}
+          tailscale-oauth-client-id: ${{ secrets.PROD_TAILSCALE_OAUTH_CLIENT_ID }}
+          tailscale-oauth-secret: ${{ secrets.PROD_TAILSCALE_OAUTH_SECRET }}
+          ghcr-username: ${{ secrets.GHCR_PULL_USERNAME }}
+          ghcr-token: ${{ secrets.GHCR_PULL_TOKEN }}
 
       - name: Connect to the PROD host
         uses: ./.github/actions/remote-connect
         with:
-          node-hostname: ${{ steps.target.outputs.node_hostname }}
+          node-hostname: ${{ steps.prod_config.outputs.node-hostname }}
           ssh-known-hosts: ${{ secrets.PROD_SSH_KNOWN_HOSTS }}
           tailscale-oauth-client-id: ${{ secrets.PROD_TAILSCALE_OAUTH_CLIENT_ID }}
           tailscale-oauth-secret: ${{ secrets.PROD_TAILSCALE_OAUTH_SECRET }}
@@ -522,60 +500,22 @@ jobs:
 
       - name: Record the PROD deployment as in progress
         id: deployment
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-          LIVE_SHA: ${{ steps.verdict.outputs.live_sha }}
-          PLATFORM_IMAGE: ${{ needs.build_and_push.outputs.platform_image }}
-          MIGRATION_IMAGE: ${{ needs.build_and_push.outputs.migration_image }}
-          POSTGRES_RUNTIME_IMAGE: ${{ needs.build_and_push.outputs.postgres_runtime_image }}
-        run: |
-          set -euo pipefail
-
-          previous_sha="${LIVE_SHA}"
-          if [[ "${previous_sha}" == "none" ]]; then
-            previous_sha=""
-          fi
-
-          request="$(jq -n \
-            --arg ref "${GITHUB_SHA}" \
-            --arg previous "${previous_sha}" \
-            --arg platform "${PLATFORM_IMAGE}" \
-            --arg migration "${MIGRATION_IMAGE}" \
-            --arg postgres "${POSTGRES_RUNTIME_IMAGE}" \
-            '{
-              ref: $ref,
-              environment: "production",
-              task: "deploy",
-              auto_merge: false,
-              required_contexts: [],
-              production_environment: true,
-              description: "Release to PROD",
-              payload: {
-                schema: "prod-release/v1",
-                kind: "release",
-                sha: $ref,
-                previousSha: $previous,
-                images: { platform: $platform, migration: $migration, postgresRuntime: $postgres }
-              }
-            }')"
-
-          deployment_id="$(gh api "repos/${GITHUB_REPOSITORY}/deployments" --input - --jq '.id' <<< "${request}")"
-          echo "id=${deployment_id}" >> "$GITHUB_OUTPUT"
-
-          gh api "repos/${GITHUB_REPOSITORY}/deployments/${deployment_id}/statuses" \
-            -f state=in_progress \
-            -f environment=production \
-            -f log_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" \
-            -f description="Deploy started" > /dev/null
+        uses: ./.github/actions/record-prod-deployment-start
+        with:
+          sha: ${{ github.sha }}
+          kind: release
+          previous-sha: ${{ steps.verdict.outputs.live_sha }}
+          platform-image: ${{ needs.build_and_push.outputs.platform_image }}
+          migration-image: ${{ needs.build_and_push.outputs.migration_image }}
+          postgres-runtime-image: ${{ needs.build_and_push.outputs.postgres_runtime_image }}
 
       - name: Deploy the image set to PROD
         id: deploy
         uses: ./.github/actions/remote-deploy
         with:
           deploy-env: prod
-          edge-hostname: ${{ steps.target.outputs.edge_hostname }}
-          host-label: ${{ steps.target.outputs.node_hostname }}
+          edge-hostname: ${{ steps.prod_config.outputs.edge-hostname }}
+          host-label: ${{ steps.prod_config.outputs.node-hostname }}
           release-sha: ${{ github.sha }}
           expected-live-sha: ${{ steps.verdict.outputs.live_sha }}
           ghcr-username: ${{ secrets.GHCR_PULL_USERNAME }}
@@ -586,36 +526,10 @@ jobs:
 
       - name: Record the PROD deployment result
         if: always() && steps.deployment.outputs.id != ''
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-          DEPLOYMENT_ID: ${{ steps.deployment.outputs.id }}
-          DEPLOY_OUTCOME: ${{ steps.deploy.outcome }}
-        run: |
-          set -euo pipefail
-
-          exit_code=""
-          exit_code_file="${RUNNER_TEMP}/remote-deploy/deploy-exit-code"
-          if [[ -f "${exit_code_file}" ]]; then
-            exit_code="$(cat "${exit_code_file}")"
-          fi
-
-          case "${exit_code}" in
-            0) state=success; description="Deployed" ;;
-            10) state=failure; description="Refused: another deploy is running or the live release changed (exit 10)" ;;
-            11) state=failure; description="Stopped: the pre-deploy backup failed (exit 11)" ;;
-            12) state=failure; description="Failed before the switch; the live release was not touched (exit 12)" ;;
-            20) state=failure; description="Public check failed; switched back to the previous release (exit 20)" ;;
-            30) state=failure; description="Switch-back failed; PROD needs a person (exit 30)" ;;
-            "") state=failure; description="The deploy did not start (${DEPLOY_OUTCOME})" ;;
-            *) state=failure; description="Failed: deploy exit ${exit_code}, step ${DEPLOY_OUTCOME}" ;;
-          esac
-
-          gh api "repos/${GITHUB_REPOSITORY}/deployments/${DEPLOYMENT_ID}/statuses" \
-            -f state="${state}" \
-            -f environment=production \
-            -f log_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" \
-            -f description="${description}" > /dev/null
+        uses: ./.github/actions/record-prod-deployment-result
+        with:
+          deployment-id: ${{ steps.deployment.outputs.id }}
+          deploy-outcome: ${{ steps.deploy.outcome }}
 
       - name: Cleanup temporary SSH state
         if: always()
