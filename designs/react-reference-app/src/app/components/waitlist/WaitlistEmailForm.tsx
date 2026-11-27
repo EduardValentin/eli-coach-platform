@@ -59,16 +59,21 @@ export function WaitlistEmailForm({
   const isDark = variant === 'dark';
 
   const inputClasses = cn(
-    'h-14 w-full rounded-full border px-6 text-base outline-none transition-all focus:ring-2 focus:ring-brand/30',
+    'h-14 w-full rounded-full border px-[min(1.5rem,24px)] text-base outline-none transition-all placeholder:text-[length:min(1rem,8.5vw)] focus:ring-2 focus:ring-brand/30',
     {
-      'border-surface-base/20 bg-surface-base/10 text-surface-inverted-foreground placeholder:text-surface-inverted-foreground/70 backdrop-blur-md':
+      'border-surface-base/50 bg-surface-base/10 text-surface-inverted-foreground placeholder:text-surface-inverted-foreground/70 backdrop-blur-md':
         isDark,
       'border-control-border-soft bg-card text-foreground placeholder:text-placeholder-soft':
         !isDark,
     },
   );
 
-  const buttonClasses = buttonVariants({ press: 'scale', size: 'lg', weight: 'semibold' });
+  const buttonClasses = buttonVariants({
+    className: 'h-auto min-h-(--size-control-lg) py-2 whitespace-normal',
+    press: 'scale',
+    size: 'lg',
+    weight: 'semibold',
+  });
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();

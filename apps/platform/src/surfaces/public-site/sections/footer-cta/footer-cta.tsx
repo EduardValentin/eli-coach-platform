@@ -70,12 +70,14 @@ export function PublicFooterCta(props: PublicFooterCtaProps) {
   return (
     <section
       aria-label="Start your next step"
-      className="relative z-10 -mt-10"
+      className="relative z-10 -mt-10 text-text-primary"
+      data-parity-root="FooterCTA"
       ref={sectionRef}
     >
       <MotionConfig reducedMotion="user">
         <motion.div
-          className="rounded-t-phone-frame bg-surface-brand-soft px-6 pb-10 pt-28 text-center text-text-primary shadow-public-footer-cta-sheet"
+          className="rounded-t-phone-frame bg-surface-brand-soft px-6 pb-10 pt-28 text-center shadow-public-footer-cta-sheet"
+          data-parity="footer-sheet"
           style={
             shouldReduceMotion ? undefined : { scale: sheetScale, y: sheetY }
           }
@@ -119,6 +121,7 @@ function FooterActionsReveal(props: PropsWithChildren<{ className: string }>) {
   return (
     <motion.div
       className={props.className}
+      data-parity="footer-actions"
       variants={FOOTER_CTA_ACTIONS_REVEAL}
     >
       {props.children}
@@ -174,8 +177,10 @@ function FooterNormalContent() {
       <FooterActionsReveal className="flex flex-col items-center justify-center gap-4 sm:flex-row">
         <RouterLink
           className={buttonVariants({
+            className: "px-6",
             elevation: "raised",
             press: "scale",
+            size: "md-grow",
             weight: "regular",
             width: "full-below-sm",
           })}
@@ -185,7 +190,9 @@ function FooterNormalContent() {
         </RouterLink>
         <RouterLink
           className={buttonVariants({
+            className: "px-6",
             press: "scale",
+            size: "md-grow",
             variant: "outline-brand",
             weight: "regular",
             width: "full-below-sm",

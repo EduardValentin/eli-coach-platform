@@ -232,6 +232,7 @@ describe("button call-to-action options", () => {
       expect.arrayContaining([
         "min-h-(--size-control-md)",
         "px-5",
+        "py-2",
         "text-base",
         "whitespace-normal",
       ]),

@@ -24,16 +24,29 @@ export const PhoneFrame = React.forwardRef<HTMLDivElement, PhoneFrameProps>(
         {...props}
       >
         {children}
-        <div aria-hidden="true" className="ui-phone-frame__notch" />
+        <div
+          aria-hidden="true"
+          className="ui-phone-frame__notch"
+          data-parity="phone-frame-notch"
+        />
         <div
           aria-hidden="true"
           className={cn("ui-phone-frame__status-bar", statusVariantClassName)}
         >
           <span>{time}</span>
           <span className="ui-phone-frame__status-dots">
-            <span className="ui-phone-frame__status-dot" />
-            <span className="ui-phone-frame__status-dot" />
-            <span className="ui-phone-frame__status-dot" />
+            <span
+              className="ui-phone-frame__status-dot"
+              data-parity="phone-frame-status-dot-1"
+            />
+            <span
+              className="ui-phone-frame__status-dot"
+              data-parity="phone-frame-status-dot-2"
+            />
+            <span
+              className="ui-phone-frame__status-dot"
+              data-parity="phone-frame-status-dot-3"
+            />
           </span>
         </div>
       </div>

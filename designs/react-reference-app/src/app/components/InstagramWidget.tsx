@@ -165,10 +165,11 @@ export function InstagramWidget() {
         />
       </div>
 
-      <div aria-hidden="true" className="absolute top-12 left-0 right-0 px-4 flex gap-1 z-40 pointer-events-none">
+      <div aria-hidden="true" data-parity="story-progress" className="absolute top-12 left-0 right-0 px-4 flex gap-1 z-40 pointer-events-none">
         {stories.map((_, idx) => (
-          <div key={idx} className="h-[3px] flex-1 bg-white/30 rounded-full overflow-hidden">
+          <div key={idx} data-parity={`story-progress-track-${idx + 1}`} className="h-[3px] flex-1 bg-white/30 rounded-full overflow-hidden">
             <div
+              data-parity={`story-progress-fill-${idx + 1}`}
               className="h-full bg-white transition-all duration-75 ease-linear"
               style={{
                 width: `${idx < currentIndex ? 100 : idx === currentIndex ? currentProgress : 0}%`,
@@ -180,7 +181,7 @@ export function InstagramWidget() {
 
       <div className="absolute top-[70px] left-0 right-0 px-4 flex items-center z-40 pointer-events-none">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full border border-white overflow-hidden">
+          <div data-parity="story-avatar" className="w-8 h-8 rounded-full border border-white overflow-hidden">
             <img
               src={ELI_PORTRAIT_SMALL}
               alt=""
@@ -216,7 +217,7 @@ export function InstagramWidget() {
       </div>
 
       <div className="absolute bottom-4 left-0 right-0 px-4 flex items-center gap-3 z-40">
-        <div className="flex-1 border border-white/70 rounded-full px-3.5 py-1.5 text-white/80 text-xs backdrop-blur-sm pointer-events-none">
+        <div className="flex-1 border border-white/80 rounded-full px-3.5 py-1.5 text-white/80 text-xs backdrop-blur-sm pointer-events-none">
           Send message…
         </div>
         <button

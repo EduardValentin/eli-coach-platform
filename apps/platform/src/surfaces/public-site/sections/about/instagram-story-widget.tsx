@@ -228,15 +228,9 @@ export function InstagramStoryWidget() {
               isNearViewport ? appUrl(currentStory.posterPath) : undefined
             }
           >
-            {isNearViewport && !shouldReduceMotion
-              ? currentStory.videoSources.map((source) => (
-                  <source
-                    key={source.path}
-                    src={appUrl(source.path)}
-                    type={source.type}
-                  />
-                ))
-              : null}
+            {isNearViewport && !shouldReduceMotion ? (
+              <source src={appUrl(currentStory.videoPath)} type="video/mp4" />
+            ) : null}
           </StoryVideo>
         </AnimatePresence>
         <div
@@ -249,14 +243,17 @@ export function InstagramStoryWidget() {
       <div
         aria-hidden="true"
         className="pointer-events-none absolute left-0 right-0 top-12 z-40 flex gap-1 px-4"
+        data-parity="story-progress"
       >
         {ABOUT_STORIES.map((story, storyIndex) => (
           <div
             key={story.alt}
             className="h-[3px] flex-1 overflow-hidden rounded-full bg-surface-base/30"
+            data-parity={`story-progress-track-${storyIndex + 1}`}
           >
             <div
               className="h-full bg-surface-base transition-all duration-75 ease-linear"
+              data-parity={`story-progress-fill-${storyIndex + 1}`}
               style={{
                 width: `${getStoryProgress({ currentIndex, currentProgress, storyIndex })}%`,
               }}
@@ -267,7 +264,10 @@ export function InstagramStoryWidget() {
 
       <div className="pointer-events-none absolute left-0 right-0 top-[70px] z-40 flex items-center px-4">
         <div className="flex items-center gap-2">
-          <div className="size-8 overflow-hidden rounded-full border border-surface-base">
+          <div
+            className="size-8 overflow-hidden rounded-full border border-surface-base"
+            data-parity="story-avatar"
+          >
             <img
               alt=""
               className="size-full object-cover"
@@ -307,7 +307,7 @@ export function InstagramStoryWidget() {
       </div>
 
       <div className="absolute bottom-4 left-0 right-0 z-40 flex items-center gap-3 px-4">
-        <div className="pointer-events-none flex-1 rounded-full border border-surface-base/70 px-3.5 py-1.5 text-xs text-text-inverted/80 backdrop-blur-sm">
+        <div className="pointer-events-none flex-1 rounded-full border border-surface-base/80 px-3.5 py-1.5 text-xs text-text-inverted/80 backdrop-blur-sm">
           Send message…
         </div>
         <button

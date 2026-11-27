@@ -34,14 +34,7 @@ function aboutMediaPath(fileName: string) {
 function storyMedia(reelName: string) {
   return {
     posterPath: aboutMediaPath(`story-${reelName}-poster.webp`),
-    // A browser plays the first source it supports, so AV1 comes first.
-    videoSources: [
-      {
-        path: aboutMediaPath(`story-${reelName}.av1.mp4`),
-        type: 'video/mp4; codecs="av01.0.05M.08"',
-      },
-      { path: aboutMediaPath(`story-${reelName}.h264.mp4`), type: "video/mp4" },
-    ],
+    videoPath: aboutMediaPath(`story-${reelName}.h264.mp4`),
   };
 }
 

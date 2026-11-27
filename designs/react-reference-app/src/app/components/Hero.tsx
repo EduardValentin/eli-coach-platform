@@ -66,7 +66,7 @@ export function Hero() {
       </div>
 
       {/* Content */}
-      <div className="relative z-10 flex flex-col items-center justify-center text-center px-6 py-[calc(var(--size-control-md)+2rem)] w-full">
+      <div className="relative z-10 flex flex-col items-center justify-center text-center px-[min(1.5rem,24px)] py-[calc(var(--size-control-md)+2rem)] w-full">
         <AnimatePresence mode="wait">
           {appState.isWaitlistMode ? (
             <motion.div
@@ -161,7 +161,7 @@ export function Hero() {
                 transition={{ duration: 0.5, delay: 0.4 }}
                 className="flex flex-col items-center gap-3"
               >
-                <Button asChild size="md" elevation="raised" lettering="caps" press="scale" textSize="sm" weight="semibold" className="group">
+                <Button asChild size="md-grow" elevation="raised" lettering="caps" press="scale" textSize="sm" weight="semibold" className="group">
                   <Link to="/book">
                     See if we’re a fit
                     <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />

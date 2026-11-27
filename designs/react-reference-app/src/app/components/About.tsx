@@ -10,19 +10,20 @@ export function About() {
   const { appState } = useAppState();
 
   return (
-    <section className="py-24 px-6 max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-16 lg:gap-24" id="about">
+    <section data-parity-root="About" className="py-24 px-6 max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-16 lg:gap-24" id="about">
       {/* Left: Content */}
-      <div className="flex-1 flex flex-col items-center lg:items-start text-center lg:text-left">
-        <motion.div 
+      <div className="flex-1 max-w-full flex flex-col items-center lg:items-start text-center lg:text-left">
+        <motion.figure
           initial={{ opacity: 0, scale: 0.9 }}
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="relative w-48 h-48 md:w-56 md:h-56 rounded-full p-2 mb-8 group"
+          data-parity="about-portrait"
+          className="relative w-48 md:w-56 aspect-square max-w-full rounded-full p-2 mb-8 group"
         >
           {/* Glowing border effect */}
-          <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-brand to-brand-secondary opacity-70 group-hover:opacity-100 transition-opacity blur-md" />
-          <div className="absolute inset-[3px] bg-white rounded-full z-10" />
+          <div aria-hidden="true" data-parity="about-portrait-glow" className="absolute inset-0 rounded-full bg-gradient-to-tr from-brand to-brand-secondary opacity-70 group-hover:opacity-100 transition-opacity blur-md" />
+          <div aria-hidden="true" data-parity="about-portrait-ring" className="absolute inset-[3px] bg-surface-base rounded-full z-10" />
           <img 
             src={ELI_PORTRAIT_LARGE}
             alt="Eli, personal trainer and nutritionist for women, smiling outdoors"
@@ -30,7 +31,7 @@ export function About() {
             height={208}
             className="relative z-20 w-full h-full object-cover rounded-full"
           />
-        </motion.div>
+        </motion.figure>
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -62,15 +63,15 @@ export function About() {
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4 mt-8 text-sm font-medium text-text-label">
-            <span className="flex items-center gap-1.5"><span className="text-brand">✔</span> IFBB Certified Trainer</span>
-            <span className="flex items-center gap-1.5"><span className="text-brand">✔</span> Certified Nutritionist</span>
-            <span className="flex items-center gap-1.5"><span className="text-brand">✔</span> Women Focused</span>
-          </div>
+          <ul aria-label="Eli's credentials and coaching focus" className="flex flex-wrap items-center justify-center lg:justify-start gap-4 mt-8 text-sm font-medium text-text-label">
+            <li className="flex items-center gap-1.5"><span aria-hidden="true" className="text-brand">✔</span> IFBB Certified Trainer</li>
+            <li className="flex items-center gap-1.5"><span aria-hidden="true" className="text-brand">✔</span> Certified Nutritionist</li>
+            <li className="flex items-center gap-1.5"><span aria-hidden="true" className="text-brand">✔</span> Women Focused</li>
+          </ul>
 
           {!appState.isWaitlistMode && (
-            <div className="flex items-center gap-6 mt-10 justify-center lg:justify-start">
-              <Button asChild size="md" elevation="raised" press="scale">
+            <div data-parity="about-actions" className="flex flex-wrap items-center gap-6 mt-10 justify-center lg:justify-start">
+              <Button asChild size="md-grow" elevation="raised" press="scale" className="max-w-full px-6">
                 <Link to="/book">Book a free call</Link>
               </Button>
               <Link to="/pricing" className="text-sm font-semibold text-link-muted hover:text-brand underline underline-offset-4 transition-colors">
@@ -87,6 +88,7 @@ export function About() {
         whileInView={{ opacity: 1, x: 0 }}
         viewport={{ once: true }}
         transition={{ duration: 0.8, delay: 0.4 }}
+        data-parity="about-story-column"
         className="flex-1 w-full flex justify-center lg:justify-end"
       >
         <InstagramWidget />
