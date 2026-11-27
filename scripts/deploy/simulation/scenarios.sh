@@ -48,6 +48,10 @@ release_sha() {
   printf "%0${SHA_LENGTH}d" "$1"
 }
 
+unpublished_image() {
+  printf '%s/sim/%s@sha256:%s' "${REGISTRY}" "$1" "$(printf '0%.0s' $(seq 1 64))"
+}
+
 start_docker_daemon() {
   # The image points the client at a sibling "docker" host; the daemon here is local.
   export DOCKER_HOST=unix:///var/run/docker.sock
@@ -158,7 +162,7 @@ with_deploy_defaults() {
   env \
     DEPLOY_ENV=prod \
     EDGE_HOSTNAME="${EDGE_HOST}" \
-    MIGRATION_IMAGE="${REGISTRY}/sim/migrations@sha256:$(printf '0%.0s' $(seq 1 64))" \
+    MIGRATION_IMAGE="$(unpublished_image migrations)" \
     POSTGRES_RUNTIME_IMAGE="${POSTGRES_IMAGE}" \
     READINESS_TIMEOUT_SECONDS=20 \
     PUBLIC_CHECK_TIMEOUT_SECONDS=15 \
@@ -247,16 +251,20 @@ ledger_has_length() {
   [[ "$(ledger_length)" == "$1" ]]
 }
 
+ledger_live_line() {
+  tail -n 1 "${APP_DIR}/releases.jsonl"
+}
+
 ledger_live_is() {
-  [[ "$(tail -n 1 "${APP_DIR}/releases.jsonl" | jq -r '.sha + " " + .color')" == "$(release_sha "$1") $2" ]]
+  [[ "$(ledger_live_line | jq -r '.sha + " " + .color')" == "$(release_sha "$1") $2" ]]
 }
 
 ledger_snapshot_is() {
-  [[ "$(tail -n 1 "${APP_DIR}/releases.jsonl" | jq -r '.snapshot // "null"')" == "$1" ]]
+  [[ "$(ledger_live_line | jq -r '.snapshot // "null"')" == "$1" ]]
 }
 
 ledger_records_images() {
-  tail -n 1 "${APP_DIR}/releases.jsonl" | jq -e --arg platform "$1" '.images.platform == $platform and (.images.migration | length > 0) and (.images.postgresRuntime | length > 0) and .kind == "release"' > /dev/null
+  ledger_live_line | jq -e --arg platform "$1" '.images.platform == $platform and (.images.migration | length > 0) and (.images.postgresRuntime | length > 0) and .kind == "release"' > /dev/null
 }
 
 active_colour_is() {
@@ -523,6 +531,9 @@ refused_deploys() {
   check "exits 10 while another deploy holds the lock" deploy_exit_is 10
   check "names the lock" output_contains "another deploy holds"
 
+  deploy_release 5 good DEPLOY_MODE=restore EXPECTED_LIVE_SHA="$(release_sha 2)"
+  check "exits 12 for an unknown deploy mode" deploy_exit_is 12
+
   check "never reached the backup" test "$(backup_calls)" = "${backups_before}"
   check "left the ledger alone" ledger_has_length 2
 }
@@ -547,7 +558,7 @@ release_whose_image_cannot_be_pulled() {
   backups_before="$(backup_calls)"
 
   run_deploy RELEASE_SHA="$(release_sha 8)" EXPECTED_LIVE_SHA="$(release_sha 2)" \
-    PLATFORM_IMAGE="${REGISTRY}/sim/platform@sha256:$(printf '0%.0s' $(seq 1 64))"
+    PLATFORM_IMAGE="$(unpublished_image platform)"
 
   check "exits 12" deploy_exit_is 12
   check "never reached the backup" test "$(backup_calls)" = "${backups_before}"
@@ -611,6 +622,124 @@ test_environment_sequence() {
   check "runs the new design reference" container_running test-design-reference-blue
 }
 
+postgres_container_id() {
+  docker inspect --format '{{.Id}}' eli-coach-platform-prod-postgres
+}
+
+running_platform_image() {
+  docker inspect --format '{{.Config.Image}}' "eli-coach-platform-prod-platform-$1"
+}
+
+database_images() {
+  jq -c '[.images.migration, .images.postgresRuntime]'
+}
+
+recorded_platform_image() {
+  grep -F "\"sha\":\"$(release_sha "$1")\"" "${APP_DIR}/releases.jsonl" | tail -n 1 | jq -r '.images.platform'
+}
+
+ledger_records_rollback_to() {
+  ledger_live_line \
+    | jq -e --arg platform "$1" '.kind == "rollback" and .images.platform == $platform and .snapshot == null' > /dev/null
+}
+
+record_earlier_release_whose_image_is_gone() {
+  local release="$1"
+  local ledger="${APP_DIR}/releases.jsonl"
+  local line=""
+
+  line="$(ledger_live_line | jq -c --arg sha "$(release_sha "${release}")" --arg platform "$(unpublished_image platform)" \
+    '.sha = $sha | .images.platform = $platform')"
+  { printf '%s\n' "${line}"; cat "${ledger}"; } > "${ledger}.next"
+  mv "${ledger}.next" "${ledger}"
+}
+
+rollback_to_an_earlier_release() {
+  section "Rollback PROD: an earlier platform image, no backup, no migrations, Postgres untouched"
+  reset_host
+  echo no-postgres > "${STATE}/backup-mode"
+  deploy_release 1 good EXPECTED_LIVE_SHA=none
+  local earlier_image="${LAST_PLATFORM_IMAGE}"
+  echo ok > "${STATE}/backup-mode"
+  deploy_release 2 good EXPECTED_LIVE_SHA="$(release_sha 1)"
+
+  local live_line=""
+  local postgres_before=""
+  local backups_before=""
+  local migrations_before=""
+  live_line="$(ledger_live_line)"
+  postgres_before="$(postgres_container_id)"
+  backups_before="$(backup_calls)"
+  migrations_before="$(migration_count)"
+
+  start_probe
+  run_deploy DEPLOY_MODE=rollback RELEASE_SHA="$(release_sha 1)" EXPECTED_LIVE_SHA="$(release_sha 2)" \
+    PLATFORM_IMAGE="${earlier_image}" MIGRATION_IMAGE="$(unpublished_image ignored)"
+  sleep 1
+  stop_probe
+
+  check "exits 0" deploy_exit_is 0
+  check "never called the backup" test "$(backup_calls)" = "${backups_before}"
+  check "never ran the migrations" migration_count_is "${migrations_before}"
+  check "left the Postgres container alone" test "$(postgres_container_id)" = "${postgres_before}"
+  check "runs the earlier platform image" test "$(running_platform_image green)" = "${earlier_image}"
+  check "recorded the rollback to release 1 on the green colour" ledger_live_is 1 green
+  check "recorded kind rollback with the earlier platform digest and no snapshot" \
+    ledger_records_rollback_to "${earlier_image}"
+  check "kept the live release's migration and Postgres runtime images" \
+    test "$(ledger_live_line | database_images)" = "$(database_images <<< "${live_line}")"
+  check "serves the earlier release through the edge with the green header" edge_serves_colour green
+  check "retired the newer colour" negated container_exists prod-platform-blue
+  check "answered every request during the rollback with 200" probe_never_failed
+}
+
+rollbacks_that_change_nothing() {
+  section "Rollbacks that are refused or cannot pull leave the live release serving"
+  record_earlier_release_whose_image_is_gone 3
+  local backups_before=""
+  local ledger_before=""
+  backups_before="$(backup_calls)"
+  ledger_before="$(ledger_length)"
+
+  run_deploy DEPLOY_MODE=rollback RELEASE_SHA="$(release_sha 1)" EXPECTED_LIVE_SHA="$(release_sha 1)" \
+    PLATFORM_IMAGE="$(recorded_platform_image 1)"
+  check "exits 10 for the release already live" deploy_exit_is 10
+  check "names the live release" output_contains "is already live"
+
+  run_deploy DEPLOY_MODE=rollback RELEASE_SHA="$(release_sha 2)" EXPECTED_LIVE_SHA="$(release_sha 2)" \
+    PLATFORM_IMAGE="$(recorded_platform_image 2)"
+  check "exits 10 when the host's live release is not the expected one" deploy_exit_is 10
+
+  run_deploy DEPLOY_MODE=rollback RELEASE_SHA="$(release_sha 2)" EXPECTED_LIVE_SHA="$(release_sha 1)" \
+    PLATFORM_IMAGE="$(recorded_platform_image 1)"
+  check "exits 10 when the host never ran that commit with that image" deploy_exit_is 10
+  check "names the missing ledger record" output_contains "ledger has no release"
+
+  run_deploy DEPLOY_MODE=rollback RELEASE_SHA="$(release_sha 6)" EXPECTED_LIVE_SHA="$(release_sha 1)" \
+    PLATFORM_IMAGE="$(unpublished_image platform)"
+  check "exits 10 for a commit this host never ran" deploy_exit_is 10
+
+  run_deploy DEPLOY_MODE=rollback RELEASE_SHA="$(release_sha 3)" EXPECTED_LIVE_SHA="$(release_sha 1)" \
+    PLATFORM_IMAGE="$(unpublished_image platform)"
+  check "exits 12 when the recorded image cannot be pulled" deploy_exit_is 12
+  check "did not start a new colour" negated container_exists prod-platform-blue
+
+  check "never called the backup" test "$(backup_calls)" = "${backups_before}"
+  check "kept the ledger" ledger_has_length "${ledger_before}"
+  check "still serves the rolled-back release" edge_serves_colour green
+}
+
+rollback_on_a_host_with_no_release() {
+  section "Rollback PROD on a host with no release starts nothing"
+  reset_host
+
+  run_deploy DEPLOY_MODE=rollback RELEASE_SHA="$(release_sha 1)" EXPECTED_LIVE_SHA=none PLATFORM_IMAGE="$(unpublished_image platform)"
+
+  check "exits 12" deploy_exit_is 12
+  check "says there is nothing to roll back from" output_contains "no live release on this host to roll back from"
+  check "started nothing" negated container_exists prod-platform-green
+}
+
 # --- run -------------------------------------------------------------------
 
 start_docker_daemon
@@ -635,6 +764,9 @@ next_deploy_after_a_colour_left_for_inspection
 first_release_that_fails_at_the_edge
 legacy_postgres_data_does_not_skip_the_backup
 session_that_drops_mid_deploy
+rollback_to_an_earlier_release
+rollbacks_that_change_nothing
+rollback_on_a_host_with_no_release
 test_environment_sequence
 
 stop_probe

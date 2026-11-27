@@ -8,6 +8,13 @@ inputs:
   deploy-env:
     description: test or prod
     required: true
+  deploy-mode:
+    description: >-
+      release, or rollback to start an earlier platform image against the
+      running database; a rollback keeps the live migration and Postgres
+      runtime images
+    required: false
+    default: release
   edge-hostname:
     description: Public host name Traefik routes
     required: true
@@ -33,19 +40,38 @@ inputs:
     description: Platform image reference by digest
     required: true
   migration-image:
-    description: Migration image reference by digest
-    required: true
+    description: Migration image reference by digest; unused by a rollback
+    required: false
+    default: ""
   design-reference-image:
     description: Design reference image reference, TEST only
     required: false
     default: ""
   postgres-runtime-image:
-    description: Postgres runtime image reference by digest
-    required: true
+    description: Postgres runtime image reference by digest; unused by a rollback
+    required: false
+    default: ""
 
 runs:
   using: composite
   steps:
+    - name: Accept only this app's GHCR digests on PROD
+      if: inputs.deploy-env == 'prod'
+      shell: bash
+      env:
+        DEPLOY_MODE: ${{ inputs.deploy-mode }}
+        PLATFORM_IMAGE: ${{ inputs.platform-image }}
+        MIGRATION_IMAGE: ${{ inputs.migration-image }}
+        POSTGRES_RUNTIME_IMAGE: ${{ inputs.postgres-runtime-image }}
+      run: |
+        set -euo pipefail
+
+        node scripts/deploy/release-plan.mjs check-prod-image platform "${PLATFORM_IMAGE}"
+        if [[ "${DEPLOY_MODE}" != "rollback" ]]; then
+          node scripts/deploy/release-plan.mjs check-prod-image migration "${MIGRATION_IMAGE}"
+          node scripts/deploy/release-plan.mjs check-prod-image postgresRuntime "${POSTGRES_RUNTIME_IMAGE}"
+        fi
+
     - name: Install the deploy files on the host
       shell: bash
       env:
@@ -85,6 +111,7 @@ runs:
       shell: bash
       env:
         DEPLOY_ENV: ${{ inputs.deploy-env }}
+        DEPLOY_MODE: ${{ inputs.deploy-mode }}
         EDGE_HOSTNAME: ${{ inputs.edge-hostname }}
         HOST_LABEL: ${{ inputs.host-label }}
         RELEASE_SHA: ${{ inputs.release-sha }}
@@ -107,6 +134,7 @@ runs:
         # deploy.sh validates every other value; %q keeps each one a single word on the host.
         assignments=(
           "DEPLOY_ENV=${DEPLOY_ENV}"
+          "DEPLOY_MODE=${DEPLOY_MODE}"
           "EDGE_HOSTNAME=${EDGE_HOSTNAME}"
           "HOST_LABEL=${HOST_LABEL}"
           "RELEASE_SHA=${RELEASE_SHA}"

@@ -1,0 +1,79 @@
+name: Resolve the PROD config
+description: >-
+  Fails before anything reaches PROD while a production-environment variable,
+  secret or the pinned host key is missing.
+
+inputs:
+  node-hostname:
+    description: PROD_NODE_HOSTNAME
+    required: false
+    default: ""
+  edge-hostname:
+    description: PROD_EDGE_HOSTNAME
+    required: false
+    default: ""
+  ssh-known-hosts:
+    description: PROD_SSH_KNOWN_HOSTS
+    required: false
+    default: ""
+  tailscale-oauth-client-id:
+    description: PROD_TAILSCALE_OAUTH_CLIENT_ID
+    required: false
+    default: ""
+  tailscale-oauth-secret:
+    description: PROD_TAILSCALE_OAUTH_SECRET
+    required: false
+    default: ""
+  ghcr-username:
+    description: GHCR_PULL_USERNAME
+    required: false
+    default: ""
+  ghcr-token:
+    description: GHCR_PULL_TOKEN
+    required: false
+    default: ""
+
+outputs:
+  node-hostname:
+    description: PROD's tailnet name without a trailing dot
+    value: ${{ steps.resolve.outputs.node_hostname }}
+  edge-hostname:
+    description: The public host name Traefik routes
+    value: ${{ steps.resolve.outputs.edge_hostname }}
+
+runs:
+  using: composite
+  steps:
+    - name: Check every PROD value exists
+      id: resolve
+      shell: bash
+      env:
+        PROD_NODE_HOSTNAME: ${{ inputs.node-hostname }}
+        PROD_EDGE_HOSTNAME: ${{ inputs.edge-hostname }}
+        PROD_SSH_KNOWN_HOSTS: ${{ inputs.ssh-known-hosts }}
+        PROD_TAILSCALE_OAUTH_CLIENT_ID: ${{ inputs.tailscale-oauth-client-id }}
+        PROD_TAILSCALE_OAUTH_SECRET: ${{ inputs.tailscale-oauth-secret }}
+        GHCR_PULL_USERNAME: ${{ inputs.ghcr-username }}
+        GHCR_PULL_TOKEN: ${{ inputs.ghcr-token }}
+      run: |
+        set -euo pipefail
+
+        missing=()
+        for name in PROD_NODE_HOSTNAME PROD_EDGE_HOSTNAME PROD_SSH_KNOWN_HOSTS PROD_TAILSCALE_OAUTH_CLIENT_ID PROD_TAILSCALE_OAUTH_SECRET GHCR_PULL_USERNAME GHCR_PULL_TOKEN; do
+          if [[ -z "${!name}" ]]; then
+            missing+=("${name}")
+          fi
+        done
+
+        if (( ${#missing[@]} > 0 )); then
+          echo "::error::PROD is not configured in the production environment: missing ${missing[*]}"
+          exit 1
+        fi
+
+        if ! grep -Eq '^[^ #]+ (ssh-ed25519|ssh-rsa|ecdsa-sha2-nistp[0-9]+) [A-Za-z0-9+/=]+' <<< "${PROD_SSH_KNOWN_HOSTS}"; then
+          echo "::error::PROD_SSH_KNOWN_HOSTS does not hold a pinned host key yet"
+          exit 1
+        fi
+
+        echo "node_hostname=${PROD_NODE_HOSTNAME%.}" >> "$GITHUB_OUTPUT"
+        echo "edge_hostname=${PROD_EDGE_HOSTNAME}" >> "$GITHUB_OUTPUT"
