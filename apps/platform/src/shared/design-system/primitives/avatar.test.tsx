@@ -103,12 +103,12 @@ describe("avatar", () => {
   it("shows the picture filling the circle when there is one, hidden from assistive technology since the name is beside it", () => {
     // arrange, act
     const { root } = renderAvatar(
-      <Avatar imageUrl="/media/eli/eli-portrait-192.webp" name="Eli" />,
+      <Avatar imageUrl="/portraits/eli.webp" name="Eli" />,
     );
 
     // assert
     const picture = root?.querySelector("img");
-    expect(picture).toHaveAttribute("src", "/media/eli/eli-portrait-192.webp");
+    expect(picture).toHaveAttribute("src", "/portraits/eli.webp");
     expect(picture).toHaveAttribute("alt", "");
     expect(picture).toHaveClass("aspect-square", "size-full", "object-cover");
     expect(root?.textContent).toBe("");

@@ -397,7 +397,7 @@ describe("the client's check-ins page", () => {
     expect(within(rows[0]).getByText("Eli")).toBeInTheDocument();
     expect(rows[0].querySelector("img")).toHaveAttribute(
       "src",
-      "/media/eli/eli-portrait-192.webp",
+      expect.stringMatching(/\/eli-portrait-192[^/]*\.webp/),
     );
     expect(
       within(rows[0]).getByRole("link", { name: "Join Meet" }),

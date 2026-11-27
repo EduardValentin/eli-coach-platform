@@ -130,10 +130,14 @@ function renderedStoryMedia() {
 function expectedStoryMedia(options: { position: number; reel: string }) {
   return {
     label: `Story ${options.position} of 3`,
-    poster: `/media/about/story-${options.reel}-poster.webp`,
+    poster: expect.stringMatching(
+      new RegExp(`/story-${options.reel}-poster[^/]*\\.webp`),
+    ),
     sources: [
       {
-        src: `/media/about/story-${options.reel}.h264.mp4`,
+        src: expect.stringMatching(
+          new RegExp(`/story-${options.reel}\\.h264[^/]*\\.mp4`),
+        ),
         type: "video/mp4",
       },
     ],

@@ -240,7 +240,7 @@ describe("appointment card", () => {
     // arrange, act
     const { container } = render(
       <AppointmentCard
-        attendee={{ imageUrl: "/media/eli/eli-portrait-192.webp", name: "Eli" }}
+        attendee={{ imageUrl: "/portraits/eli.webp", name: "Eli" }}
         when={WHEN}
       />,
     );
@@ -248,7 +248,7 @@ describe("appointment card", () => {
     // assert
     expect(container.querySelector("img")).toHaveAttribute(
       "src",
-      "/media/eli/eli-portrait-192.webp",
+      "/portraits/eli.webp",
     );
   });
 

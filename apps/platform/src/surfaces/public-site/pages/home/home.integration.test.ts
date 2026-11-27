@@ -3,7 +3,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { ApiIntegrationTestSuite } from "~integration-test-config/api-integration-test-suite";
 
 const suite = new ApiIntegrationTestSuite();
-const HERO_POSTER_FILE_PREFIX = "/media/hero/hero-studio-poster-";
+const HERO_POSTER_FILE_NAME_PREFIX = "hero-studio-poster-";
 
 describe("home page integration", () => {
   beforeAll(async () => {
@@ -33,10 +33,27 @@ describe("home page integration", () => {
     }
     expect(
       posterLinkForScreens(posterLinks, "(orientation: portrait)"),
-    ).toContain(`href="${HERO_POSTER_FILE_PREFIX}portrait.webp"`);
+    ).toMatch(builtPosterHrefPattern("portrait"));
     expect(
       posterLinkForScreens(posterLinks, "(orientation: landscape)"),
-    ).toContain(`href="${HERO_POSTER_FILE_PREFIX}landscape.webp"`);
+    ).toMatch(builtPosterHrefPattern("landscape"));
+  });
+
+  it("lets a browser keep a hero poster for a year without asking again", async () => {
+    // arrange
+    const homePage = await suite.request(new Request(suite.url("/")));
+    const posterPath = firstPosterPathIn(await homePage.text());
+
+    // act
+    const response = await suite.request(new Request(suite.url(posterPath)));
+
+    // assert
+    const cachePolicy = response.headers.get("cache-control");
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toBe("image/webp");
+    expect(cachePolicy).toMatch(/\bmax-age=31536000\b/);
+    expect(cachePolicy).toMatch(/\bimmutable\b/);
   });
 
   it("leaves the hero poster out of other public pages", async () => {
@@ -56,7 +73,7 @@ describe("home page integration", () => {
 
 function posterLinkTagsIn(document: string): string[] {
   return (document.match(/<link\b[^>]*>/g) ?? []).filter((tag) =>
-    tag.includes(HERO_POSTER_FILE_PREFIX),
+    tag.includes(HERO_POSTER_FILE_NAME_PREFIX),
   );
 }
 
@@ -65,4 +82,21 @@ function posterLinkForScreens(
   mediaQuery: string,
 ): string | undefined {
   return posterLinks.find((tag) => tag.includes(`media="${mediaQuery}"`));
+}
+
+function builtPosterHrefPattern(orientation: string): RegExp {
+  return new RegExp(
+    `\\bhref="/assets/${HERO_POSTER_FILE_NAME_PREFIX}${orientation}-[\\w-]+\\.webp"`,
+  );
+}
+
+function firstPosterPathIn(document: string): string {
+  const [posterLink] = posterLinkTagsIn(document);
+  const posterPath = posterLink?.match(/\bhref="([^"]+)"/)?.[1];
+
+  if (!posterPath) {
+    throw new Error("Expected the home page to preload a hero poster.");
+  }
+
+  return posterPath;
 }

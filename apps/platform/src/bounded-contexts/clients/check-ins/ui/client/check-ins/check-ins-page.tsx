@@ -1,5 +1,6 @@
 import { appUrl } from "~/shared/http/base-path";
-import { COACH_DISPLAY_NAME, ELI_PORTRAIT_PATHS } from "~/shared/brand";
+import { COACH_DISPLAY_NAME } from "~/shared/brand";
+import { ELI_PORTRAIT_PATHS } from "~/shared/brand/eli-portrait-paths";
 import { pwaSurfaceDefinitions } from "~/shared/pwa";
 import { useCalendarDayTimeZone } from "~/shared/design-system/lib";
 import { PortalPageHeader } from "~/shared/design-system/portal";
