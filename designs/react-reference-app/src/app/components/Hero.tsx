@@ -8,11 +8,46 @@ import { WaitlistEmailForm } from './waitlist/WaitlistEmailForm';
 import { WaitlistAvailabilityStatus } from './waitlist/WaitlistAvailabilityStatus';
 
 const HERO_MEDIA_ROOT = `${import.meta.env.BASE_URL}media/hero/`;
-const HERO_POSTER_SRC = `${HERO_MEDIA_ROOT}hero-studio-poster.webp`;
-const HERO_VIDEO_SRC = `${HERO_MEDIA_ROOT}hero-studio-loop-720.h264.mp4`;
+const UPRIGHT_SCREEN_MEDIA_QUERY = '(orientation: portrait)';
+const HERO_PORTRAIT_POSTER = {
+  src: `${HERO_MEDIA_ROOT}hero-studio-poster-portrait.webp`,
+  width: 720,
+  height: 1280,
+};
+const HERO_LANDSCAPE_POSTER = {
+  src: `${HERO_MEDIA_ROOT}hero-studio-poster-landscape.webp`,
+  width: 1600,
+  height: 900,
+};
+const HERO_PORTRAIT_VIDEO_SRC = `${HERO_MEDIA_ROOT}hero-studio-loop-portrait.h264.mp4`;
+const HERO_LANDSCAPE_VIDEO_SRC = `${HERO_MEDIA_ROOT}hero-studio-loop-landscape.h264.mp4`;
+
+const heroFootageLayerClassName = 'absolute inset-0 w-full h-full object-cover';
 
 const heroControlClassName =
   'inline-flex size-(--size-control-md) items-center justify-center rounded-full transition-colors hover:text-surface-inverted-foreground';
+
+function HeroPosterPicture() {
+  return (
+    <picture data-parity="hero-poster">
+      <source
+        media={UPRIGHT_SCREEN_MEDIA_QUERY}
+        srcSet={HERO_PORTRAIT_POSTER.src}
+        type="image/webp"
+        width={HERO_PORTRAIT_POSTER.width}
+        height={HERO_PORTRAIT_POSTER.height}
+      />
+      <img
+        data-parity="hero-poster-image"
+        alt=""
+        src={HERO_LANDSCAPE_POSTER.src}
+        width={HERO_LANDSCAPE_POSTER.width}
+        height={HERO_LANDSCAPE_POSTER.height}
+        className={heroFootageLayerClassName}
+      />
+    </picture>
+  );
+}
 
 export function Hero() {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -49,18 +84,25 @@ export function Hero() {
   return (
     <section data-parity-root="Hero" data-surface="inverted" className="relative w-full min-h-[max(100vh,600px)] flex items-center justify-center overflow-hidden bg-surface-inverted">
       <div aria-hidden="true" data-parity="hero-media" className="absolute inset-0 w-full h-full">
-        <video
-          ref={videoRef}
-          data-parity="hero-video"
-          autoPlay={isPlaying}
-          loop
-          muted
-          playsInline
-          poster={HERO_POSTER_SRC}
-          className="w-full h-full object-cover opacity-60"
-        >
-          {shouldReduceMotion ? null : <source src={HERO_VIDEO_SRC} type="video/mp4" />}
-        </video>
+        <div data-parity="hero-footage" className="absolute inset-0 opacity-60">
+          <HeroPosterPicture />
+          <video
+            ref={videoRef}
+            data-parity="hero-video"
+            autoPlay={isPlaying}
+            loop
+            muted
+            playsInline
+            className={heroFootageLayerClassName}
+          >
+            {shouldReduceMotion ? null : (
+              <>
+                <source media={UPRIGHT_SCREEN_MEDIA_QUERY} src={HERO_PORTRAIT_VIDEO_SRC} type="video/mp4" />
+                <source src={HERO_LANDSCAPE_VIDEO_SRC} type="video/mp4" />
+              </>
+            )}
+          </video>
+        </div>
         <div data-parity="hero-gradient" className="absolute inset-0 bg-gradient-to-t from-surface-inverted via-transparent to-transparent" />
         <div data-parity="hero-dim" className="absolute inset-0 bg-surface-inverted/55" />
       </div>

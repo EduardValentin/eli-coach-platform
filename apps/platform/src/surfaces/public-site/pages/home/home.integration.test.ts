@@ -3,7 +3,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { ApiIntegrationTestSuite } from "~integration-test-config/api-integration-test-suite";
 
 const suite = new ApiIntegrationTestSuite();
-const HERO_POSTER_FILE = "media/hero/hero-studio-poster.webp";
+const HERO_POSTER_FILE_PREFIX = "/media/hero/hero-studio-poster-";
 
 describe("home page integration", () => {
   beforeAll(async () => {
@@ -14,7 +14,7 @@ describe("home page integration", () => {
     await suite.stop();
   });
 
-  it("asks the browser to fetch the hero poster first", async () => {
+  it("asks the browser to fetch first only the hero poster that fits the screen's orientation", async () => {
     // arrange
     const request = new Request(suite.url("/"));
 
@@ -25,11 +25,18 @@ describe("home page integration", () => {
     const posterLinks = posterLinkTagsIn(await response.text());
 
     expect(response.status).toBe(200);
-    expect(posterLinks).toHaveLength(1);
-    expect(posterLinks[0]).toMatch(/\brel="preload"/);
-    expect(posterLinks[0]).toMatch(/\bas="image"/);
-    expect(posterLinks[0]).toMatch(/\bfetchpriority="high"/i);
-    expect(posterLinks[0]).toContain(`href="/${HERO_POSTER_FILE}"`);
+    expect(posterLinks).toHaveLength(2);
+    for (const posterLink of posterLinks) {
+      expect(posterLink).toMatch(/\brel="preload"/);
+      expect(posterLink).toMatch(/\bas="image"/);
+      expect(posterLink).toMatch(/\bfetchpriority="high"/i);
+    }
+    expect(
+      posterLinkForScreens(posterLinks, "(orientation: portrait)"),
+    ).toContain(`href="${HERO_POSTER_FILE_PREFIX}portrait.webp"`);
+    expect(
+      posterLinkForScreens(posterLinks, "(orientation: landscape)"),
+    ).toContain(`href="${HERO_POSTER_FILE_PREFIX}landscape.webp"`);
   });
 
   it("leaves the hero poster out of other public pages", async () => {
@@ -49,6 +56,13 @@ describe("home page integration", () => {
 
 function posterLinkTagsIn(document: string): string[] {
   return (document.match(/<link\b[^>]*>/g) ?? []).filter((tag) =>
-    tag.includes(HERO_POSTER_FILE),
+    tag.includes(HERO_POSTER_FILE_PREFIX),
   );
+}
+
+function posterLinkForScreens(
+  posterLinks: string[],
+  mediaQuery: string,
+): string | undefined {
+  return posterLinks.find((tag) => tag.includes(`media="${mediaQuery}"`));
 }

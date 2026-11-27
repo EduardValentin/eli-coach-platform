@@ -43,8 +43,28 @@ function heroVideo(container: HTMLElement) {
   return video;
 }
 
+function heroPosterPicture(container: HTMLElement) {
+  const picture = container.querySelector('picture');
+
+  if (!picture) {
+    throw new Error('Expected the hero to render a poster picture.');
+  }
+
+  return picture;
+}
+
+function heroPosterImage(container: HTMLElement) {
+  const image = heroPosterPicture(container).querySelector('img');
+
+  if (!image) {
+    throw new Error('Expected the hero poster picture to hold an image.');
+  }
+
+  return image;
+}
+
 describe('Hero', () => {
-  it('loops the silent studio clip behind the copy, over its poster', () => {
+  it('loops the silent studio clip behind the copy', () => {
     // arrange
     // act
     const { container } = renderHero();
@@ -56,19 +76,60 @@ describe('Hero', () => {
     expect(video.loop).toBe(true);
     expect(video.muted).toBe(true);
     expect(video).toHaveAttribute('playsinline');
-    expect(video.getAttribute('poster')).toMatch(/\/media\/hero\/hero-studio-poster\.webp$/);
+  });
+
+  it('offers upright screens the portrait cut and every other screen the landscape cut', () => {
+    // arrange
+    // act
+    const { container } = renderHero();
+
+    // assert
     expect(
-      Array.from(video.querySelectorAll('source')).map((source) => ({
+      Array.from(heroVideo(container).querySelectorAll('source')).map((source) => ({
+        media: source.getAttribute('media'),
         src: source.getAttribute('src'),
         type: source.getAttribute('type'),
       })),
     ).toEqual([
       {
-        src: expect.stringMatching(/\/media\/hero\/hero-studio-loop-720\.h264\.mp4$/),
+        media: '(orientation: portrait)',
+        src: expect.stringMatching(/\/media\/hero\/hero-studio-loop-portrait\.h264\.mp4$/),
+        type: 'video/mp4',
+      },
+      {
+        media: null,
+        src: expect.stringMatching(/\/media\/hero\/hero-studio-loop-landscape\.h264\.mp4$/),
         type: 'video/mp4',
       },
     ]);
-    expect(container.querySelector('img')).toBeNull();
+  });
+
+  it('paints a decorative poster behind the clip, the portrait one on upright screens', () => {
+    // arrange
+    // act
+    const { container } = renderHero();
+
+    // assert
+    const video = heroVideo(container);
+    const posterPicture = heroPosterPicture(container);
+    const posterImage = heroPosterImage(container);
+
+    expect(video).not.toHaveAttribute('poster');
+    expect(posterPicture.nextElementSibling).toBe(video);
+    expect(posterPicture.closest('[aria-hidden="true"]')).not.toBeNull();
+    expect(
+      Array.from(posterPicture.querySelectorAll('source')).map((source) => ({
+        media: source.getAttribute('media'),
+        srcSet: source.getAttribute('srcset'),
+      })),
+    ).toEqual([
+      {
+        media: '(orientation: portrait)',
+        srcSet: expect.stringMatching(/\/media\/hero\/hero-studio-poster-portrait\.webp$/),
+      },
+    ]);
+    expect(posterImage).toHaveAttribute('alt', '');
+    expect(posterImage.getAttribute('src')).toMatch(/\/media\/hero\/hero-studio-poster-landscape\.webp$/);
   });
 
   it('shows only the poster, with a play control, when motion is reduced', () => {
@@ -80,6 +141,7 @@ describe('Hero', () => {
 
     // assert
     expect(heroVideo(container).querySelector('source')).toBeNull();
+    expect(heroPosterImage(container)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Play hero video' })).toBeInTheDocument();
   });
 

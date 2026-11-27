@@ -99,6 +99,36 @@ function getHeroSubmitButton() {
   return within(form).getByRole("button", { name: /\S/ });
 }
 
+function heroVideo(container: HTMLElement) {
+  const video = container.querySelector("video");
+
+  if (!video) {
+    throw new Error("Expected the hero to render a background video.");
+  }
+
+  return video;
+}
+
+function heroPosterPicture(container: HTMLElement) {
+  const picture = container.querySelector("picture");
+
+  if (!picture) {
+    throw new Error("Expected the hero to render a poster picture.");
+  }
+
+  return picture;
+}
+
+function heroPosterImage(container: HTMLElement) {
+  const image = heroPosterPicture(container).querySelector("img");
+
+  if (!image) {
+    throw new Error("Expected the hero poster picture to hold an image.");
+  }
+
+  return image;
+}
+
 describe("PublicHero local interactions", () => {
   it("renders an enabled waitlist state when availability is known", () => {
     // arrange
@@ -178,7 +208,7 @@ describe("PublicHero local interactions", () => {
     expect(normalHeadingCount).toBe(1);
   });
 
-  it("renders a first-party hero video with a poster before loading sources", async () => {
+  it("renders a first-party hero video that waits before loading sources", async () => {
     // arrange
     vi.useFakeTimers();
     const waitlist = { availability: "available" as const, enabled: false };
@@ -186,18 +216,13 @@ describe("PublicHero local interactions", () => {
     // act
     const { container } = renderHero(waitlist);
 
-    const video = container.querySelector("video");
-    const sourceCountBeforeLoading = video?.querySelectorAll("source").length;
+    const video = heroVideo(container);
+    const sourceCountBeforeLoading = video.querySelectorAll("source").length;
     await act(async () => {
       vi.advanceTimersByTime(1200);
     });
 
     // assert
-    expect(video).toBeInTheDocument();
-    expect(video).toHaveAttribute(
-      "poster",
-      "/media/hero/hero-studio-poster.webp",
-    );
     expect(video).toHaveAttribute("preload", "none");
     expect(sourceCountBeforeLoading).toBe(0);
     const mediaSources = Array.from(container.querySelectorAll("[src]")).map(
@@ -214,7 +239,54 @@ describe("PublicHero local interactions", () => {
     ).toBe(true);
   });
 
-  it("offers phones the 720p clip and prefers AV1 over H.264 at each size", async () => {
+  it("paints a decorative poster behind the video, the portrait one on upright screens", () => {
+    // arrange
+    const waitlist = { availability: "available" as const, enabled: false };
+
+    // act
+    const { container } = renderHero(waitlist);
+
+    // assert
+    const video = heroVideo(container);
+    const posterPicture = heroPosterPicture(container);
+    const posterImage = heroPosterImage(container);
+
+    expect(video).not.toHaveAttribute("poster");
+    expect(posterPicture.nextElementSibling).toBe(video);
+    expect(posterPicture.closest('[aria-hidden="true"]')).not.toBeNull();
+    expect(
+      Array.from(posterPicture.querySelectorAll("source")).map((source) => ({
+        media: source.getAttribute("media"),
+        srcSet: source.getAttribute("srcset"),
+      })),
+    ).toEqual([
+      {
+        media: "(orientation: portrait)",
+        srcSet: "/media/hero/hero-studio-poster-portrait.webp",
+      },
+    ]);
+    expect(posterImage).toHaveAttribute("alt", "");
+    expect(posterImage).toHaveAttribute(
+      "src",
+      "/media/hero/hero-studio-poster-landscape.webp",
+    );
+  });
+
+  it("loads the poster eagerly at high priority", () => {
+    // arrange
+    const waitlist = { availability: "available" as const, enabled: false };
+
+    // act
+    const { container } = renderHero(waitlist);
+
+    // assert
+    const posterImage = heroPosterImage(container);
+
+    expect(posterImage).toHaveAttribute("fetchpriority", "high");
+    expect(posterImage).not.toHaveAttribute("loading", "lazy");
+  });
+
+  it("offers upright screens the portrait cut and every other screen the landscape cut, AV1 before H.264", async () => {
     // arrange
     vi.useFakeTimers();
     const waitlist = { availability: "available" as const, enabled: false };
@@ -234,23 +306,23 @@ describe("PublicHero local interactions", () => {
       })),
     ).toEqual([
       {
-        media: "(max-width: 767px)",
-        src: "/media/hero/hero-studio-loop-720.av1.mp4",
+        media: "(orientation: portrait)",
+        src: "/media/hero/hero-studio-loop-portrait.av1.mp4",
         type: 'video/mp4; codecs="av01.0.05M.08"',
       },
       {
-        media: "(max-width: 767px)",
-        src: "/media/hero/hero-studio-loop-720.h264.mp4",
+        media: "(orientation: portrait)",
+        src: "/media/hero/hero-studio-loop-portrait.h264.mp4",
         type: "video/mp4",
       },
       {
         media: null,
-        src: "/media/hero/hero-studio-loop-1080.av1.mp4",
+        src: "/media/hero/hero-studio-loop-landscape.av1.mp4",
         type: 'video/mp4; codecs="av01.0.08M.08"',
       },
       {
         media: null,
-        src: "/media/hero/hero-studio-loop-1080.h264.mp4",
+        src: "/media/hero/hero-studio-loop-landscape.h264.mp4",
         type: "video/mp4",
       },
     ]);
@@ -271,6 +343,7 @@ describe("PublicHero local interactions", () => {
 
     // assert
     expect(container.querySelector("video source")).not.toBeInTheDocument();
+    expect(heroPosterImage(container)).toBeInTheDocument();
   });
 
   it("offers to play, not pause, the poster it keeps for a visitor saving data", async () => {
@@ -290,6 +363,7 @@ describe("PublicHero local interactions", () => {
 
     // assert
     expect(container.querySelector("video source")).not.toBeInTheDocument();
+    expect(heroPosterImage(container)).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Play hero video" }),
     ).toBeInTheDocument();
@@ -302,11 +376,7 @@ describe("PublicHero local interactions", () => {
       availability: "available",
       enabled: false,
     });
-    const video = container.querySelector("video");
-
-    if (!video) {
-      throw new Error("Expected the hero to render a background video.");
-    }
+    const video = heroVideo(container);
 
     await act(async () => {
       vi.advanceTimersByTime(1200);
@@ -355,11 +425,7 @@ describe("PublicHero local interactions", () => {
 
     // act
     const { container, setReducedMotion } = renderHero(waitlist, options);
-    const video = container.querySelector("video");
-
-    if (!video) {
-      throw new Error("Expected the hero to render a background video.");
-    }
+    const video = heroVideo(container);
 
     await act(async () => {
       vi.advanceTimersByTime(1200);
