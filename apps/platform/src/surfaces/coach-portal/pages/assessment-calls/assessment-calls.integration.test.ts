@@ -125,9 +125,7 @@ describe("coach assessment calls page sales integration", () => {
     expect(response.status).toBe(200);
     expect(texts).toContain("Paid");
     expect(texts).toContain("View client");
-    expect(page).toContain(
-      `href="${suite.path(`/coach/clients/${clientId}`)}"`,
-    );
+    expect(page).toContain(`href="/coach/clients/${clientId}"`);
     expect(texts).not.toContain("Payment link sent");
     expect(texts).not.toContain("Send payment link");
     expect(texts).not.toContain("Re-send payment link");

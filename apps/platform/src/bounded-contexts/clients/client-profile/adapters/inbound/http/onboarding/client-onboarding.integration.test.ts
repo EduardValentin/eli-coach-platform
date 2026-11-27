@@ -267,12 +267,10 @@ describe("client onboarding integration", () => {
     );
     expect(client.onboardingSubmittedAt).toEqual(CALL_ENDED_INSTANT);
     expect(welcomeAfterSubmission.status).toBe(302);
-    expect(welcomeAfterSubmission.headers.get("location")).toBe(
-      suite.path(CLIENT_PORTAL),
-    );
+    expect(welcomeAfterSubmission.headers.get("location")).toBe(CLIENT_PORTAL);
     expect(onboardingAfterSubmission.status).toBe(302);
     expect(onboardingAfterSubmission.headers.get("location")).toBe(
-      suite.path(CLIENT_PORTAL),
+      CLIENT_PORTAL,
     );
   });
 
@@ -468,7 +466,7 @@ describe("client onboarding integration", () => {
     // assert
     expect(response.status).toBe(200);
     expect(portalLinksIn(await visibleDocument(response))).toContainEqual({
-      href: suite.path(CLIENT_PORTAL),
+      href: CLIENT_PORTAL,
       label: "Client Portal",
     });
   });

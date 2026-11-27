@@ -174,8 +174,8 @@ describe("Store checkout integration", () => {
       "metadata[orderId]": orderId,
       "payment_intent_data[metadata][purpose]": "store-order",
       "payment_intent_data[metadata][orderId]": orderId,
-      success_url: `https://localhost:3000${suite.path(CHECKOUT_COMPLETE_PAGE)}?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `https://localhost:3000${suite.path("/store")}?payment=cancelled`,
+      success_url: `https://localhost:3000${CHECKOUT_COMPLETE_PAGE}?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: "https://localhost:3000/store?payment=cancelled",
     });
     expect(sessionRequest!.idempotencyKey).toBe(
       `store-order:${orderId}:checkout`,
@@ -325,7 +325,7 @@ describe("Store checkout integration", () => {
     expect(replay.status).toBe(201);
     expect(await replay.json()).toEqual({
       success: true,
-      checkoutUrl: `https://localhost:3000${suite.path(CHECKOUT_COMPLETE_PAGE)}?session_id=${STRIPE_STORE_CHECKOUT_SESSION_ID}`,
+      checkoutUrl: `https://localhost:3000${CHECKOUT_COMPLETE_PAGE}?session_id=${STRIPE_STORE_CHECKOUT_SESSION_ID}`,
     });
   });
 
@@ -511,7 +511,7 @@ describe("Store checkout integration", () => {
     ]);
     expect(oldLink.status).toBe(303);
     expect(oldLink.headers.get("Location")).toBe(
-      suite.path("/store/download?unavailable=1"),
+      "/store/download?unavailable=1",
     );
     expect(newLink.status).toBe(200);
   });
@@ -754,7 +754,7 @@ describe("Store checkout integration", () => {
     expect(await contents.json()).toEqual({ status: "unavailable" });
     expect(download.status).toBe(303);
     expect(download.headers.get("Location")).toBe(
-      suite.path("/store/download?unavailable=1"),
+      "/store/download?unavailable=1",
     );
     expect(await suite.sentEmails()).toHaveLength(1);
   });
@@ -827,7 +827,7 @@ describe("Store checkout integration", () => {
     ]);
     expect(download.status).toBe(303);
     expect(download.headers.get("Location")).toBe(
-      suite.path("/store/download?unavailable=1"),
+      "/store/download?unavailable=1",
     );
   });
 

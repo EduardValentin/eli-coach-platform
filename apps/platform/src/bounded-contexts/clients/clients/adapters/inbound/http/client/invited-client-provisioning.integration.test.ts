@@ -89,7 +89,7 @@ describe("invited client provisioning integration", () => {
 
     // assert
     expect(response.status).toBe(302);
-    expect(response.headers.get("location")).toBe(suite.path(WELCOME));
+    expect(response.headers.get("location")).toBe(WELCOME);
     expect(await accountsOf(INVITED_CLIENT)).toEqual([
       { id: expect.any(String), role: "CLIENT" },
     ]);
@@ -118,7 +118,7 @@ describe("invited client provisioning integration", () => {
 
     // assert
     expect(response.status).toBe(302);
-    expect(response.headers.get("location")).toBe(suite.path(WELCOME));
+    expect(response.headers.get("location")).toBe(WELCOME);
     expect(await accountsOf(INVITED_CLIENT)).toEqual(accountsAfterAdmission);
     expect(await identityLookupsOf(INVITED_CLIENT)).toHaveLength(1);
   });
@@ -143,9 +143,7 @@ describe("invited client provisioning integration", () => {
 
     // assert
     expect(response.status).toBe(302);
-    expect(response.headers.get("location")).toBe(
-      suite.path("/sign-in-failed"),
-    );
+    expect(response.headers.get("location")).toBe("/sign-in-failed");
     expect(await revocationsOf(SECOND_SUBJECT)).toHaveLength(1);
     expect(await accountsOf(SECOND_SUBJECT)).toEqual([]);
     expect(await clientBoundTo(INVITED_CLIENT)).toBe(invitation.clientId);
@@ -164,9 +162,7 @@ describe("invited client provisioning integration", () => {
 
     // assert
     expect(response.status).toBe(302);
-    expect(response.headers.get("location")).toBe(
-      suite.path("/sign-in-failed"),
-    );
+    expect(response.headers.get("location")).toBe("/sign-in-failed");
     expect(await revocationsOf(UNINVITED_SUBJECT)).toHaveLength(1);
     expect(await accountsOf(UNINVITED_SUBJECT)).toEqual([]);
     expect(await readInvitation()).toEqual(invitation);

@@ -1201,7 +1201,7 @@ describe("recipe library integration", () => {
 
       // assert
       expect(response.status).toBe(302);
-      expect(response.headers.get("location")).toBe(suite.path(RECIPES_PAGE));
+      expect(response.headers.get("location")).toBe(RECIPES_PAGE);
     });
 
     it("returns her to the Recipes tab when she opens another coach's recipe", async () => {
@@ -1221,7 +1221,7 @@ describe("recipe library integration", () => {
 
       // assert
       expect(response.status).toBe(302);
-      expect(response.headers.get("location")).toBe(suite.path(RECIPES_PAGE));
+      expect(response.headers.get("location")).toBe(RECIPES_PAGE);
     });
 
     it("refuses a signed-in client on the Recipes tab and both builder pages", async () => {
@@ -1272,7 +1272,7 @@ describe("recipe library integration", () => {
         pages.map((page) => [
           302,
           `https://evoa.fit/sign-in?redirect_url=${encodeURIComponent(
-            `https://localhost:3000${suite.path(page)}`,
+            `https://localhost:3000${page}`,
           )}`,
         ]),
       );

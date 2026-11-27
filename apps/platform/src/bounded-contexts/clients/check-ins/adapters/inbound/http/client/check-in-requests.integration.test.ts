@@ -310,9 +310,7 @@ describe("check-in requests integration", () => {
       expect(sent[0]?.idempotencyKey).toContain(
         `check-in:${checkInId}:0:requested`,
       );
-      expect(sent[0]?.html).toContain(
-        `href="${PUBLIC_ORIGIN}${suite.path("/coach/checkins")}"`,
-      );
+      expect(sent[0]?.html).toContain(`href="${PUBLIC_ORIGIN}/coach/checkins"`);
     });
 
     it("keeps the request when the provider refuses the coach's email", async () => {

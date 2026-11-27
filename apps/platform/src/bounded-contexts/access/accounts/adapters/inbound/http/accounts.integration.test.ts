@@ -77,9 +77,7 @@ describe("account API integration", () => {
     );
 
     expect(response.status).toBe(302);
-    expect(response.headers.get("location")).toBe(
-      suite.path("/sign-in-failed"),
-    );
+    expect(response.headers.get("location")).toBe("/sign-in-failed");
     expect(rows).toHaveLength(0);
     expect(revocations).toHaveLength(1);
   });
@@ -127,7 +125,7 @@ describe("account API integration", () => {
     expect(response.status).toBe(302);
     expect(response.headers.get("location")).toBe(
       `https://evoa.fit/sign-in?redirect_url=${encodeURIComponent(
-        `https://localhost:3000${suite.path("/client")}`,
+        "https://localhost:3000/client",
       )}`,
     );
   });
@@ -141,7 +139,7 @@ describe("account API integration", () => {
     expect(response.status).toBe(302);
     expect(response.headers.get("location")).toBe(
       `https://evoa.fit/sign-in?redirect_url=${encodeURIComponent(
-        `https://localhost:3000${suite.path("/coach")}`,
+        "https://localhost:3000/coach",
       )}`,
     );
   });
@@ -157,7 +155,7 @@ describe("account API integration", () => {
     expect(response.status).toBe(302);
     expect(response.headers.get("location")).toBe(
       `https://evoa.fit/sign-in?redirect_url=${encodeURIComponent(
-        `https://localhost:3000${suite.path(CLIENT_PORTAL)}`,
+        `https://localhost:3000${CLIENT_PORTAL}`,
       )}`,
     );
   });
@@ -291,9 +289,7 @@ describe("account API integration", () => {
     );
 
     expect(response.status).toBe(302);
-    expect(response.headers.get("location")).toBe(
-      suite.path("/sign-in-failed"),
-    );
+    expect(response.headers.get("location")).toBe("/sign-in-failed");
     expect(revocations).toHaveLength(1);
   });
 
@@ -311,7 +307,7 @@ describe("account API integration", () => {
 
     expect(response.status).toBe(200);
     expect(document).toContain("finish signing you in");
-    expect(document).toContain(suite.path("/store"));
+    expect(document).toContain("/store");
   });
 
   it("serves the public-site shell to a visitor carrying no session", async () => {
@@ -365,9 +361,7 @@ describe("account API integration", () => {
 
     expect(deletedResponse.status).toBe(302);
     expect(newSubjectResponse.status).toBe(302);
-    expect(newSubjectResponse.headers.get("location")).toBe(
-      suite.path("/sign-in-failed"),
-    );
+    expect(newSubjectResponse.headers.get("location")).toBe("/sign-in-failed");
     expect(deleted?.deleted_at).not.toBeNull();
     expect(rowsForNewSubject).toHaveLength(0);
   });

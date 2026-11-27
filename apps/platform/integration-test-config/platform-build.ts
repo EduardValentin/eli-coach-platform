@@ -6,26 +6,12 @@ import { promisify } from "node:util";
 const runCommand = promisify(execFile);
 const currentDirectory = dirname(fileURLToPath(import.meta.url));
 const workspaceRootPath = resolve(currentDirectory, "../../..");
-const PLATFORM_BUILD_KEY = Symbol.for("eli-coach-platform.integration-build");
-
-type BuildRegistry = { [PLATFORM_BUILD_KEY]?: Promise<void> };
 
 /**
  * Produces the artifact the suites serve: the one production build every
- * deployment runs, whatever prefix it is served under. Each integration
- * project serves it under its own prefix, so the projects share one build
- * per run instead of making one each. Vitest loads this module once per
- * project, so the shared build lives on `globalThis`, not in a module variable.
+ * deployment runs, built before the first suite starts.
  */
-export function buildPlatformServer(): Promise<void> {
-  const registry = globalThis as BuildRegistry;
-
-  registry[PLATFORM_BUILD_KEY] ??= runPlatformBuild();
-
-  return registry[PLATFORM_BUILD_KEY];
-}
-
-async function runPlatformBuild(): Promise<void> {
+export async function buildPlatformServer(): Promise<void> {
   try {
     await runCommand(
       "pnpm",

@@ -97,7 +97,7 @@ describe("check-in answers integration", () => {
     expect(others).toEqual([]);
     expect(approved?.to).toBe(ANA.email);
     expect(approved?.html).toContain(
-      `href="${PUBLIC_ORIGIN}${suite.path(`/client/checkins/${checkInId}/join`)}"`,
+      `href="${PUBLIC_ORIGIN}/client/checkins/${checkInId}/join"`,
     );
     expect(approved?.html).toContain(
       'href="https://calendar.google.com/calendar/render?',
@@ -136,9 +136,7 @@ describe("check-in answers integration", () => {
     const [declined, ...others] = await emailsFor(checkInId, "0:declined");
     expect(others).toEqual([]);
     expect(declined?.to).toBe(ANA.email);
-    expect(declined?.html).toContain(
-      `href="${PUBLIC_ORIGIN}${suite.path("/client/checkins")}"`,
-    );
+    expect(declined?.html).toContain(`href="${PUBLIC_ORIGIN}/client/checkins"`);
     expect(declined?.attachments).toEqual([]);
   });
 

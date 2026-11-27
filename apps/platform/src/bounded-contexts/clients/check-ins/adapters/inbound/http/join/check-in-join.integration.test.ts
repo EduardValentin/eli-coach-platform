@@ -182,7 +182,7 @@ describe("check-in join integration", () => {
         expect(response.status).toBe(302);
         expect(response.headers.get("location")).toBe(
           `${SIGN_IN_URL}?redirect_url=${encodeURIComponent(
-            `${PUBLIC_ORIGIN}${suite.path(`/${portal}/checkins/${checkInId}/join`)}`,
+            `${PUBLIC_ORIGIN}/${portal}/checkins/${checkInId}/join`,
           )}`,
         );
       },

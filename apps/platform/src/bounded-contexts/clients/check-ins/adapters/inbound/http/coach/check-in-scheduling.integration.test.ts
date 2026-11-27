@@ -174,9 +174,7 @@ describe("check-in scheduling integration", () => {
     expect(sent?.text).toContain("Europe/London");
     expect(sent?.text).not.toContain("Europe/Bucharest");
     expect(sent?.text).toContain(`NOTE: ${NOTE}`);
-    expect(sent?.html).toContain(
-      `href="${PUBLIC_ORIGIN}${suite.path("/client/checkins")}"`,
-    );
+    expect(sent?.html).toContain(`href="${PUBLIC_ORIGIN}/client/checkins"`);
   });
 
   it("keeps the request when the provider refuses the client's email", async () => {

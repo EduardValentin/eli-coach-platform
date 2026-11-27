@@ -154,7 +154,7 @@ describe("client shell at a glance integration", () => {
     expect(response.status).toBe(200);
     expect(await visibleDocument(response)).toMatch(
       new RegExp(
-        `<img alt="" class="[^"]*" data-parity="avatar" src="${suite.path(`/api/client-profile/avatar/${clientId}`)}\\?v=${avatar?.avatarId}"`,
+        `<img alt="" class="[^"]*" data-parity="avatar" src="/api/client-profile/avatar/${clientId}\\?v=${avatar?.avatarId}"`,
       ),
     );
   });
@@ -170,7 +170,7 @@ describe("client shell at a glance integration", () => {
 
     // assert
     expect(portal.status).toBe(302);
-    expect(portal.headers.get("location")).toBe(suite.path(ENDED_PAGE));
+    expect(portal.headers.get("location")).toBe(ENDED_PAGE);
     expect(endedPage.status).toBe(200);
     expect(await visibleDocument(endedPage)).not.toContain(NEXT_CHECK_IN_ROOT);
   });
