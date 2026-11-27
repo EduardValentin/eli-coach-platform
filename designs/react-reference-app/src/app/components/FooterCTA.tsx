@@ -31,10 +31,11 @@ export function FooterCTA() {
   });
 
   return (
-    <section ref={sectionRef} className="relative -mt-10 z-10">
+    <section ref={sectionRef} aria-label="Start your next step" data-parity-root="FooterCTA" className="relative -mt-10 z-10 text-foreground">
       <motion.div
+        data-parity="footer-sheet"
         style={{ y: sheetY, scale: sheetScale }}
-        className="bg-surface-brand-soft rounded-t-phone-frame shadow-public-footer-cta-sheet text-foreground pt-28 pb-10 px-6 text-center"
+        className="bg-surface-brand-soft rounded-t-phone-frame shadow-public-footer-cta-sheet pt-28 pb-10 px-6 text-center"
       >
         <motion.div
           ref={textRef}
@@ -63,6 +64,7 @@ export function FooterCTA() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={isTextInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
                 transition={{ duration: 0.5, delay: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                data-parity="footer-actions"
                 className="space-y-6"
               >
                 <WaitlistEmailForm
@@ -88,17 +90,18 @@ export function FooterCTA() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={isTextInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
                 transition={{ duration: 0.5, delay: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                data-parity="footer-actions"
                 className="flex flex-col sm:flex-row items-center justify-center gap-4"
               >
                 <Link
                   to="/store"
-                  className={buttonVariants({ elevation: 'raised', press: 'scale', size: 'md', weight: 'regular', width: 'full-below-sm' })}
+                  className={buttonVariants({ className: 'px-6', elevation: 'raised', press: 'scale', size: 'md-grow', weight: 'regular', width: 'full-below-sm' })}
                 >
                   Browse the free resources
                 </Link>
                 <Link
                   to="/pricing"
-                  className={buttonVariants({ press: 'scale', size: 'md', variant: 'outline-brand', weight: 'regular', width: 'full-below-sm' })}
+                  className={buttonVariants({ className: 'px-6', press: 'scale', size: 'md-grow', variant: 'outline-brand', weight: 'regular', width: 'full-below-sm' })}
                 >
                   See coaching plans
                 </Link>

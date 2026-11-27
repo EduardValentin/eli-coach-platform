@@ -27,6 +27,7 @@ export function PhoneFrame({
 
       <div
         aria-hidden="true"
+        data-parity="phone-frame-notch"
         className="absolute top-2 left-1/2 -translate-x-1/2 w-24 h-5 bg-foreground rounded-full z-30"
       />
 
@@ -36,9 +37,9 @@ export function PhoneFrame({
       >
         <span>{time}</span>
         <span className="flex items-center gap-1">
-          <span className={`block w-1 h-1 rounded-full ${dotClass}`} />
-          <span className={`block w-1 h-1 rounded-full ${dotClass}`} />
-          <span className={`block w-1 h-1 rounded-full ${dotClass}`} />
+          <span data-parity="phone-frame-status-dot-1" className={`block w-1 h-1 rounded-full ${dotClass}`} />
+          <span data-parity="phone-frame-status-dot-2" className={`block w-1 h-1 rounded-full ${dotClass}`} />
+          <span data-parity="phone-frame-status-dot-3" className={`block w-1 h-1 rounded-full ${dotClass}`} />
         </span>
       </div>
     </div>

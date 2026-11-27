@@ -38,7 +38,7 @@ type WaitlistEmailFormProps = {
 type WaitlistFormVariant = "dark" | "light";
 
 const emailFieldClassName =
-  "h-14 w-full rounded-full border px-6 text-base outline-none transition-all";
+  "h-14 w-full rounded-full border px-[min(1.5rem,24px)] text-base outline-none transition-all placeholder:text-[length:min(1rem,8.5vw)]";
 const consentLinkClassName =
   "font-medium underline underline-offset-2 hover:no-underline";
 
@@ -82,7 +82,7 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
                     className={cn(emailFieldClassName, {
                       "border-control-border-soft bg-surface-base text-text-primary placeholder:text-placeholder-soft":
                         !isDark,
-                      "border-surface-base/20 bg-surface-base/10 text-text-inverted placeholder:text-text-inverted/70 backdrop-blur-md":
+                      "border-surface-base/50 bg-surface-base/10 text-text-inverted placeholder:text-text-inverted/70 backdrop-blur-md":
                         isDark,
                     })}
                     disabled={submission.isSubmitting}
@@ -110,6 +110,7 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
                       ? waitlistLoadingLabel(mode)
                       : undefined
                   }
+                  className="h-auto min-h-(--size-control-lg) py-2 whitespace-normal"
                   disabled={submission.isSubmitting || !email.trim()}
                   press="scale"
                   size="lg"

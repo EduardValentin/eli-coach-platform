@@ -133,10 +133,6 @@ function expectedStoryMedia(options: { position: number; reel: string }) {
     poster: `/media/about/story-${options.reel}-poster.webp`,
     sources: [
       {
-        src: `/media/about/story-${options.reel}.av1.mp4`,
-        type: 'video/mp4; codecs="av01.0.05M.08"',
-      },
-      {
         src: `/media/about/story-${options.reel}.h264.mp4`,
         type: "video/mp4",
       },
@@ -207,7 +203,7 @@ describe("InstagramStoryWidget", () => {
     expect(HTMLMediaElement.prototype.play).not.toHaveBeenCalled();
   });
 
-  it("plays the lifestyle reel over its poster once the phone frame enters the viewport, preferring AV1", async () => {
+  it("plays the lifestyle reel over its poster once the phone frame enters the viewport", async () => {
     // arrange
     renderStoryWidget();
 

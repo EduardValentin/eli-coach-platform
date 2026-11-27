@@ -31,9 +31,10 @@ export function PublicAbout(props: PublicAboutProps) {
       data-parity-root="About"
       id="about"
     >
-      <div className="flex flex-1 flex-col items-center text-center lg:items-start lg:text-left">
+      <div className="flex max-w-full flex-1 flex-col items-center text-center lg:items-start lg:text-left">
         <motion.figure
-          className="group relative mb-8 size-48 rounded-full p-2 md:size-56"
+          className="group relative mb-8 aspect-square w-48 max-w-full rounded-full p-2 md:w-56"
+          data-parity="about-portrait"
           initial={{ opacity: 0, scale: 0.9 }}
           transition={{ duration: 0.6 }}
           viewport={ABOUT_VIEWPORT}
@@ -42,10 +43,12 @@ export function PublicAbout(props: PublicAboutProps) {
           <div
             aria-hidden="true"
             className="absolute inset-0 rounded-full bg-gradient-to-tr from-brand-primary to-brand-secondary opacity-70 blur-md transition-opacity group-hover:opacity-100"
+            data-parity="about-portrait-glow"
           />
           <div
             aria-hidden="true"
             className="absolute inset-[3px] z-10 rounded-full bg-surface-base"
+            data-parity="about-portrait-ring"
           />
           <img
             alt="Eli, personal trainer and nutritionist for women, smiling outdoors"
@@ -88,18 +91,21 @@ export function PublicAbout(props: PublicAboutProps) {
           </ul>
 
           {props.waitlist.showsAuthControls ? (
-            <div className="mt-10 flex items-center justify-center gap-6 lg:justify-start">
-              <span className="inline-block">
-                <Link
-                  className={buttonVariants({
-                    elevation: "raised",
-                    press: "scale",
-                  })}
-                  to={BOOK_PATH}
-                >
-                  Book a free call
-                </Link>
-              </span>
+            <div
+              className="mt-10 flex flex-wrap items-center justify-center gap-6 lg:justify-start"
+              data-parity="about-actions"
+            >
+              <Link
+                className={buttonVariants({
+                  className: "max-w-full px-6",
+                  elevation: "raised",
+                  press: "scale",
+                  size: "md-grow",
+                })}
+                to={BOOK_PATH}
+              >
+                Book a free call
+              </Link>
               <Link
                 className="text-sm font-semibold text-link-muted underline underline-offset-4 transition-colors hover:text-brand-primary"
                 to={PRICING_PATH}
@@ -113,6 +119,7 @@ export function PublicAbout(props: PublicAboutProps) {
 
       <motion.div
         className="flex w-full flex-1 justify-center lg:justify-end"
+        data-parity="about-story-column"
         initial={{ opacity: 0, x: 20 }}
         transition={{ delay: 0.4, duration: 0.8 }}
         viewport={ABOUT_VIEWPORT}

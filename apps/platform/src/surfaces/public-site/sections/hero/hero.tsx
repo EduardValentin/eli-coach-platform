@@ -5,7 +5,6 @@ import { ChevronRight, Pause, Play, RotateCcw } from "lucide-react";
 import { MotionConfig, motion, type Transition } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
-import { cn } from "~/shared/design-system/lib";
 import { buttonVariants } from "~/shared/design-system/primitives";
 
 import type { BotDetectionConfig } from "~/shared/submission-checks/bot-detection";
@@ -153,7 +152,7 @@ export function PublicHero(props: PublicHeroProps) {
           />
         </div>
 
-        <div className="relative z-10 flex w-full flex-col items-center justify-center px-6 py-[calc(var(--size-control-md)+2rem)] text-center">
+        <div className="relative z-10 flex w-full flex-col items-center justify-center px-[min(1.5rem,24px)] py-[calc(var(--size-control-md)+2rem)] text-center">
           {props.waitlist.mode !== "disabled" ? (
             <div className="flex w-full flex-col items-center">
               {isClosed ? (
@@ -254,16 +253,15 @@ export function PublicHero(props: PublicHeroProps) {
                 transition={{ delay: 0.4, duration: 0.5 }}
               >
                 <Link
-                  className={cn(
-                    buttonVariants({
-                      elevation: "raised",
-                      lettering: "caps",
-                      press: "scale",
-                      textSize: "sm",
-                      weight: "semibold",
-                    }),
-                    "group",
-                  )}
+                  className={buttonVariants({
+                    className: "group",
+                    elevation: "raised",
+                    lettering: "caps",
+                    press: "scale",
+                    size: "md-grow",
+                    textSize: "sm",
+                    weight: "semibold",
+                  })}
                   to={BOOK_PATH}
                 >
                   See if we’re a fit

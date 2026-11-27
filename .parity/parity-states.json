@@ -7455,5 +7455,21 @@
         "waitFor": "[data-parity=\"disabled-action-hint\"]"
       }
     ]
-  }
+  },
+  "about-in-view": [
+    {
+      "hover": "#about h2"
+    },
+    {
+      "use": "story-paused"
+    }
+  ],
+  "footer-in-view": [
+    {
+      "press": "End"
+    },
+    {
+      "waitFor": "[data-parity=\"footer-sheet\"][style*=\"transform: none\"] [data-parity=\"footer-actions\"][style*=\"opacity: 1\"]"
+    }
+  ]
 }
