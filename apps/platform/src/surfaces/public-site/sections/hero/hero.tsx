@@ -14,7 +14,11 @@ import { WaitlistEmailForm } from "~/bounded-contexts/sales/waitlist/ui/public/e
 import { PRICING_PATH } from "~/surfaces/public-site/paths";
 import { BOOK_PATH } from "~/bounded-contexts/scheduling/public/paths";
 
-import { HERO_POSTER_PATH, HERO_VIDEO_SOURCES } from "./hero-media";
+import {
+  HERO_LANDSCAPE_POSTER,
+  HERO_PORTRAIT_POSTER,
+  HERO_VIDEO_SOURCES,
+} from "./hero-media";
 
 const HERO_VIDEO_LOAD_DELAY_MS = 1200;
 
@@ -120,28 +124,33 @@ export function PublicHero(props: PublicHeroProps) {
           className="absolute inset-0 h-full w-full"
           data-parity="hero-media"
         >
-          <video
-            ref={videoRef}
-            autoPlay={shouldLoadVideo && isPlaying}
-            className="h-full w-full object-cover opacity-60"
-            data-parity="hero-video"
-            loop
-            muted
-            playsInline
-            poster={appUrl(HERO_POSTER_PATH)}
-            preload="none"
+          <div
+            className="absolute inset-0 opacity-60"
+            data-parity="hero-footage"
           >
-            {shouldLoadVideo
-              ? HERO_VIDEO_SOURCES.map((source) => (
-                  <source
-                    key={source.path}
-                    media={source.media}
-                    src={appUrl(source.path)}
-                    type={source.type}
-                  />
-                ))
-              : null}
-          </video>
+            <HeroPosterPicture />
+            <video
+              ref={videoRef}
+              autoPlay={shouldLoadVideo && isPlaying}
+              className={heroFootageLayerClassName}
+              data-parity="hero-video"
+              loop
+              muted
+              playsInline
+              preload="none"
+            >
+              {shouldLoadVideo
+                ? HERO_VIDEO_SOURCES.map((source) => (
+                    <source
+                      key={source.path}
+                      media={source.media}
+                      src={appUrl(source.path)}
+                      type={source.type}
+                    />
+                  ))
+                : null}
+            </video>
+          </div>
           <div
             className="absolute inset-0 bg-linear-to-t from-surface-inverted via-transparent to-transparent"
             data-parity="hero-gradient"
@@ -308,8 +317,33 @@ export function PublicHero(props: PublicHeroProps) {
   );
 }
 
+function HeroPosterPicture() {
+  return (
+    <picture data-parity="hero-poster">
+      <source
+        height={HERO_PORTRAIT_POSTER.height}
+        media={HERO_PORTRAIT_POSTER.media}
+        srcSet={appUrl(HERO_PORTRAIT_POSTER.path)}
+        type={HERO_PORTRAIT_POSTER.type}
+        width={HERO_PORTRAIT_POSTER.width}
+      />
+      <img
+        alt=""
+        className={heroFootageLayerClassName}
+        data-parity="hero-poster-image"
+        fetchPriority="high"
+        height={HERO_LANDSCAPE_POSTER.height}
+        src={appUrl(HERO_LANDSCAPE_POSTER.path)}
+        width={HERO_LANDSCAPE_POSTER.width}
+      />
+    </picture>
+  );
+}
+
 const heroHeadingClassName =
   "mb-4 font-heading text-display-md font-medium leading-none text-balance text-text-inverted min-[360px]:text-4xl sm:text-5xl md:text-7xl";
+
+const heroFootageLayerClassName = "absolute inset-0 h-full w-full object-cover";
 
 const heroVideoControlClassName =
   "inline-flex size-(--size-control-md) items-center justify-center rounded-full transition-colors hover:text-text-inverted";

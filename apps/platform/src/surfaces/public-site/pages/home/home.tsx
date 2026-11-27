@@ -7,7 +7,10 @@ import type { PublicOutletContext } from "~/surfaces/public-site/shell/layout";
 import { PublicAbout } from "~/surfaces/public-site/sections/about/about";
 import { PublicCycleNutrition } from "~/surfaces/public-site/sections/cycle-nutrition/cycle-nutrition";
 import { PublicHero } from "~/surfaces/public-site/sections/hero/hero";
-import { HERO_POSTER_PATH } from "~/surfaces/public-site/sections/hero/hero-media";
+import {
+  HERO_LANDSCAPE_POSTER,
+  HERO_PORTRAIT_POSTER,
+} from "~/surfaces/public-site/sections/hero/hero-media";
 import { PublicMyMethod } from "~/surfaces/public-site/sections/my-method/my-method";
 import { PublicPlatform } from "~/surfaces/public-site/sections/platform/platform";
 import { PublicWorkouts } from "~/surfaces/public-site/sections/workouts/workouts";
@@ -21,15 +24,15 @@ export const meta: MetaFunction = () => [
   },
 ];
 
-export const links: LinksFunction = () => [
-  {
+export const links: LinksFunction = () =>
+  [HERO_PORTRAIT_POSTER, HERO_LANDSCAPE_POSTER].map((poster) => ({
     rel: "preload",
-    href: appUrl(HERO_POSTER_PATH),
+    href: appUrl(poster.path),
     as: "image",
-    type: "image/webp",
+    type: poster.type,
+    media: poster.media,
     fetchPriority: "high",
-  },
-];
+  }));
 
 export default function HomeRoute() {
   const { botDetection, waitlist } = useOutletContext<PublicOutletContext>();
